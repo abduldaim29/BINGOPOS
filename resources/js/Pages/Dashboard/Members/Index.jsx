@@ -11,13 +11,7 @@ import {
     IconSearch,
     IconUsers,
 } from "@tabler/icons-react";
-
-const formatCurrency = (value = 0) =>
-    Number(value || 0).toLocaleString("id-ID", {
-        style: "currency",
-        currency: "IDR",
-        minimumFractionDigits: 0,
-    });
+import { formatCurrency } from "@/Utils/currency";
 
 const formatDate = (value) =>
     value

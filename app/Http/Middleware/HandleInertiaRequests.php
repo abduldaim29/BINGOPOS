@@ -47,6 +47,9 @@ class HandleInertiaRequests extends Middleware
         $activeOutlet = null;
         $availableOutlets = collect();
 
+        // Only load heavy data on dashboard route, not on every page
+        $isDashboardRoute = $request->route()?->getName() === 'dashboard';
+
         if ($request->user()) {
             $userId = $request->user()->id;
 
@@ -58,107 +61,7 @@ class HandleInertiaRequests extends Middleware
                 $pendingDineOrdersCount = DineOrder::pending()->count();
             }
 
-            $warehouseIds = app(OutletAccessService::class)->warehousesFor($request->user())->pluck('id');
-            $includeLegacy = Outlet::active()->count() <= 1;
-            $lowStockNotifications = Product::query()
-                ->leftJoinSub(
-                    DB::table('product_warehouse')
-                        ->select('product_id', DB::raw('SUM(stock) as warehouse_stock'))
-                        ->whereIn('warehouse_id', $warehouseIds)
-                        ->groupBy('product_id'),
-                    'warehouse_totals',
-                    fn ($join) => $join->on('warehouse_totals.product_id', '=', 'products.id')
-                )
-                ->where('min_stock', '>', 0)
-                ->where(function ($query) use ($includeLegacy) {
-                    $query->whereColumn('warehouse_totals.warehouse_stock', '<=', 'min_stock');
-                    if ($includeLegacy) {
-                        $query->orWhere(function ($legacy) {
-                            $legacy->whereNull('warehouse_totals.warehouse_stock')
-                                ->whereColumn('stock', '<=', 'min_stock');
-                        });
-                    }
-                })
-                ->whereNotExists(function ($query) use ($userId) {
-                    $query->selectRaw('1')
-                        ->from('product_notification_reads as pr')
-                        ->whereColumn('pr.product_id', 'products.id')
-                        ->where('pr.user_id', $userId)
-                        ->whereColumn('pr.updated_at', '>=', 'products.updated_at');
-                })
-                ->orderByDesc('updated_at')
-                ->limit(10)
-                ->get(['products.id', 'title', DB::raw('COALESCE(warehouse_totals.warehouse_stock, products.stock) as warehouse_stock'), 'updated_at'])
-                ->map(function ($product) {
-                    return [
-                        'id' => $product->id,
-                        'title' => $product->title,
-                        'stock' => (int) $product->warehouse_stock,
-                        'time' => optional($product->updated_at)->diffForHumans(),
-                    ];
-                });
-
-            $expiringBatchNotifications = ProductBatch::with('product:id,title')
-                ->where('stock', '>', 0)
-                ->whereNotNull('expired_at')
-                ->whereBetween('expired_at', [now(), now()->addDays(30)])
-                ->orderBy('expired_at')
-                ->limit(10)
-                ->get()
-                ->map(function ($batch) {
-                    return [
-                        'id' => $batch->id,
-                        'title' => $batch->product?->title,
-                        'batch_number' => $batch->batch_number,
-                        'stock' => (int) $batch->stock,
-                        'time' => optional($batch->expired_at)->diffForHumans(),
-                    ];
-                });
-
-            $payableAgingService = new PayableAgingService;
-            $receivableService = new ReceivableService;
-
-            $payableAgingSummary = $payableAgingService->getAgingSummary();
-            $receivableAgingSummary = $receivableService->getAgingSummary();
-
-            $receivableNotifications = Receivable::whereNot('status', 'paid')
-                ->whereNotNull('due_date')
-                ->whereDate('due_date', '<=', now()->addDays(3))
-                ->orderBy('due_date')
-                ->limit(5)
-                ->get(['id', 'invoice', 'customer_id', 'due_date', 'total', 'paid', 'status'])
-                ->map(function ($item) {
-                    $remaining = max(0, ($item->total ?? 0) - ($item->paid ?? 0));
-
-                    return [
-                        'id' => $item->id,
-                        'title' => "Piutang: {$item->invoice}",
-                        'subtitle' => 'Sisa '.number_format($remaining, 0, ',', '.'),
-                        'time' => optional($item->due_date)->diffForHumans(),
-                        'status' => $item->status,
-                        'aging_bucket' => $item->aging_bucket,
-                    ];
-                });
-
-            $payableNotifications = Payable::whereNot('status', 'paid')
-                ->whereNotNull('due_date')
-                ->whereDate('due_date', '<=', now()->addDays(3))
-                ->orderBy('due_date')
-                ->limit(5)
-                ->get(['id', 'document_number', 'due_date', 'total', 'paid', 'status'])
-                ->map(function ($item) {
-                    $remaining = max(0, ($item->total ?? 0) - ($item->paid ?? 0));
-
-                    return [
-                        'id' => $item->id,
-                        'title' => "Hutang: {$item->document_number}",
-                        'subtitle' => 'Sisa '.number_format($remaining, 0, ',', '.'),
-                        'time' => optional($item->due_date)->diffForHumans(),
-                        'status' => $item->status,
-                        'aging_bucket' => $item->aging_bucket,
-                    ];
-                });
-
+            // Load active shift (needed for POS functionality)
             $activeShift = CashierShift::query()
                 ->with('user:id,name', 'warehouse:id,code,name,outlet_id', 'warehouse.outlet')
                 ->open()
@@ -174,7 +77,116 @@ class HandleInertiaRequests extends Middleware
                 $activeCashierShift = app(CashierShiftService::class)->summarizeForDisplay($activeShift);
             }
 
-            $securityWarnings = ProductionSecurityBaseline::issues();
+            // Only load these heavy queries on dashboard
+            if ($isDashboardRoute) {
+                $warehouseIds = app(OutletAccessService::class)->warehousesFor($request->user())->pluck('id');
+                $includeLegacy = Outlet::active()->count() <= 1;
+                $lowStockNotifications = Product::query()
+                    ->leftJoinSub(
+                        DB::table('product_warehouse')
+                            ->select('product_id', DB::raw('SUM(stock) as warehouse_stock'))
+                            ->whereIn('warehouse_id', $warehouseIds)
+                            ->groupBy('product_id'),
+                        'warehouse_totals',
+                        fn ($join) => $join->on('warehouse_totals.product_id', '=', 'products.id')
+                    )
+                    ->where('min_stock', '>', 0)
+                    ->where(function ($query) use ($includeLegacy) {
+                        $query->whereColumn('warehouse_totals.warehouse_stock', '<=', 'min_stock');
+                        if ($includeLegacy) {
+                            $query->orWhere(function ($legacy) {
+                                $legacy->whereNull('warehouse_totals.warehouse_stock')
+                                    ->whereColumn('stock', '<=', 'min_stock');
+                            });
+                        }
+                    })
+                    ->whereNotExists(function ($query) use ($userId) {
+                        $query->selectRaw('1')
+                            ->from('product_notification_reads as pr')
+                            ->whereColumn('pr.product_id', 'products.id')
+                            ->where('pr.user_id', $userId)
+                            ->whereColumn('pr.updated_at', '>=', 'products.updated_at');
+                    })
+                    ->orderByDesc('updated_at')
+                    ->limit(10)
+                    ->get(['products.id', 'title', DB::raw('COALESCE(warehouse_totals.warehouse_stock, products.stock) as warehouse_stock'), 'updated_at'])
+                    ->map(function ($product) {
+                        return [
+                            'id' => $product->id,
+                            'title' => $product->title,
+                            'stock' => (int) $product->warehouse_stock,
+                            'time' => optional($product->updated_at)->diffForHumans(),
+                        ];
+                    });
+
+                $expiringBatchNotifications = ProductBatch::with('product:id,title')
+                    ->where('stock', '>', 0)
+                    ->whereNotNull('expired_at')
+                    ->whereBetween('expired_at', [now(), now()->addDays(30)])
+                    ->orderBy('expired_at')
+                    ->limit(10)
+                    ->get()
+                    ->map(function ($batch) {
+                        return [
+                            'id' => $batch->id,
+                            'title' => $batch->product?->title,
+                            'batch_number' => $batch->batch_number,
+                            'stock' => (int) $batch->stock,
+                            'time' => optional($batch->expired_at)->diffForHumans(),
+                        ];
+                    });
+
+                $payableAgingService = new PayableAgingService;
+                $receivableService = new ReceivableService;
+
+                $payableAgingSummary = $payableAgingService->getAgingSummary();
+                $receivableAgingSummary = $receivableService->getAgingSummary();
+
+                $receivableNotifications = Receivable::whereNot('status', 'paid')
+                    ->whereNotNull('due_date')
+                    ->whereDate('due_date', '<=', now()->addDays(3))
+                    ->orderBy('due_date')
+                    ->limit(5)
+                    ->get(['id', 'invoice', 'customer_id', 'due_date', 'total', 'paid', 'status'])
+                    ->map(function ($item) {
+                        $remaining = max(0, ($item->total ?? 0) - ($item->paid ?? 0));
+                        $currencySymbol = Setting::getCurrencySymbol($outlet);
+
+                        return [
+                            'id' => $item->id,
+                            'title' => "Piutang: {$item->invoice}",
+                            'subtitle' => 'Sisa '.$currencySymbol.' '.number_format($remaining, 0, ',', '.'),
+                            'time' => optional($item->due_date)->diffForHumans(),
+                            'status' => $item->status,
+                            'aging_bucket' => $item->aging_bucket,
+                        ];
+                    });
+
+                $payableNotifications = Payable::whereNot('status', 'paid')
+                    ->whereNotNull('due_date')
+                    ->whereDate('due_date', '<=', now()->addDays(3))
+                    ->orderBy('due_date')
+                    ->limit(5)
+                    ->get(['id', 'document_number', 'due_date', 'total', 'paid', 'status'])
+                    ->map(function ($item) {
+                        $remaining = max(0, ($item->total ?? 0) - ($item->paid ?? 0));
+                        $currencySymbol = Setting::getCurrencySymbol($outlet);
+
+                        return [
+                            'id' => $item->id,
+                            'title' => "Hutang: {$item->document_number}",
+                            'subtitle' => 'Sisa '.$currencySymbol.' '.number_format($remaining, 0, ',', '.'),
+                            'time' => optional($item->due_date)->diffForHumans(),
+                            'status' => $item->status,
+                            'aging_bucket' => $item->aging_bucket,
+                        ];
+                    });
+            }
+
+            // Only check security warnings in production or on dashboard
+            if (config('app.env') === 'production' || $isDashboardRoute) {
+                $securityWarnings = ProductionSecurityBaseline::issues();
+            }
 
             $confirmedAt = (int) $request->session()->get('auth.password_confirmed_at', 0);
             if ($confirmedAt > 0) {
@@ -218,10 +230,24 @@ class HandleInertiaRequests extends Middleware
                 'autoPrint' => Setting::getBoolForOutlet('printer_auto_print', $outlet, false),
                 'paperSize' => Setting::getForOutlet('printer_paper_size', $outlet, '80mm'),
             ];
+
+            $currencySettings = [
+                'code' => Setting::getCurrencyCode($outlet),
+                'symbol' => Setting::getCurrencySymbol($outlet),
+                'locale' => Setting::getCurrencyLocale($outlet),
+                'decimalPlaces' => Setting::getCurrencyDecimalPlaces($outlet),
+            ];
         } else {
             $printerSettings = [
                 'autoPrint' => false,
                 'paperSize' => '80mm',
+            ];
+
+            $currencySettings = [
+                'code' => 'PKR',
+                'symbol' => 'Rs',
+                'locale' => 'en-PK',
+                'decimalPlaces' => 2,
             ];
         }
 
@@ -238,10 +264,10 @@ class HandleInertiaRequests extends Middleware
             ],
             'locale' => [
                 'current' => app()->getLocale(),
-                'available' => ['id', 'en'],
+                'available' => ['en', 'id'],
                 'names' => [
-                    'id' => 'Indonesia',
                     'en' => 'English',
+                    'id' => 'Indonesia',
                 ],
             ],
             'lowStockNotifications' => $lowStockNotifications,
@@ -253,6 +279,7 @@ class HandleInertiaRequests extends Middleware
             'activeCashierShift' => $activeCashierShift,
             'storeProfile' => $storeProfile,
             'printerSettings' => $printerSettings,
+            'currencySettings' => $currencySettings,
             'pendingApprovalCount' => $pendingApprovalCount,
             'pendingDineOrdersCount' => $pendingDineOrdersCount,
             'appVersion' => config('app.version'),

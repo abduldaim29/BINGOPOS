@@ -6,13 +6,7 @@ import {
     IconPlus,
 } from "@tabler/icons-react";
 import { getProductImageUrl } from "@/Utils/imageUrl";
-
-const formatPrice = (value = 0) =>
-    Number(value || 0).toLocaleString("id-ID", {
-        style: "currency",
-        currency: "IDR",
-        minimumFractionDigits: 0,
-    });
+import { formatCurrency } from "@/Utils/currency";
 
 // Single Product Card
 function ProductCard({ product, onAddToCart, isAdding }) {
@@ -116,11 +110,11 @@ function ProductCard({ product, onAddToCart, isAdding }) {
                 <div className="mt-2">
                     {showPromo && !selectedUnit && (
                         <p className="text-xs text-slate-400 line-through">
-                            {formatPrice(basePrice)}
+                            {formatCurrency(basePrice)}
                         </p>
                     )}
                     <p className="text-base font-bold text-primary-600 dark:text-primary-400">
-                        {formatPrice(displayPrice)}
+                        {formatCurrency(displayPrice)}
                         {selectedUnit && (
                             <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
                                 {" "}/{selectedUnit.code}

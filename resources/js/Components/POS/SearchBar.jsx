@@ -2,13 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { IconSearch, IconX, IconBarcode, IconCamera } from "@tabler/icons-react";
 import { getProductImageUrl } from "@/Utils/imageUrl";
 import BarcodeScanner from "./BarcodeScanner";
-
-const formatPrice = (value = 0) =>
-    Number(value || 0).toLocaleString("id-ID", {
-        style: "currency",
-        currency: "IDR",
-        minimumFractionDigits: 0,
-    });
+import { formatCurrency } from "@/Utils/currency";
 
 export default function SearchBar({
     value = "",
@@ -209,7 +203,7 @@ export default function SearchBar({
                                     {/* Price */}
                                     <div className="text-right flex-shrink-0">
                                         <p className="text-sm font-semibold text-primary-600 dark:text-primary-400">
-                                            {formatPrice(product.sell_price)}
+                                            {formatCurrency(product.sell_price)}
                                         </p>
                                         {product.stock <= 0 && (
                                             <span className="text-xs text-danger-500 font-medium">

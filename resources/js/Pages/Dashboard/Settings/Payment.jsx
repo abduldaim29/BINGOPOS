@@ -82,15 +82,15 @@ export default function Payment({
 
     return (
         <>
-            <Head title="Pengaturan Payment" />
+            <Head title="Payment Settings" />
 
             <div className="mb-6">
                 <h1 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
                     <IconCreditCard size={28} className="text-primary-500" />
-                    Pengaturan Payment Gateway
+                    Payment Gateway Settings
                 </h1>
                 <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-                    Konfigurasi metode pembayaran dan gateway
+                    Configure payment methods and gateways
                 </p>
             </div>
 
@@ -99,20 +99,20 @@ export default function Payment({
                 <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6">
                     <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-4 flex items-center gap-2">
                         <IconCash size={18} />
-                        Gateway Default
+                        Default Gateway
                     </h3>
                     <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
-                        Gateway pembayaran default yang digunakan kasir saat
-                        membuka halaman transaksi.
+                        Default payment gateway used by cashier when
+                        opening transaction page.
                     </p>
                     {!canUpdatePaymentSettings && (
                         <div className="mb-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-300">
-                            Anda hanya memiliki akses lihat. Perubahan payment settings memerlukan permission update dan konfirmasi password ulang.
+                            You only have view access. Payment settings changes require update permission and password reconfirmation.
                         </div>
                     )}
                     <div>
                         <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                            Pilih Gateway
+                            Select Gateway
                         </label>
                         <select
                             value={data.default_gateway}
@@ -130,7 +130,7 @@ export default function Payment({
                                 >
                                     {gw.label}
                                     {!isGatewaySelectable(gw.value) &&
-                                        " (nonaktif)"}
+                                        " (inactive)"}
                                 </option>
                             ))}
                         </select>
@@ -146,7 +146,7 @@ export default function Payment({
                 <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6">
                     <div className="flex items-center justify-between mb-4">
                         <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-2">
-                            🏦 Transfer Bank
+                            🏦 Bank Transfer
                         </h3>
                         <label
                             className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium cursor-pointer transition-all ${
@@ -165,19 +165,19 @@ export default function Payment({
                                 }
                                 disabled={!canUpdatePaymentSettings}
                             />
-                            {data.bank_transfer_enabled ? "Aktif" : "Nonaktif"}
+                            {data.bank_transfer_enabled ? "Active" : "Inactive"}
                         </label>
                     </div>
                     <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
-                        Pembayaran manual via transfer bank. Kasir akan
-                        memasukkan transaksi dengan status pending, kemudian
-                        admin mengkonfirmasi setelah dana diterima.
+                        Manual payment via bank transfer. Cashier will
+                        enter transaction with pending status, then
+                        admin confirms after funds received.
                     </p>
                         <a
                             href={route("settings.bank-accounts.index")}
                         className="inline-flex items-center gap-2 text-sm text-primary-500 hover:text-primary-600 font-medium"
                     >
-                        Kelola Rekening Bank →
+                        Manage Bank Accounts →
                     </a>
                 </div>
 
@@ -205,7 +205,7 @@ export default function Payment({
                                 }
                                 disabled={!canUpdatePaymentSettings}
                             />
-                            {data.midtrans_enabled ? "Aktif" : "Nonaktif"}
+                            {data.midtrans_enabled ? "Active" : "Inactive"}
                         </label>
                     </div>
                     <div
@@ -229,7 +229,7 @@ export default function Payment({
                                 errors={errors?.midtrans_server_key}
                                 placeholder={
                                     paymentSettingSources?.midtrans_server_key?.configured
-                                        ? "Kosongkan untuk mempertahankan nilai saat ini"
+                                        ? "Leave blank to keep current value"
                                         : "SB-Mid-server-xxx"
                                 }
                                 disabled={
@@ -254,7 +254,7 @@ export default function Payment({
                         </div>
                         {renderSecretHint(
                             "midtrans_server_key",
-                            "Isi ulang hanya jika ingin mengganti secret."
+                            "Fill again only if you want to change secret."
                         )}
                         <label className="flex items-center gap-2 cursor-pointer">
                             <Checkbox
@@ -295,7 +295,7 @@ export default function Payment({
                                 }
                                 disabled={!canUpdatePaymentSettings}
                             />
-                            {data.xendit_enabled ? "Aktif" : "Nonaktif"}
+                            {data.xendit_enabled ? "Active" : "Inactive"}
                         </label>
                     </div>
                     <div
@@ -316,7 +316,7 @@ export default function Payment({
                                 errors={errors?.xendit_secret_key}
                                 placeholder={
                                     paymentSettingSources?.xendit_secret_key?.configured
-                                        ? "Kosongkan untuk mempertahankan nilai saat ini"
+                                        ? "Leave blank to keep current value"
                                         : "xnd_development_xxx"
                                 }
                                 disabled={
@@ -338,7 +338,7 @@ export default function Payment({
                         </div>
                         {renderSecretHint(
                             "xendit_secret_key",
-                            "Isi ulang hanya jika ingin mengganti secret."
+                            "Fill again only if you want to change secret."
                         )}
                         <Input
                             label="Callback Token"
@@ -350,7 +350,7 @@ export default function Payment({
                             errors={errors?.xendit_callback_token}
                             placeholder={
                                 paymentSettingSources?.xendit_callback_token?.configured
-                                    ? "Kosongkan untuk mempertahankan nilai saat ini"
+                                    ? "Leave blank to keep current value"
                                     : "xendit-callback-token"
                             }
                             disabled={
@@ -360,7 +360,7 @@ export default function Payment({
                         />
                         {renderSecretHint(
                             "xendit_callback_token",
-                            "Isi ulang hanya jika ingin mengganti token."
+                            "Fill again only if you want to change token."
                         )}
                         <label className="flex items-center gap-2 cursor-pointer">
                             <Checkbox
@@ -386,8 +386,8 @@ export default function Payment({
                         🔗 Webhook URLs
                     </h3>
                     <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
-                        Salin URL berikut dan paste ke dashboard Midtrans/Xendit
-                        sebagai Notification/Callback URL.
+                        Copy the following URL and paste to Midtrans/Xendit
+                        dashboard as Notification/Callback URL.
                     </p>
                     {webhookWarnings.length > 0 && (
                         <div className="mb-4 space-y-2">
@@ -419,11 +419,11 @@ export default function Payment({
                                         navigator.clipboard.writeText(
                                             webhookUrls.midtrans || ""
                                         );
-                                        toast.success("URL disalin!");
+                                        toast.success("URL copied!");
                                     }}
                                     className="px-3 h-10 rounded-lg border border-slate-200 dark:border-slate-700 text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
                                 >
-                                    Salin
+                                    Copy
                                 </button>
                             </div>
                         </div>
@@ -444,11 +444,11 @@ export default function Payment({
                                         navigator.clipboard.writeText(
                                             webhookUrls.xendit || ""
                                         );
-                                        toast.success("URL disalin!");
+                                        toast.success("URL copied!");
                                     }}
                                     className="px-3 h-10 rounded-lg border border-slate-200 dark:border-slate-700 text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
                                 >
-                                    Salin
+                                    Copy
                                 </button>
                             </div>
                         </div>
@@ -463,7 +463,7 @@ export default function Payment({
                         className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-primary-500 hover:bg-primary-600 text-white font-medium transition-colors disabled:opacity-50"
                     >
                         <IconDeviceFloppy size={18} />
-                        {processing ? "Menyimpan..." : "Simpan Konfigurasi"}
+                        {processing ? "Saving..." : "Save Configuration"}
                     </button>
                 </div>
             </form>

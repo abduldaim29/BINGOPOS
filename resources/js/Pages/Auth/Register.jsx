@@ -10,9 +10,16 @@ import {
     IconEyeOff,
     IconLoader2,
     IconCheck,
+    IconChevronDown,
 } from "@tabler/icons-react";
 
-export default function Register({ botGuard }) {
+export default function Register({ botGuard, userRoles }) {
+    const roleLabels = {
+        'super-admin': 'Super Administrator',
+        'administrator': 'Administrator/Manager',
+        'inventory-manager': 'Inventory Manager',
+        'cashier': 'Cashier',
+    };
     const honeypotField = botGuard?.honeypot_field || "company_website";
     const tokenField = botGuard?.token_field || "bot_guard_token";
     const { data, setData, post, processing, errors, reset } = useForm({
@@ -20,6 +27,7 @@ export default function Register({ botGuard }) {
         email: "",
         password: "",
         password_confirmation: "",
+        role: userRoles?.[0]?.name || "super-admin",
         [honeypotField]: "",
         [tokenField]: botGuard?.token || "",
     });
@@ -169,6 +177,40 @@ export default function Register({ botGuard }) {
                                 {errors.email && (
                                     <p className="mt-1.5 text-sm text-danger-500">
                                         {errors.email}
+                                    </p>
+                                )}
+                            </div>
+
+                            {/* Role Selection */}
+                            <div>
+                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                                    Peran (Role)
+                                </label>
+                                <div className="relative">
+                                    <select
+                                        value={data.role}
+                                        onChange={(e) =>
+                                            setData("role", e.target.value)
+                                        }
+                                        className={`w-full h-12 pl-4 pr-12 rounded-xl border-2 appearance-none cursor-pointer ${
+                                            errors.role
+                                                ? "border-danger-500 focus:border-danger-500"
+                                                : "border-slate-200 dark:border-slate-700 focus:border-primary-500"
+                                        } bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-4 focus:ring-primary-500/20 transition-all`}
+                                    >
+                                        {userRoles?.map((role) => (
+                                            <option key={role.id} value={role.name}>
+                                                {roleLabels[role.name] || role.name}
+                                            </option>
+                                        ))}
+                                    </select>
+                                    <div className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">
+                                        <IconChevronDown size={20} />
+                                    </div>
+                                </div>
+                                {errors.role && (
+                                    <p className="mt-1.5 text-sm text-danger-500">
+                                        {errors.role}
                                     </p>
                                 )}
                             </div>

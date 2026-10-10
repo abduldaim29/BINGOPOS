@@ -9,13 +9,7 @@ import {
     IconReceipt,
     IconTruck,
 } from "@tabler/icons-react";
-
-const formatCurrency = (value = 0) =>
-    new Intl.NumberFormat("id-ID", {
-        style: "currency",
-        currency: "IDR",
-        minimumFractionDigits: 0,
-    }).format(value);
+import { formatCurrency } from "@/Utils/currency";
 
 const formatDate = (value) => {
     if (!value) return "-";

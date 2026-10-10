@@ -1,4 +1,5 @@
 import React from "react";
+import { formatWithSymbol } from "@/Utils/currency";
 
 /**
  * ThermalReceipt - Receipt template optimized for thermal printers (58mm/80mm)
@@ -19,7 +20,7 @@ export default function ThermalReceipt({
     storeWebsite = "",
 }) {
     const formatPrice = (price = 0) => {
-        return "Rp " + Number(price || 0).toLocaleString("id-ID");
+        return formatWithSymbol(price);
     };
 
     const formatDate = (value) => {
@@ -285,7 +286,7 @@ export function ThermalReceipt58mm({
     storeWebsite = "",
 }) {
     const formatPrice = (price = 0) => {
-        return "Rp" + Number(price || 0).toLocaleString("id-ID");
+        return formatWithSymbol(price);
     };
 
     const formatTime = (value) => {

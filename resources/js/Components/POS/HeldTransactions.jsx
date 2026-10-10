@@ -9,13 +9,7 @@ import {
     IconX,
 } from "@tabler/icons-react";
 import toast from "react-hot-toast";
-
-const formatPrice = (value = 0) =>
-    Number(value || 0).toLocaleString("id-ID", {
-        style: "currency",
-        currency: "IDR",
-        minimumFractionDigits: 0,
-    });
+import { formatCurrency } from "@/Utils/currency";
 
 /**
  * HeldTransactions - Compact badge with expandable panel
@@ -101,7 +95,7 @@ export default function HeldTransactions({
                         Transaksi Ditahan
                     </span>
                     <span className="text-xs text-amber-600 dark:text-amber-400">
-                        • {formatPrice(totalHeldAmount)}
+                        • {formatCurrency(totalHeldAmount)}
                     </span>
                 </div>
                 <IconChevronDown size={16} className="text-amber-600" />
@@ -143,7 +137,7 @@ export default function HeldTransactions({
                             </p>
                             <p className="text-xs text-amber-600 dark:text-amber-400">
                                 {hold.items_count} item •{" "}
-                                {formatPrice(hold.total)}
+                                {formatCurrency(hold.total)}
                             </p>
                         </div>
                         <div className="flex items-center gap-1">

@@ -3,8 +3,7 @@ import { Head, Link, router, usePage } from "@inertiajs/react";
 import DashboardLayout from "@/Layouts/DashboardLayout";
 import { IconArrowLeft, IconTrash, IconPlus } from "@tabler/icons-react";
 import toast from "react-hot-toast";
-
-const formatPrice = (v = 0) => Number(v).toLocaleString("id-ID");
+import { formatCurrency } from "@/Utils/currency";
 
 export default function PriceListItems({ priceList, products }) {
     const { flash } = usePage().props;

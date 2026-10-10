@@ -22,7 +22,14 @@ export default function Edit({ category }) {
         _method: "PUT",
     });
 
-    const [imagePreview, setImagePreview] = useState(category.image || null);
+    const [imagePreview, setImagePreview] = useState(null);
+
+    // Initialize image preview when component mounts
+    React.useEffect(() => {
+        if (category.image) {
+            setImagePreview(category.image);
+        }
+    }, [category.image]);
 
     const handleImageChange = (e) => {
         const file = e.target.files[0];
@@ -35,7 +42,13 @@ export default function Edit({ category }) {
     const submit = (e) => {
         e.preventDefault();
         post(route("categories.update", category.id), {
-            onSuccess: () => toast.success("Kategori berhasil diperbarui"),
+            onSuccess: (page) => {
+                toast.success("Kategori berhasil diperbarui");
+                // Update image preview with the new path from server response
+                if (page.props.category?.image) {
+                    setImagePreview(page.props.category.image);
+                }
+            },
             onError: () => toast.error("Gagal memperbarui kategori"),
         });
     };
@@ -74,12 +87,18 @@ export default function Edit({ category }) {
                                             src={imagePreview}
                                             alt="Preview"
                                             className="w-full h-full object-cover"
+                                            onError={(e) => {
+                                                e.target.style.display = 'none';
+                                            }}
                                         />
                                     ) : (
-                                        <IconPhoto
-                                            size={32}
-                                            className="text-slate-400"
-                                        />
+                                        <div className="text-center">
+                                            <IconPhoto
+                                                size={32}
+                                                className="text-slate-400 mx-auto mb-2"
+                                            />
+                                            <p className="text-xs text-slate-400">No image</p>
+                                        </div>
                                     )}
                                 </div>
                                 <Input

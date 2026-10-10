@@ -8,13 +8,7 @@ import {
     IconAlertCircle,
     IconBuildingBank,
 } from "@tabler/icons-react";
-
-const formatPrice = (value = 0) =>
-    Number(value || 0).toLocaleString("id-ID", {
-        style: "currency",
-        currency: "IDR",
-        minimumFractionDigits: 0,
-    });
+import { formatCurrency } from "@/Utils/currency";
 
 // Quick Amount Button
 function QuickAmountButton({ amount, onClick, isSelected }) {
@@ -32,7 +26,7 @@ function QuickAmountButton({ amount, onClick, isSelected }) {
                 }
             `}
         >
-            {formatPrice(amount)}
+            {formatCurrency(amount)}
         </button>
     );
 }
@@ -151,7 +145,7 @@ export default function PaymentPanel({
         if (!hasItems) return "Keranjang Kosong";
         if (!selectedCustomer) return "Pilih Pelanggan";
         if (isCashPayment && remaining > 0)
-            return `Kurang ${formatPrice(remaining)}`;
+            return `Kurang ${formatCurrency(remaining)}`;
         return "Selesaikan Transaksi";
     }, [hasItems, selectedCustomer, isCashPayment, remaining]);
 
@@ -177,7 +171,7 @@ export default function PaymentPanel({
                             Subtotal
                         </span>
                         <span className="font-medium text-slate-800 dark:text-slate-200">
-                            {formatPrice(subtotal)}
+                            {formatCurrency(subtotal)}
                         </span>
                     </div>
                     <div className="flex justify-between text-sm">
@@ -185,7 +179,7 @@ export default function PaymentPanel({
                             Promo Otomatis
                         </span>
                         <span className="font-medium text-danger-500">
-                            - {formatPrice(promoDiscount)}
+                            - {formatCurrency(promoDiscount)}
                         </span>
                     </div>
                     <div className="flex justify-between text-sm">
@@ -193,7 +187,7 @@ export default function PaymentPanel({
                             Voucher
                         </span>
                         <span className="font-medium text-danger-500">
-                            - {formatPrice(voucherDiscount)}
+                            - {formatCurrency(voucherDiscount)}
                         </span>
                     </div>
                     <div className="flex justify-between text-sm">
@@ -201,7 +195,7 @@ export default function PaymentPanel({
                             Redeem Poin
                         </span>
                         <span className="font-medium text-danger-500">
-                            - {formatPrice(loyaltyDiscount)}
+                            - {formatCurrency(loyaltyDiscount)}
                         </span>
                     </div>
                     <div className="flex justify-between text-sm">
@@ -209,7 +203,7 @@ export default function PaymentPanel({
                             Diskon
                         </span>
                         <span className="font-medium text-danger-500">
-                            - {formatPrice(discount)}
+                            - {formatCurrency(discount)}
                         </span>
                     </div>
                     {taxTotal > 0 && (
@@ -218,7 +212,7 @@ export default function PaymentPanel({
                                 PPN
                             </span>
                             <span className="font-medium text-slate-800 dark:text-slate-200">
-                                {formatPrice(taxTotal)}
+                                {formatCurrency(taxTotal)}
                             </span>
                         </div>
                     )}
@@ -228,7 +222,7 @@ export default function PaymentPanel({
                             Total
                         </span>
                         <span className="text-xl font-bold text-primary-600 dark:text-primary-400">
-                            {formatPrice(payable)}
+                            {formatCurrency(payable)}
                         </span>
                     </div>
                 </div>
@@ -433,7 +427,7 @@ export default function PaymentPanel({
                                             : "text-slate-400"
                                     }`}
                                 >
-                                    {formatPrice(change)}
+                                    {formatCurrency(change)}
                                 </span>
                             </div>
                         </div>

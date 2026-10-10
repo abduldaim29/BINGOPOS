@@ -44,9 +44,16 @@ export default function Store({ settings }) {
         e.preventDefault();
         post(route("settings.store.update"), {
             preserveScroll: true,
-            onSuccess: () => {
+            onSuccess: (page) => {
                 toast.success("Profil toko disimpan");
                 reset("store_logo");
+                // Update logo preview with the new path from server response
+                if (page.props.settings.store_logo) {
+                    const logoPath = page.props.settings.store_logo;
+                    setLogoPreview(logoPath.startsWith('http') || logoPath.startsWith('/storage') 
+                        ? logoPath 
+                        : `/storage/${logoPath}`);
+                }
             },
             onError: () => toast.error("Gagal menyimpan profil toko"),
         });
@@ -77,11 +84,14 @@ export default function Store({ settings }) {
                             <div className="w-32 h-32 rounded-2xl border-2 border-dashed border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 flex items-center justify-center overflow-hidden mb-3">
                                 {logoPreview ? (
                                     <img
-                                        src={logoPreview.startsWith("http") || logoPreview.startsWith("/storage")
+                                        src={logoPreview.startsWith("blob:") || logoPreview.startsWith("http") || logoPreview.startsWith("/storage")
                                             ? logoPreview
                                             : `/storage/${logoPreview}`}
                                         alt="Logo"
                                         className="w-full h-full object-cover"
+                                        onError={(e) => {
+                                            e.target.style.display = 'none';
+                                        }}
                                     />
                                 ) : (
                                     <IconBuildingStore size={36} className="text-slate-300" />

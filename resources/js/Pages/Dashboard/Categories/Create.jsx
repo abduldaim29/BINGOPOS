@@ -72,6 +72,9 @@ export default function Create() {
                                             src={imagePreview}
                                             alt="Preview"
                                             className="w-full h-full object-cover"
+                                            onError={(e) => {
+                                                e.target.style.display = 'none';
+                                            }}
                                         />
                                     ) : (
                                         <IconPhoto

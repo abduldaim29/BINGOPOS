@@ -11,13 +11,7 @@ import {
     IconReceipt,
     IconTags,
 } from "@tabler/icons-react";
-
-const formatPrice = (value = 0) =>
-    Number(value || 0).toLocaleString("id-ID", {
-        style: "currency",
-        currency: "IDR",
-        minimumFractionDigits: 0,
-    });
+import { formatCurrency as formatPrice } from "@/Utils/currency";
 
 const formatDateTime = (value) =>
     value

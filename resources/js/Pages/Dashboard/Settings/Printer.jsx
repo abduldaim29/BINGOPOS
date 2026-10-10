@@ -9,6 +9,7 @@ import {
     printReceipt,
     kickDrawer,
 } from "@/Utils/escpos";
+import { formatCurrency } from "@/Utils/currency";
 
 export default function Printer({ settings }) {
     const { data, setData, post, processing, errors } = useForm({
@@ -40,7 +41,7 @@ export default function Printer({ settings }) {
                     invoice: "TEST-001",
                     created_at: new Date().toLocaleString("id-ID"),
                     items: [{ qty: 1, name: "Produk Uji Cetak", price: 1000 }],
-                    money: (v) => `Rp${Number(v || 0).toLocaleString("id-ID")}`,
+                    money: formatCurrency,
                     subtotal: 1000,
                     discount_total: 0,
                     tax_total: 0,

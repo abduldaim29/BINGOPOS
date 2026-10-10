@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Payable;
 use App\Models\Receivable;
+use App\Models\SalesInvoice;
 use App\Models\Setting;
 use App\Models\Transaction;
 use App\Services\ThermalPrintService;
@@ -179,5 +180,21 @@ class DocumentController extends Controller
         ])->setPaper('a5', 'portrait');
 
         return $pdf->stream("hutang-{$payable->document_number}.pdf");
+    }
+
+    public function salesInvoice(string $invoiceNumber)
+    {
+        $this->ensureFontDirectory();
+
+        $invoice = SalesInvoice::with(['customer', 'items.product', 'receipts.createdBy'])
+            ->where('invoice_number', $invoiceNumber)
+            ->firstOrFail();
+
+        $pdf = Pdf::loadView('pdf.sales_invoice', [
+            'invoice' => $invoice,
+            'store' => $this->storeProfile(),
+        ])->setPaper('a4');
+
+        return $pdf->stream("sales-invoice-{$invoice->invoice_number}.pdf");
     }
 }

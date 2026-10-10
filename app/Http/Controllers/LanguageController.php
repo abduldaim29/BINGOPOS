@@ -13,7 +13,7 @@ class LanguageController extends Controller
             'locale' => ['required', 'string', 'in:id,en'],
         ]);
 
-        $locale = $request->input('locale', 'id');
+        $locale = $request->input('locale', 'en');
 
         $request->session()->put('locale', $locale);
 

@@ -15,6 +15,7 @@ class ThermalPrintService
         $storeName = Setting::getForOutlet('store_name', $outlet, 'Toko Anda');
         $storeAddress = Setting::getForOutlet('store_address', $outlet, '');
         $storePhone = Setting::getForOutlet('store_phone', $outlet, '');
+        $currencySymbol = Setting::getCurrencySymbol($outlet);
         $maxWidth = $paperSize === '58mm' ? 32 : 48;
 
         $lines = [];
@@ -39,7 +40,7 @@ class ThermalPrintService
 
         foreach ($transaction->details as $detail) {
             $title = mb_substr($detail->product?->title ?? 'Produk', 0, $maxWidth - 10);
-            $linePrice = number_format((int) $detail->price, 0, ',', '.');
+            $linePrice = $currencySymbol.' '.number_format((int) $detail->price, 0, ',', '.');
             $lineTotal = "{$detail->qty}x @ ".number_format((int) ($detail->unit_price ?: $detail->price / max(1, $detail->qty)), 0, ',', '.');
             $lines[] = $this->left($title, $maxWidth);
             $lines[] = $this->leftRight($lineTotal, $linePrice, $maxWidth);
@@ -47,18 +48,18 @@ class ThermalPrintService
 
         $lines[] = $this->line($maxWidth);
         $subtotal = ($transaction->grand_total ?? 0) + ($transaction->discount ?? 0) - ($transaction->shipping_cost ?? 0) - ($transaction->tax_total ?? 0);
-        $lines[] = $this->leftRight('Subtotal', number_format($subtotal, 0, ',', '.'), $maxWidth);
+        $lines[] = $this->leftRight('Subtotal', $currencySymbol.' '.number_format($subtotal, 0, ',', '.'), $maxWidth);
         if (($transaction->discount ?? 0) > 0) {
-            $lines[] = $this->leftRight('Diskon', '-'.number_format((int) $transaction->discount, 0, ',', '.'), $maxWidth);
+            $lines[] = $this->leftRight('Diskon', '-'.$currencySymbol.' '.number_format((int) $transaction->discount, 0, ',', '.'), $maxWidth);
         }
         if (($transaction->tax_total ?? 0) > 0) {
-            $lines[] = $this->leftRight('PPN', number_format((int) $transaction->tax_total, 0, ',', '.'), $maxWidth);
+            $lines[] = $this->leftRight('PPN', $currencySymbol.' '.number_format((int) $transaction->tax_total, 0, ',', '.'), $maxWidth);
         }
         if (($transaction->shipping_cost ?? 0) > 0) {
-            $lines[] = $this->leftRight('Ongkir', number_format((int) $transaction->shipping_cost, 0, ',', '.'), $maxWidth);
+            $lines[] = $this->leftRight('Ongkir', $currencySymbol.' '.number_format((int) $transaction->shipping_cost, 0, ',', '.'), $maxWidth);
         }
         $lines[] = $this->line($maxWidth);
-        $lines[] = $this->leftRight('TOTAL', number_format((int) $transaction->grand_total, 0, ',', '.'), $maxWidth);
+        $lines[] = $this->leftRight('TOTAL', $currencySymbol.' '.number_format((int) $transaction->grand_total, 0, ',', '.'), $maxWidth);
 
         $tenders = $transaction->relationLoaded('tenders')
             ? $transaction->tenders
@@ -74,15 +75,15 @@ class ThermalPrintService
                     'qris' => 'QRIS',
                     default => ucfirst(str_replace('_', ' ', $tender->method)),
                 };
-                $lines[] = $this->leftRight($label, number_format((int) $tender->amount, 0, ',', '.'), $maxWidth);
+                $lines[] = $this->leftRight($label, $currencySymbol.' '.number_format((int) $tender->amount, 0, ',', '.'), $maxWidth);
                 if ($tender->method === 'cash' && $tender->change > 0) {
-                    $lines[] = $this->leftRight('Kembali', number_format((int) $tender->change, 0, ',', '.'), $maxWidth);
+                    $lines[] = $this->leftRight('Kembali', $currencySymbol.' '.number_format((int) $tender->change, 0, ',', '.'), $maxWidth);
                 }
             }
         } elseif ($transaction->payment_method === 'cash' && $transaction->cash > 0) {
-            $lines[] = $this->leftRight('Tunai', number_format((int) $transaction->cash, 0, ',', '.'), $maxWidth);
+            $lines[] = $this->leftRight('Tunai', $currencySymbol.' '.number_format((int) $transaction->cash, 0, ',', '.'), $maxWidth);
             if (($transaction->change ?? 0) > 0) {
-                $lines[] = $this->leftRight('Kembali', number_format((int) $transaction->change, 0, ',', '.'), $maxWidth);
+                $lines[] = $this->leftRight('Kembali', $currencySymbol.' '.number_format((int) $transaction->change, 0, ',', '.'), $maxWidth);
             }
         }
 
@@ -113,6 +114,7 @@ class ThermalPrintService
         $outlet = $shift->warehouse?->outlet;
         $storeName = Setting::getForOutlet('store_name', $outlet, 'Toko Anda');
         $storeAddress = Setting::getForOutlet('store_address', $outlet, '');
+        $currencySymbol = Setting::getCurrencySymbol($outlet);
         $maxWidth = $paperSize === '58mm' ? 32 : 48;
         $isX = $reportType === 'X';
 
@@ -134,10 +136,10 @@ class ThermalPrintService
         }
 
         $lines[] = $this->line($maxWidth);
-        $lines[] = $this->leftRight('Penjualan Tunai', number_format((int) $shift->cash_sales_total, 0, ',', '.'), $maxWidth);
-        $lines[] = $this->leftRight('Penjualan Non Tunai', number_format((int) $shift->non_cash_sales_total, 0, ',', '.'), $maxWidth);
-        $lines[] = $this->leftRight('Retur Tunai', '-'.number_format((int) $shift->cash_refund_total, 0, ',', '.'), $maxWidth);
-        $lines[] = $this->leftRight('Retur Non Tunai', '-'.number_format((int) $shift->non_cash_refund_total, 0, ',', '.'), $maxWidth);
+        $lines[] = $this->leftRight('Penjualan Tunai', $currencySymbol.' '.number_format((int) $shift->cash_sales_total, 0, ',', '.'), $maxWidth);
+        $lines[] = $this->leftRight('Penjualan Non Tunai', $currencySymbol.' '.number_format((int) $shift->non_cash_sales_total, 0, ',', '.'), $maxWidth);
+        $lines[] = $this->leftRight('Retur Tunai', '-'.$currencySymbol.' '.number_format((int) $shift->cash_refund_total, 0, ',', '.'), $maxWidth);
+        $lines[] = $this->leftRight('Retur Non Tunai', '-'.$currencySymbol.' '.number_format((int) $shift->non_cash_refund_total, 0, ',', '.'), $maxWidth);
 
         if ($shift->relationLoaded('cashMovements')) {
             $movements = $shift->cashMovements;
@@ -147,7 +149,7 @@ class ThermalPrintService
 
         foreach ($movements as $movement) {
             $label = $movement->type === ShiftCashMovement::TYPE_IN ? 'Kas Masuk' : 'Kas Keluar';
-            $lines[] = $this->leftRight($label, number_format((int) $movement->amount, 0, ',', '.'), $maxWidth);
+            $lines[] = $this->leftRight($label, $currencySymbol.' '.number_format((int) $movement->amount, 0, ',', '.'), $maxWidth);
             if ($movement->note) {
                 $lines[] = $this->left('  ('.mb_substr($movement->note, 0, $maxWidth - 3).')', $maxWidth);
             }
@@ -157,15 +159,15 @@ class ThermalPrintService
         $lines[] = $this->leftRight('Total Transaksi', (string) $shift->transactions_count, $maxWidth);
         $lines[] = $this->leftRight('Total Retur', (string) $shift->sales_returns_count, $maxWidth);
         $lines[] = $this->line($maxWidth);
-        $lines[] = $this->leftRight('MODAL AWAL', number_format((int) $shift->opening_cash, 0, ',', '.'), $maxWidth);
-        $lines[] = $this->leftRight('EXPECTED CASH', number_format((int) $shift->expected_cash, 0, ',', '.'), $maxWidth);
+        $lines[] = $this->leftRight('MODAL AWAL', $currencySymbol.' '.number_format((int) $shift->opening_cash, 0, ',', '.'), $maxWidth);
+        $lines[] = $this->leftRight('EXPECTED CASH', $currencySymbol.' '.number_format((int) $shift->expected_cash, 0, ',', '.'), $maxWidth);
 
         if ($shift->actual_cash !== null) {
-            $lines[] = $this->leftRight('KAS FISIK', number_format((int) $shift->actual_cash, 0, ',', '.'), $maxWidth);
+            $lines[] = $this->leftRight('KAS FISIK', $currencySymbol.' '.number_format((int) $shift->actual_cash, 0, ',', '.'), $maxWidth);
             $diffLabel = ($shift->cash_difference ?? 0) === 0
                 ? 'SELISIH (BALANCE)'
                 : 'SELISIH';
-            $lines[] = $this->leftRight($diffLabel, number_format((int) $shift->cash_difference, 0, ',', '.'), $maxWidth);
+            $lines[] = $this->leftRight($diffLabel, $currencySymbol.' '.number_format((int) $shift->cash_difference, 0, ',', '.'), $maxWidth);
         }
 
         $lines[] = $this->line($maxWidth);

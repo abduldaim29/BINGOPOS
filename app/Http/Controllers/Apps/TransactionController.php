@@ -92,7 +92,7 @@ class TransactionController extends Controller
             })
             ->values();
 
-        // get all customers
+        // get all customers (including walk-in customer)
         $customers = Customer::latest()->get();
 
         // get products with stock > 0 in active warehouse

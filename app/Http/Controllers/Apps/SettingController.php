@@ -149,7 +149,20 @@ class SettingController extends Controller
             ],
         );
 
-        return back()->with('success', 'Profil toko berhasil diperbarui');
+        return Inertia::render('Dashboard/Settings/Store', [
+            'settings' => [
+                'store_name' => Setting::getForOutlet('store_name', $outlet, ''),
+                'store_logo' => Setting::getForOutlet('store_logo', $outlet, ''),
+                'store_address' => Setting::getForOutlet('store_address', $outlet, ''),
+                'store_phone' => Setting::getForOutlet('store_phone', $outlet, ''),
+                'store_email' => Setting::getForOutlet('store_email', $outlet, ''),
+                'store_website' => Setting::getForOutlet('store_website', $outlet, ''),
+                'store_city' => Setting::getForOutlet('store_city', $outlet, ''),
+                'store_npwp' => Setting::get('store_npwp', ''),
+                'store_nib' => Setting::get('store_nib', ''),
+                'tax_default_rate' => Setting::get('tax_default_rate', '11.00'),
+            ],
+        ])->with('success', 'Profil toko berhasil diperbarui');
     }
 
     public function printer()

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { usePage, Link } from "@inertiajs/react";
+import { useTranslation } from "react-i18next";
 import { Toaster } from "react-hot-toast";
 import { useTheme } from "@/Context/ThemeSwitcherContext";
 import { useOnlineStatus } from "@/Context/OnlineStatusContext";
@@ -18,11 +19,13 @@ import {
     IconQuestionMark,
 } from "@tabler/icons-react";
 import Notification from "@/Components/Dashboard/Notification";
+import LanguageSwitcher from "@/Components/Dashboard/LanguageSwitcher";
 import { useTour } from "@/Hooks/useTour";
 import i18n from "@/i18n";
 import { getPendingCount } from "@/Utils/offlineDb";
 
 export default function POSLayout({ children }) {
+    const { t } = useTranslation();
     const { auth, storeProfile, activeCashierShift, appVersion } = usePage().props;
     const { darkMode, themeSwitcher } = useTheme();
     const { start: startTour, isActive: tourActive } = useTour("pos");
@@ -154,14 +157,14 @@ export default function POSLayout({ children }) {
                             className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100 dark:text-slate-400 dark:hover:text-white dark:hover:bg-slate-800 transition-colors"
                         >
                             <IconHome size={18} />
-                            <span>Dashboard</span>
+                            <span>{t("posLayout.dashboard")}</span>
                         </Link>
                         <Link
                             href={route("transactions.history")}
                             className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100 dark:text-slate-400 dark:hover:text-white dark:hover:bg-slate-800 transition-colors"
                         >
                             <IconHistory size={18} />
-                            <span>Riwayat</span>
+                            <span>{t("posLayout.history")}</span>
                         </Link>
                     </nav>
 
@@ -192,7 +195,7 @@ export default function POSLayout({ children }) {
                     <button
                         onClick={toggleFullscreen}
                         className="p-2.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors min-w-touch min-h-touch flex items-center justify-center"
-                        title={isFullscreen ? "Keluar Fullscreen" : "Fullscreen"}
+                        title={isFullscreen ? t("posLayout.exitFullscreen") : t("posLayout.fullscreen")}
                     >
                         {isFullscreen ? (
                             <IconArrowsMinimize size={20} className="text-slate-500" />
@@ -205,7 +208,7 @@ export default function POSLayout({ children }) {
                     <button
                         onClick={themeSwitcher}
                         className="p-2.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors min-w-touch min-h-touch flex items-center justify-center"
-                        title={darkMode ? "Light Mode" : "Dark Mode"}
+                        title={darkMode ? t("posLayout.lightMode") : t("posLayout.darkMode")}
                     >
                         {darkMode ? (
                             <IconSun size={20} className="text-amber-500" />
@@ -213,6 +216,9 @@ export default function POSLayout({ children }) {
                             <IconMoon size={20} className="text-slate-500" />
                         )}
                     </button>
+
+                    {/* Language Switcher */}
+                    <LanguageSwitcher />
 
                     {/* Notifications (mobile) */}
                     <div className="flex md:hidden">
@@ -228,7 +234,7 @@ export default function POSLayout({ children }) {
                             >
                                 <IconWallet size={16} />
                                 <span>
-                                    Shift aktif •{" "}
+                                    {t("posLayout.activeShift")} •{" "}
                                     {new Intl.NumberFormat("id-ID").format(
                                         activeCashierShift.expected_cash || 0
                                     )}
@@ -246,7 +252,7 @@ export default function POSLayout({ children }) {
                         method="post"
                         as="button"
                         className="hidden lg:flex p-2.5 rounded-lg text-slate-500 hover:text-danger-600 hover:bg-danger-50 dark:hover:bg-danger-950/50 transition-colors min-w-touch min-h-touch items-center justify-center"
-                        title="Logout"
+                        title={t("posLayout.logout")}
                     >
                         <IconLogout size={20} />
                     </Link>
@@ -255,13 +261,13 @@ export default function POSLayout({ children }) {
 
             {!isOnline && (
                 <div className="bg-amber-500 text-white text-center text-xs font-medium py-1 px-4">
-                    Transaksi disimpan offline — akan dikirim saat online kembali
+                    {t("posLayout.offlineNotice")}
                 </div>
             )}
 
             {isOnline && pendingSyncCount > 0 && (
                 <div className="bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-200 text-center text-xs font-medium py-1 px-4">
-                    {pendingSyncCount} transaksi menunggu sinkronisasi
+                    {pendingSyncCount} {t("posLayout.pendingSync")}
                 </div>
             )}
 
@@ -281,7 +287,7 @@ export default function POSLayout({ children }) {
                                 className="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800 transition-colors"
                             >
                                 <IconHome size={20} />
-                                <span className="font-medium">Dashboard</span>
+                                <span className="font-medium">{t("posLayout.dashboard")}</span>
                             </Link>
                             <Link
                                 href={route("transactions.history")}
@@ -289,7 +295,7 @@ export default function POSLayout({ children }) {
                             >
                                 <IconHistory size={20} />
                                 <span className="font-medium">
-                                    Riwayat Transaksi
+                                    {t("posLayout.history")}
                                 </span>
                             </Link>
                             <Link
@@ -297,7 +303,7 @@ export default function POSLayout({ children }) {
                                 className="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800 transition-colors"
                             >
                                 <IconUser size={20} />
-                                <span className="font-medium">Profil</span>
+                                <span className="font-medium">{t("posLayout.profile")}</span>
                             </Link>
                             <hr className="border-slate-200 dark:border-slate-700" />
                             <Link

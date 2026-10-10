@@ -34,7 +34,7 @@ class CustomerController extends Controller
      */
     public function index()
     {
-        // get customers
+        // get customers (exclude walk-in customers)
         $customers = Customer::when(request()->search, function ($customers) {
             $search = request()->search;
             $customers = $customers->where(function ($query) use ($search) {
@@ -42,7 +42,7 @@ class CustomerController extends Controller
                     ->where('name', 'like', '%'.$search.'%')
                     ->orWhere('member_code', 'like', '%'.$search.'%');
             });
-        })->latest()->paginate($this->perPage())->withQueryString();
+        })->where('is_walkin', false)->latest()->paginate($this->perPage())->withQueryString();
 
         // return inertia
         return Inertia::render('Dashboard/Customers/Index', [
@@ -57,10 +57,7 @@ class CustomerController extends Controller
      */
     public function create()
     {
-        $provinces = Province::select('code', 'name')->orderBy('name')->get();
-
         return Inertia::render('Dashboard/Customers/Create', [
-            'provinces' => $provinces,
             'tierOptions' => $this->loyaltyService->tierOptions(),
         ]);
     }
@@ -78,13 +75,19 @@ class CustomerController extends Controller
         $request->validate([
             'name' => 'required',
             'no_telp' => 'required|unique:customers',
+            'email' => 'nullable|email|unique:customers',
             'address' => 'required',
             'is_loyalty_member' => 'nullable|boolean',
+            'is_walkin' => 'nullable|boolean',
             'loyalty_tier' => ['nullable', 'string', Rule::in(array_keys($this->loyaltyService->tiers()))],
-            'province_id' => 'required|string',
-            'regency_id' => 'required|string',
-            'district_id' => 'required|string',
-            'village_id' => 'required|string',
+            'province_id' => 'nullable|string',
+            'regency_id' => 'nullable|string',
+            'district_id' => 'nullable|string',
+            'village_id' => 'nullable|string',
+            'tax_id' => 'nullable|string',
+            'tax_name' => 'nullable|string',
+            'cnic' => 'nullable|string',
+            'ntn' => 'nullable|string',
         ]);
 
         $province = Province::where('code', $request->province_id)->first();
@@ -97,6 +100,7 @@ class CustomerController extends Controller
             ...$this->resolveLoyaltyPayload($request),
             'name' => $request->name,
             'no_telp' => $request->no_telp,
+            'email' => $request->email,
             'address' => $request->address,
             'province_id' => $request->province_id,
             'province_name' => $province?->name,
@@ -106,6 +110,10 @@ class CustomerController extends Controller
             'district_name' => $district?->name,
             'village_id' => $request->village_id,
             'village_name' => $village?->name,
+            'tax_id' => $request->tax_id,
+            'tax_name' => $request->tax_name,
+            'cnic' => $request->cnic,
+            'ntn' => $request->ntn,
         ]);
 
         // redirect
@@ -124,6 +132,7 @@ class CustomerController extends Controller
             'no_telp' => 'required|string|unique:customers,no_telp',
             'address' => 'required|string',
             'is_loyalty_member' => 'nullable|boolean',
+            'is_walkin' => 'nullable|boolean',
             'loyalty_tier' => ['nullable', 'string', Rule::in(array_keys($this->loyaltyService->tiers()))],
             'province_id' => 'nullable|string',
             'regency_id' => 'nullable|string',
@@ -188,24 +197,9 @@ class CustomerController extends Controller
      */
     public function edit(Customer $customer)
     {
-        $provinces = Province::select('code', 'name')->orderBy('name')->get();
-        $regencies = $customer->province_id
-            ? City::where('province_code', $customer->province_id)->select('code', 'name')->orderBy('name')->get()
-            : [];
-        $districts = $customer->regency_id
-            ? District::where('city_code', $customer->regency_id)->select('code', 'name')->orderBy('name')->get()
-            : [];
-        $villages = $customer->district_id
-            ? Village::where('district_code', $customer->district_id)->select('code', 'name')->orderBy('name')->get()
-            : [];
-
         return Inertia::render('Dashboard/Customers/Edit', [
             'customer' => $customer,
             'tierOptions' => $this->loyaltyService->tierOptions(),
-            'provinces' => $provinces,
-            'regencies' => $regencies,
-            'districts' => $districts,
-            'villages' => $villages,
         ]);
     }
 
@@ -223,13 +217,19 @@ class CustomerController extends Controller
         $request->validate([
             'name' => 'required',
             'no_telp' => 'required|unique:customers,no_telp,'.$customer->id,
+            'email' => 'nullable|email|unique:customers,email,'.$customer->id,
             'address' => 'required',
             'is_loyalty_member' => 'nullable|boolean',
+            'is_walkin' => 'nullable|boolean',
             'loyalty_tier' => ['nullable', 'string', Rule::in(array_keys($this->loyaltyService->tiers()))],
-            'province_id' => 'required|string',
-            'regency_id' => 'required|string',
-            'district_id' => 'required|string',
-            'village_id' => 'required|string',
+            'province_id' => 'nullable|string',
+            'regency_id' => 'nullable|string',
+            'district_id' => 'nullable|string',
+            'village_id' => 'nullable|string',
+            'tax_id' => 'nullable|string',
+            'tax_name' => 'nullable|string',
+            'cnic' => 'nullable|string',
+            'ntn' => 'nullable|string',
         ]);
 
         $province = Province::where('code', $request->province_id)->first();
@@ -242,6 +242,7 @@ class CustomerController extends Controller
             ...$this->resolveLoyaltyPayload($request, $customer),
             'name' => $request->name,
             'no_telp' => $request->no_telp,
+            'email' => $request->email,
             'address' => $request->address,
             'province_id' => $request->province_id,
             'province_name' => $province?->name,
@@ -251,6 +252,10 @@ class CustomerController extends Controller
             'district_name' => $district?->name,
             'village_id' => $request->village_id,
             'village_name' => $village?->name,
+            'tax_id' => $request->tax_id,
+            'tax_name' => $request->tax_name,
+            'cnic' => $request->cnic,
+            'ntn' => $request->ntn,
         ]);
 
         // redirect

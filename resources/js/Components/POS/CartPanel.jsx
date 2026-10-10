@@ -6,13 +6,7 @@ import {
     IconShoppingCart,
 } from "@tabler/icons-react";
 import { getProductImageUrl } from "@/Utils/imageUrl";
-
-const formatPrice = (value = 0) =>
-    Number(value || 0).toLocaleString("id-ID", {
-        style: "currency",
-        currency: "IDR",
-        minimumFractionDigits: 0,
-    });
+import { formatCurrency } from "@/Utils/currency";
 
 // Single Cart Item
 function CartItem({ item, onUpdateQty, onRemove, isRemoving }) {
@@ -56,10 +50,10 @@ function CartItem({ item, onUpdateQty, onRemove, isRemoving }) {
                     {item.product?.title || "Produk"}
                 </h4>
                 <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                    {formatPrice(unitPrice)} × {item.qty}
+                    {formatCurrency(unitPrice)} × {item.qty}
                 </p>
                 <p className="text-sm font-semibold text-primary-600 dark:text-primary-400 mt-1">
-                    {formatPrice(subtotal)}
+                    {formatCurrency(subtotal)}
                 </p>
             </div>
 
@@ -180,7 +174,7 @@ export default function CartPanel({
                             Subtotal
                         </span>
                         <span className="text-lg font-bold text-slate-900 dark:text-white">
-                            {formatPrice(subtotal)}
+                            {formatCurrency(subtotal)}
                         </span>
                     </div>
                 </div>

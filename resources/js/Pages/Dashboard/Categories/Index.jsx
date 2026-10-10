@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import DashboardLayout from "@/Layouts/DashboardLayout";
 import { Head, usePage, Link } from "@inertiajs/react";
+import { useTranslation } from "react-i18next";
 import Button from "@/Components/Dashboard/Button";
 import {
     IconCirclePlus,
@@ -29,6 +30,9 @@ function CategoryCard({ category, canUpdate, canDelete }) {
                         alt={category.name}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                         loading="lazy"
+                        onError={(e) => {
+                            e.target.style.display = 'none';
+                        }}
                     />
                 ) : (
                     <div className="w-full h-full flex items-center justify-center">
@@ -81,6 +85,7 @@ function CategoryCard({ category, canUpdate, canDelete }) {
 }
 
 export default function Index({ categories }) {
+    const { t } = useTranslation();
     const { can } = useAuthorization();
     const [viewMode, setViewMode] = useState("grid");
     const canCreateCategories = can("categories-create");
@@ -89,18 +94,18 @@ export default function Index({ categories }) {
 
     return (
         <>
-            <Head title="Kategori" />
+            <Head title={t("categories.title")} />
 
             {/* Header */}
             <div className="mb-6">
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                     <div>
                         <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
-                            Kategori
+                            {t("categories.title")}
                         </h1>
                         <p className="text-sm text-slate-500 dark:text-slate-400">
                             {categories.total || categories.data?.length || 0}{" "}
-                            kategori terdaftar
+                            {t("categories.registered")}
                         </p>
                     </div>
                     {canCreateCategories && (
@@ -115,7 +120,7 @@ export default function Index({ categories }) {
                             className={
                                 "bg-primary-500 hover:bg-primary-600 text-white shadow-lg shadow-primary-500/30"
                             }
-                            label={"Tambah Kategori"}
+                            label={t("categories.addCategory")}
                             href={route("categories.create")}
                         />
                     )}
@@ -127,7 +132,7 @@ export default function Index({ categories }) {
                 <div className="w-full sm:w-80">
                     <Search
                         url={route("categories.index")}
-                        placeholder="Cari kategori..."
+                        placeholder={t("categories.searchPlaceholder")}
                     />
                 </div>
                 <div className="flex items-center gap-2">
@@ -138,7 +143,7 @@ export default function Index({ categories }) {
                                 ? "bg-primary-100 text-primary-600 dark:bg-primary-900/50 dark:text-primary-400"
                                 : "text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
                         }`}
-                        title="Grid View"
+                        title={t("products.messages.gridView")}
                     >
                         <IconLayoutGrid size={20} />
                     </button>
@@ -149,7 +154,7 @@ export default function Index({ categories }) {
                                 ? "bg-primary-100 text-primary-600 dark:bg-primary-900/50 dark:text-primary-400"
                                 : "text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
                         }`}
-                        title="List View"
+                        title={t("products.messages.listView")}
                     >
                         <IconList size={20} />
                     </button>
@@ -172,7 +177,7 @@ export default function Index({ categories }) {
                     </div>
                 ) : (
                     /* List View */
-                    <Table.Card title={"Data Kategori"}>
+                    <Table.Card title={t("categories.dataTitle")}>
                         <Table>
                             <Table.Thead>
                                 <tr>
@@ -201,6 +206,9 @@ export default function Index({ categories }) {
                                                             src={category.image}
                                                             alt={category.name}
                                                             className="w-full h-full object-cover"
+                                                            onError={(e) => {
+                                                                e.target.style.display = 'none';
+                                                            }}
                                                         />
                                                     ) : (
                                                         <div className="w-full h-full flex items-center justify-center">
@@ -285,7 +293,7 @@ export default function Index({ categories }) {
                         Belum Ada Kategori
                     </h3>
                     <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
-                        Tambahkan kategori pertama Anda.
+                        {t("categories.addFirst")}
                     </p>
                     <Button
                         type={"link"}
@@ -293,7 +301,7 @@ export default function Index({ categories }) {
                         className={
                             "bg-primary-500 hover:bg-primary-600 text-white"
                         }
-                        label={"Tambah Kategori"}
+                        label={t("categories.addCategory")}
                         href={route("categories.create")}
                     />
                 </div>

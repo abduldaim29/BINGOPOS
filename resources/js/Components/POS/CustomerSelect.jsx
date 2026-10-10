@@ -28,10 +28,11 @@ export default function CustomerSelect({
     const containerRef = useRef(null);
     const inputRef = useRef(null);
 
-    // Filter customers by search
+    // Filter customers by search (exclude walk-in customer from dropdown list)
     const filteredCustomers = customers.filter(
         (customer) =>
-            String(customer.name ?? "")
+            !customer.is_walkin && (
+                String(customer.name ?? "")
                 .toLowerCase()
                 .includes(search.toLowerCase()) ||
             String(customer.no_telp ?? "")
@@ -40,6 +41,7 @@ export default function CustomerSelect({
             String(customer.member_code ?? "")
                 .toLowerCase()
                 .includes(search.toLowerCase())
+            )
     );
 
     // Close on click outside

@@ -4,13 +4,7 @@ import Button from "@/Components/Dashboard/Button";
 import Input from "@/Components/Dashboard/Input";
 import toast from "react-hot-toast";
 import { IconTarget, IconDeviceFloppy, IconCoin } from "@tabler/icons-react";
-
-const formatCurrency = (value = 0) =>
-    new Intl.NumberFormat("id-ID", {
-        style: "currency",
-        currency: "IDR",
-        minimumFractionDigits: 0,
-    }).format(value);
+import { formatCurrency } from "@/Utils/currency";
 
 export default function Target({ settings }) {
     const { data, setData, post, processing, errors } = useForm({

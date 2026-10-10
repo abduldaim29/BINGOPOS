@@ -17,8 +17,9 @@ import {
     IconRulerMeasure,
 } from "@tabler/icons-react";
 import { getProductImageUrl } from "@/Utils/imageUrl";
+import { formatCurrency } from "@/Utils/currency";
 
-export default function Edit({ categories, product, products = [], units = [] }) {
+export default function Edit({ categories, productTypes = [], subCategories = [], product, products = [], units = [] }) {
     const { errors } = usePage().props;
 
     const { data, setData, post, processing } = useForm({
@@ -27,6 +28,8 @@ export default function Edit({ categories, product, products = [], units = [] })
         sku: product.sku,
         title: product.title,
         category_id: product.category_id,
+        product_type_id: product.product_type_id,
+        sub_category_id: product.sub_category_id,
         description: product.description,
         buy_price: product.buy_price,
         sell_price: product.sell_price,
@@ -50,6 +53,9 @@ export default function Edit({ categories, product, products = [], units = [] })
     });
 
     const [selectedCategory, setSelectedCategory] = useState(null);
+    const [selectedProductType, setSelectedProductType] = useState(null);
+    const [selectedSubCategory, setSelectedSubCategory] = useState(null);
+    const [availableSubCategories, setAvailableSubCategories] = useState(subCategories);
     const [imagePreview, setImagePreview] = useState(
         product.image ? getProductImageUrl(product.image) : null
     );
@@ -60,11 +66,41 @@ export default function Edit({ categories, product, products = [], units = [] })
                 categories.find((cat) => cat.id === product.category_id)
             );
         }
-    }, [product.category_id]);
+        if (product.product_type_id) {
+            setSelectedProductType(
+                productTypes.find((pt) => pt.id === product.product_type_id)
+            );
+        }
+        if (product.sub_category_id) {
+            setSelectedSubCategory(
+                subCategories.find((sc) => sc.id === product.sub_category_id)
+            );
+        }
+    }, [product.category_id, product.product_type_id, product.sub_category_id]);
 
-    const setSelectedCategoryHandler = (value) => {
+    const setSelectedCategoryHandler = async (value) => {
         setSelectedCategory(value);
         setData("category_id", value?.id || "");
+        setData("sub_category_id", ""); // Reset subcategory when category changes
+
+        // Load subcategories for the selected category
+        if (value?.id) {
+            try {
+                const response = await fetch(`/dashboard/categories/${value.id}/sub-categories`);
+                const data = await response.json();
+                setAvailableSubCategories(data);
+            } catch (error) {
+                console.error("Failed to load subcategories:", error);
+                setAvailableSubCategories([]);
+            }
+        } else {
+            setAvailableSubCategories([]);
+        }
+    };
+
+    const setSelectedProductTypeHandler = (value) => {
+        setSelectedProductType(value);
+        setData("product_type_id", value?.id || "");
     };
 
     const toggleComposite = (checked) => {
@@ -252,6 +288,34 @@ export default function Edit({ categories, product, products = [], units = [] })
                                         errors={errors.category_id}
                                         searchable={true}
                                         displayKey="name"
+                                    />
+                                </div>
+                                <div className="md:col-span-2">
+                                    <InputSelect
+                                        label="Item"
+                                        data={productTypes}
+                                        selected={selectedProductType}
+                                        setSelected={setSelectedProductTypeHandler}
+                                        placeholder="Pilih item (opsional)"
+                                        errors={errors.product_type_id}
+                                        searchable={true}
+                                        displayKey="name"
+                                    />
+                                </div>
+                                <div className="md:col-span-2">
+                                    <InputSelect
+                                        label="Sub Kategori"
+                                        data={availableSubCategories}
+                                        selected={selectedSubCategory}
+                                        setSelected={(value) => {
+                                            setSelectedSubCategory(value);
+                                            setData("sub_category_id", value?.id || "");
+                                        }}
+                                        placeholder="Pilih sub kategori (opsional)"
+                                        errors={errors.sub_category_id}
+                                        searchable={true}
+                                        displayKey="name"
+                                        disabled={!selectedCategory}
                                     />
                                 </div>
                                 <Input

@@ -116,7 +116,7 @@ function UserCard({
                             className="flex-1 flex items-center justify-center gap-1.5 py-3 text-danger-600 hover:bg-danger-50 dark:hover:bg-danger-950/50 text-sm font-medium transition-colors"
                         >
                             <IconTrash size={16} />
-                            <span>Hapus</span>
+                            <span>Delete</span>
                         </button>
                     )}
                 </div>
@@ -152,20 +152,20 @@ export default function Index() {
 
     const deleteData = async (id) => {
         Swal.fire({
-            title: "Hapus Pengguna?",
-            text: "Data yang dihapus tidak dapat dikembalikan!",
+            title: "Delete User?",
+            text: "Deleted data cannot be restored!",
             icon: "warning",
             showCancelButton: true,
             confirmButtonColor: "#ef4444",
             cancelButtonColor: "#64748b",
-            confirmButtonText: "Ya, Hapus!",
-            cancelButtonText: "Batal",
+            confirmButtonText: "Yes, Delete!",
+            cancelButtonText: "Cancel",
         }).then((result) => {
             if (result.isConfirmed) {
                 destroy(route("users.destroy", [id]));
                 Swal.fire({
-                    title: "Berhasil!",
-                    text: "Data berhasil dihapus!",
+                    title: "Success!",
+                    text: "Data successfully deleted!",
                     icon: "success",
                     showConfirmButton: false,
                     timer: 1500,
@@ -177,18 +177,18 @@ export default function Index() {
 
     return (
         <>
-            <Head title="Pengguna" />
+            <Head title="Users" />
 
             {/* Header */}
             <div className="mb-6">
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                     <div>
                         <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
-                            Pengguna
+                            Users
                         </h1>
                         <p className="text-sm text-slate-500 dark:text-slate-400">
-                            {users.total || users.data?.length || 0} pengguna
-                            terdaftar
+                            {users.total || users.data?.length || 0} registered
+                            users
                         </p>
                     </div>
                     <div className="flex gap-2">
@@ -199,7 +199,7 @@ export default function Index() {
                                 className={
                                     "bg-danger-500 hover:bg-danger-600 text-white"
                                 }
-                                label={`Hapus ${data.selectedUser.length}`}
+                                label={`Delete ${data.selectedUser.length}`}
                                 onClick={() => deleteData(data.selectedUser)}
                             />
                         )}
@@ -216,7 +216,7 @@ export default function Index() {
                                 className={
                                     "bg-primary-500 hover:bg-primary-600 text-white shadow-lg shadow-primary-500/30"
                                 }
-                                label={"Tambah Pengguna"}
+                                label={"Add User"}
                             />
                         )}
                     </div>
@@ -228,7 +228,7 @@ export default function Index() {
                 <div className="w-full sm:w-80">
                     <Search
                         url={route("users.index")}
-                        placeholder="Cari pengguna..."
+                        placeholder="Search users..."
                     />
                 </div>
                 <div className="flex items-center gap-2">
@@ -274,7 +274,7 @@ export default function Index() {
                         ))}
                     </div>
                 ) : (
-                    <Table.Card title={"Data Pengguna"}>
+                    <Table.Card title={"User Data"}>
                         <Table>
                             <Table.Thead>
                                 <tr>
@@ -301,8 +301,8 @@ export default function Index() {
                                         )}
                                     </Table.Th>
                                     <Table.Th className={"w-10"}>No</Table.Th>
-                                    <Table.Th>Pengguna</Table.Th>
-                                    <Table.Th>Group Akses</Table.Th>
+                                    <Table.Th>User</Table.Th>
+                                    <Table.Th>Access Group</Table.Th>
                                     <Table.Th></Table.Th>
                                 </tr>
                             </Table.Thead>

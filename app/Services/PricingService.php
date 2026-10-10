@@ -9,6 +9,7 @@ use App\Models\PricingRule;
 use App\Models\PricingRuleBuyGetItem;
 use App\Models\PricingRuleQtyBreak;
 use App\Models\Product;
+use App\Models\Setting;
 use Carbon\CarbonInterface;
 use Illuminate\Support\Collection;
 
@@ -161,9 +162,10 @@ class PricingService
 
     public function ruleLabel(PricingRule $rule): string
     {
+        $currencySymbol = Setting::getCurrencySymbol();
         return match ($rule->kind) {
             PricingRule::KIND_QTY_BREAK => 'Grosir '.$this->standardDiscountLabel($rule),
-            PricingRule::KIND_BUNDLE_PRICE => 'Bundle Rp '.number_format((float) $rule->discount_value, 0, ',', '.'),
+            PricingRule::KIND_BUNDLE_PRICE => 'Bundle '.$currencySymbol.' '.number_format((float) $rule->discount_value, 0, ',', '.'),
             PricingRule::KIND_BUY_X_GET_Y => 'Buy X Get Y',
             default => $this->standardDiscountLabel($rule),
         };
@@ -656,10 +658,11 @@ class PricingService
 
     private function standardDiscountLabel(PricingRule $rule): string
     {
+        $currencySymbol = Setting::getCurrencySymbol();
         return match ($rule->discount_type) {
             PricingRule::TYPE_PERCENTAGE => rtrim(rtrim(number_format((float) $rule->discount_value, 2, '.', ''), '0'), '.').'% OFF',
-            PricingRule::TYPE_FIXED_AMOUNT => 'Hemat Rp '.number_format((float) $rule->discount_value, 0, ',', '.'),
-            PricingRule::TYPE_FIXED_PRICE => 'Harga Rp '.number_format((float) $rule->discount_value, 0, ',', '.'),
+            PricingRule::TYPE_FIXED_AMOUNT => 'Hemat '.$currencySymbol.' '.number_format((float) $rule->discount_value, 0, ',', '.'),
+            PricingRule::TYPE_FIXED_PRICE => 'Harga '.$currencySymbol.' '.number_format((float) $rule->discount_value, 0, ',', '.'),
             default => $rule->name,
         };
     }

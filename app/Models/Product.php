@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class Product extends Model
@@ -34,6 +35,8 @@ class Product extends Model
         'buy_price',
         'sell_price',
         'category_id',
+        'product_type_id',
+        'sub_category_id',
         'stock',
         'tax_type',
         'tax_rate',
@@ -42,9 +45,19 @@ class Product extends Model
         'is_composite',
     ];
 
-    public function category()
+    public function category(): BelongsTo
     {
         return $this->belongsTo(Category::class);
+    }
+
+    public function productType(): BelongsTo
+    {
+        return $this->belongsTo(ProductType::class);
+    }
+
+    public function subCategory(): BelongsTo
+    {
+        return $this->belongsTo(SubCategory::class);
     }
 
     public function warehouses(): BelongsToMany
@@ -143,7 +156,7 @@ class Product extends Model
     protected function image(): Attribute
     {
         return Attribute::make(
-            get: fn ($value) => asset('/storage/products/'.$value),
+            get: fn ($value) => $value ? (str_starts_with($value, 'http') ? $value : asset('/storage/products/'.$value)) : null,
         );
     }
 }

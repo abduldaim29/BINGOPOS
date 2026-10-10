@@ -18,7 +18,22 @@ class User extends Authenticatable implements MustVerifyEmail
         hasPermissionTo as protected spatieHasPermissionTo;
         checkPermissionTo as protected spatieCheckPermissionTo;
     }
-    use MustVerifyEmailTrait;
+    use MustVerifyEmailTrait {
+        hasVerifiedEmail as baseHasVerifiedEmail;
+    }
+
+    /**
+     * Override email verification check to skip on localhost/development
+     */
+    public function hasVerifiedEmail(): bool
+    {
+        // Skip email verification on localhost/development environments
+        if (app()->environment('local', 'testing')) {
+            return true;
+        }
+
+        return $this->baseHasVerifiedEmail();
+    }
 
     /**
      * The attributes that are mass assignable.

@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import DashboardLayout from "@/Layouts/DashboardLayout";
 import { Head, usePage, Link } from "@inertiajs/react";
+import { useTranslation } from "react-i18next";
 import Button from "@/Components/Dashboard/Button";
 import {
     IconCirclePlus,
@@ -24,13 +25,7 @@ import { getProductImageUrl } from "@/Utils/imageUrl";
 import BarcodePrintModal from "@/Components/Barcode/BarcodePrintModal";
 import { useAuthorization } from "@/Utils/authorization";
 import { router } from "@inertiajs/react";
-
-const formatCurrency = (value = 0) =>
-    new Intl.NumberFormat("id-ID", {
-        style: "currency",
-        currency: "IDR",
-        minimumFractionDigits: 0,
-    }).format(value);
+import { formatCurrency } from "@/Utils/currency";
 
 // Product Card for Grid View
 function ProductCard({
@@ -88,16 +83,16 @@ function ProductCard({
                 <div className="absolute top-2 right-2 flex flex-col items-end gap-1">
                     {isComposite && (
                         <span className="px-2 py-1 text-xs font-semibold bg-primary-500 text-white rounded-full">
-                            Komposit
+                            {t("products.status.composite")}
                         </span>
                     )}
                     {outOfStock ? (
                         <span className="px-2 py-1 text-xs font-semibold bg-danger-500 text-white rounded-full">
-                            Habis
+                            {t("products.status.outOfStock")}
                         </span>
                     ) : lowStock ? (
                         <span className="px-2 py-1 text-xs font-semibold bg-warning-500 text-white rounded-full">
-                            Stok: {product.stock}
+                            {t("products.status.lowStock")}: {product.stock}
                         </span>
                     ) : (
                         <span className="px-2 py-1 text-xs font-medium bg-slate-900/60 text-white rounded-full">
@@ -184,6 +179,7 @@ function ProductCard({
 }
 
 export default function Index({ products }) {
+    const { t } = useTranslation();
     const { can } = useAuthorization();
     const [viewMode, setViewMode] = useState("grid"); // 'grid' | 'list'
     const [showBarcodeModal, setShowBarcodeModal] = useState(false);
@@ -235,17 +231,17 @@ export default function Index({ products }) {
 
     return (
         <>
-            <Head title="Produk" />
+            <Head title={t("products.title")} />
 
             {/* Header */}
             <div data-tour="products-header" className="mb-6">
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                     <div>
                         <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
-                            Produk
+                            {t("products.title")}
                         </h1>
                         <p className="text-sm text-slate-500 dark:text-slate-400">
-                            {products.total} produk terdaftar
+                            {products.total} {t("products.messages.registered")}
                         </p>
                     </div>
                     <div
@@ -257,7 +253,7 @@ export default function Index({ products }) {
                             className="inline-flex items-center justify-center gap-2 px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors w-full sm:w-auto"
                         >
                             <IconBarcode size={18} />
-                            Cetak All Barcode
+                            {t("products.actions.printAllBarcode")}
                         </button>
                         {canCreateProducts && (
                             <>
@@ -274,7 +270,7 @@ export default function Index({ products }) {
                                     className="inline-flex items-center justify-center gap-2 px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors w-full sm:w-auto"
                                 >
                                     <IconUpload size={18} />
-                                    Import
+                                    {t("common.buttons.import")}
                                 </button>
                                 <input
                                     id="import-products-input"
@@ -300,7 +296,7 @@ export default function Index({ products }) {
                                 className={
                                     "bg-primary-500 hover:bg-primary-600 text-white shadow-lg shadow-primary-500/30 w-full sm:w-auto justify-center"
                                 }
-                                label={"Tambah Produk"}
+                                label={t("products.addProduct")}
                                 href={route("products.create")}
                             />
                         )}
@@ -317,7 +313,7 @@ export default function Index({ products }) {
                     <div className="w-full sm:w-80">
                         <Search
                             url={route("products.index")}
-                            placeholder="Cari produk..."
+                            placeholder={t("products.messages.searchPlaceholder")}
                         />
                     </div>
                     {/* Select All Checkbox */}
@@ -333,7 +329,7 @@ export default function Index({ products }) {
                             className="w-4 h-4 rounded border-slate-300 text-primary-500 focus:ring-primary-500"
                         />
                         <span className="text-sm text-slate-600 dark:text-slate-400 hidden sm:inline">
-                            Pilih Semua
+                            {t("common.buttons.selectAll")}
                         </span>
                     </label>
                 </div>
@@ -345,7 +341,7 @@ export default function Index({ products }) {
                             className="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-primary-500 hover:bg-primary-600 text-white text-sm font-medium transition-colors"
                         >
                             <IconPrinter size={18} />
-                            Cetak Terpilih ({selectedProducts.length})
+                            {t("products.actions.printBarcode")} ({selectedProducts.length})
                         </button>
                     )}
                     <button
@@ -355,7 +351,7 @@ export default function Index({ products }) {
                                 ? "bg-primary-100 text-primary-600 dark:bg-primary-900/50 dark:text-primary-400"
                                 : "text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
                         }`}
-                        title="Grid View"
+                        title={t("products.messages.gridView")}
                     >
                         <IconLayoutGrid size={20} />
                     </button>
@@ -366,7 +362,7 @@ export default function Index({ products }) {
                                 ? "bg-primary-100 text-primary-600 dark:bg-primary-900/50 dark:text-primary-400"
                                 : "text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
                         }`}
-                        title="List View"
+                        title={t("products.messages.listView")}
                     >
                         <IconList size={20} />
                     </button>
@@ -395,7 +391,7 @@ export default function Index({ products }) {
                     </div>
                 ) : (
                     /* List View */
-                    <Table.Card title={"Data Produk"}>
+                    <Table.Card title={t("products.messages.dataTitle")}>
                         <Table>
                             <Table.Thead>
                                 <tr>
@@ -540,7 +536,7 @@ export default function Index({ products }) {
                         Belum Ada Produk
                     </h3>
                     <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
-                        Tambahkan produk pertama Anda untuk memulai.
+                        {t("products.empty.description")}
                     </p>
                     {canCreateProducts && (
                         <Button
@@ -549,7 +545,7 @@ export default function Index({ products }) {
                             className={
                                 "bg-primary-500 hover:bg-primary-600 text-white"
                             }
-                            label={"Tambah Produk"}
+                            label={t("products.addProduct")}
                             href={route("products.create")}
                         />
                     )}

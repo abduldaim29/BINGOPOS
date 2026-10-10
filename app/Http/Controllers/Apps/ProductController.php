@@ -5,7 +5,9 @@ namespace App\Http\Controllers\Apps;
 use App\Http\Controllers\Controller;
 use App\Models\Category;
 use App\Models\Product;
+use App\Models\ProductType;
 use App\Models\ProductWarehouse;
+use App\Models\SubCategory;
 use App\Models\Unit;
 use App\Models\Warehouse;
 use App\Services\AuditLogService;
@@ -53,6 +55,9 @@ class ProductController extends Controller
         // get categories
         $categories = Category::all();
 
+        // get product types
+        $productTypes = ProductType::where('is_active', true)->get();
+
         // get non-composite products for composite component selection
         $products = Product::where('is_composite', false)
             ->orderBy('title')
@@ -61,6 +66,7 @@ class ProductController extends Controller
         // return inertia
         return Inertia::render('Dashboard/Products/Create', [
             'categories' => $categories,
+            'productTypes' => $productTypes,
             'products' => $products,
             'units' => Unit::orderBy('code')->get(['id', 'code', 'symbol']),
         ]);
@@ -83,6 +89,8 @@ class ProductController extends Controller
             'title' => 'required',
             'description' => 'required',
             'category_id' => 'required',
+            'product_type_id' => 'nullable|exists:product_types,id',
+            'sub_category_id' => 'nullable|exists:sub_categories,id',
             'buy_price' => 'required',
             'sell_price' => 'required',
             'stock' => 'required|integer|min:0',
@@ -106,6 +114,8 @@ class ProductController extends Controller
             'title' => $request->title,
             'description' => $request->description,
             'category_id' => $request->category_id,
+            'product_type_id' => $request->product_type_id,
+            'sub_category_id' => $request->sub_category_id,
             'buy_price' => $request->buy_price,
             'sell_price' => $request->sell_price,
             'stock' => $request->stock,
@@ -161,6 +171,14 @@ class ProductController extends Controller
         // get categories
         $categories = Category::all();
 
+        // get product types
+        $productTypes = ProductType::where('is_active', true)->get();
+
+        // get sub categories for the product's category
+        $subCategories = $product->category_id
+            ? SubCategory::where('category_id', $product->category_id)->where('is_active', true)->get()
+            : collect();
+
         // get non-composite products for composite component selection
         $products = Product::where('is_composite', false)
             ->where('id', '!=', $product->id)
@@ -170,6 +188,8 @@ class ProductController extends Controller
         return Inertia::render('Dashboard/Products/Edit', [
             'product' => $product->load('components', 'units'),
             'categories' => $categories,
+            'productTypes' => $productTypes,
+            'subCategories' => $subCategories,
             'products' => $products,
             'units' => Unit::orderBy('code')->get(['id', 'code', 'symbol']),
         ]);
@@ -194,6 +214,8 @@ class ProductController extends Controller
             'title' => 'required',
             'description' => 'required',
             'category_id' => 'required',
+            'product_type_id' => 'nullable|exists:product_types,id',
+            'sub_category_id' => 'nullable|exists:sub_categories,id',
             'buy_price' => 'required',
             'sell_price' => 'required',
             'min_stock' => 'nullable|integer|min:0',
@@ -230,6 +252,8 @@ class ProductController extends Controller
                 'title' => $request->title,
                 'description' => $request->description,
                 'category_id' => $request->category_id,
+                'product_type_id' => $request->product_type_id,
+                'sub_category_id' => $request->sub_category_id,
                 'buy_price' => $request->buy_price,
                 'sell_price' => $request->sell_price,
                 'min_stock' => $request->min_stock ?? 0,
@@ -257,6 +281,8 @@ class ProductController extends Controller
             'title' => $request->title,
             'description' => $request->description,
             'category_id' => $request->category_id,
+            'product_type_id' => $request->product_type_id,
+            'sub_category_id' => $request->sub_category_id,
             'buy_price' => $request->buy_price,
             'sell_price' => $request->sell_price,
             'min_stock' => $request->min_stock ?? 0,

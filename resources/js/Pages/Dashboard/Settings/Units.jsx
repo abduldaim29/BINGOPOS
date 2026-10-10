@@ -60,21 +60,21 @@ export default function Units({ units = [] }) {
     };
 
     const handleDelete = (u) => {
-        if (!confirm(`Hapus satuan ${u.name}?`)) return;
+        if (!confirm(`Delete unit ${u.name}?`)) return;
         router.delete(route("settings.units.destroy", u.id));
     };
 
     return (
         <>
-            <Head title="Pengaturan Satuan" />
+            <Head title="Unit Settings" />
 
             <div className="mb-6">
                 <h1 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
                     <IconRulerMeasure size={28} className="text-primary-500" />
-                    Satuan
+                    Units
                 </h1>
                 <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-                    Master satuan produk (pcs, box, karton, dll) untuk penjualan multi-satuan
+                    Product unit master (pcs, box, carton, etc) for multi-unit sales
                 </p>
             </div>
 
@@ -82,7 +82,7 @@ export default function Units({ units = [] }) {
                 <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden">
                     <div className="p-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
                         <h3 className="font-semibold text-slate-800 dark:text-white">
-                            Daftar Satuan ({units.length})
+                            Unit List ({units.length})
                         </h3>
                         {canCreate && (
                             <button
@@ -90,7 +90,7 @@ export default function Units({ units = [] }) {
                                 className="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-primary-500 hover:bg-primary-600 text-white text-sm font-medium transition-colors"
                             >
                                 <IconPlus size={18} />
-                                Tambah Satuan
+                                Add Unit
                             </button>
                         )}
                     </div>
@@ -114,7 +114,7 @@ export default function Units({ units = [] }) {
                                         <p className="text-sm text-slate-500 dark:text-slate-400">
                                             {u.code}
                                             {u.products_count > 0
-                                                ? ` • dipakai ${u.products_count} produk`
+                                                ? ` • used by ${u.products_count} products`
                                                 : ""}
                                         </p>
                                     </div>
@@ -142,7 +142,7 @@ export default function Units({ units = [] }) {
                     ) : (
                         <div className="p-8 text-center">
                             <IconRulerMeasure size={48} className="mx-auto text-slate-300 dark:text-slate-600 mb-3" />
-                            <p className="text-slate-500 dark:text-slate-400">Belum ada satuan</p>
+                            <p className="text-slate-500 dark:text-slate-400">No units yet</p>
                         </div>
                     )}
                 </div>
@@ -150,7 +150,7 @@ export default function Units({ units = [] }) {
                 {showForm && (
                     <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-4 space-y-4">
                         <h3 className="font-semibold text-slate-800 dark:text-white">
-                            {editing ? "Edit Satuan" : "Tambah Satuan Baru"}
+                            {editing ? "Edit Unit" : "Add New Unit"}
                         </h3>
                         <form onSubmit={handleSubmit} className="space-y-4">
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -162,7 +162,7 @@ export default function Units({ units = [] }) {
                                     errors={errors.code}
                                 />
                                 <Input
-                                    label="Nama Satuan"
+                                    label="Unit Name"
                                     placeholder="Pieces"
                                     value={form.name}
                                     onChange={(e) => setForm({ ...form, name: e.target.value })}
@@ -181,14 +181,14 @@ export default function Units({ units = [] }) {
                                     type="submit"
                                     className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-primary-500 hover:bg-primary-600 text-white text-sm font-semibold transition-colors"
                                 >
-                                    {editing ? "Update" : "Simpan"}
+                                    {editing ? "Update" : "Save"}
                                 </button>
                                 <button
                                     type="button"
                                     onClick={resetForm}
                                     className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
                                 >
-                                    Batal
+                                    Cancel
                                 </button>
                             </div>
                         </form>

@@ -1,11 +1,13 @@
 import React, { useEffect, useState } from "react";
 import { Head, useForm, usePage, router } from "@inertiajs/react";
+import { useTranslation } from "react-i18next";
 import DashboardLayout from "@/Layouts/DashboardLayout";
 import { IconBuildingStore, IconPencil, IconTrash, IconPlus } from "@tabler/icons-react";
 import toast from "react-hot-toast";
 import { useAuthorization } from "@/Utils/authorization";
 
 export default function SuppliersIndex({ suppliers = [] }) {
+    const { t } = useTranslation();
     const { flash } = usePage().props;
     const { can } = useAuthorization();
     const [editing, setEditing] = useState(null);
@@ -51,22 +53,22 @@ export default function SuppliersIndex({ suppliers = [] }) {
     };
 
     const remove = (id) => {
-        if (!confirm("Hapus supplier ini?")) return;
+        if (!confirm(t("suppliers.messages.confirmDelete"))) return;
         destroy(route("suppliers.destroy", id));
     };
 
     return (
         <>
-            <Head title="Supplier" />
+            <Head title={t("suppliers.title")} />
             <div className="space-y-6">
                 <div className="flex items-center justify-between">
                     <div>
                         <h1 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
                             <IconBuildingStore size={26} className="text-primary-500" />
-                            Supplier
+                            {t("suppliers.title")}
                         </h1>
                         <p className="text-sm text-slate-500">
-                            Data pemasok untuk pencatatan hutang.
+                            {t("suppliers.description")}
                         </p>
                     </div>
                     {canManageSuppliers && (
@@ -75,7 +77,7 @@ export default function SuppliersIndex({ suppliers = [] }) {
                             className="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-primary-500 text-white text-sm font-semibold"
                         >
                             <IconPlus size={16} />
-                            Tambah Supplier
+                            {t("suppliers.addSupplier")}
                         </button>
                     )}
                 </div>
@@ -87,7 +89,7 @@ export default function SuppliersIndex({ suppliers = [] }) {
                     >
                     <div className="md:col-span-1">
                         <label className="text-sm font-semibold text-slate-700 dark:text-slate-200">
-                            Nama
+                            {t("common.labels.name")}
                         </label>
                         <input
                             className="w-full h-11 px-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm"
@@ -98,7 +100,7 @@ export default function SuppliersIndex({ suppliers = [] }) {
                     </div>
                     <div>
                         <label className="text-sm font-semibold text-slate-700 dark:text-slate-200">
-                            Telepon
+                            {t("suppliers.phone")}
                         </label>
                         <input
                             className="w-full h-11 px-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm"
@@ -108,7 +110,7 @@ export default function SuppliersIndex({ suppliers = [] }) {
                     </div>
                     <div>
                         <label className="text-sm font-semibold text-slate-700 dark:text-slate-200">
-                            Email
+                            {t("suppliers.email")}
                         </label>
                         <input
                             className="w-full h-11 px-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm"
@@ -119,7 +121,7 @@ export default function SuppliersIndex({ suppliers = [] }) {
                     </div>
                     <div className="md:col-span-1">
                         <label className="text-sm font-semibold text-slate-700 dark:text-slate-200">
-                            Alamat
+                            {t("common.labels.address")}
                         </label>
                         <textarea
                             rows={1}
@@ -134,7 +136,7 @@ export default function SuppliersIndex({ suppliers = [] }) {
                             disabled={processing}
                             className="px-4 py-2 rounded-xl bg-primary-500 text-white text-sm font-semibold"
                         >
-                            {editing ? "Update" : "Simpan"}
+                            {editing ? t("common.buttons.edit") : t("common.buttons.save")}
                         </button>
                         {editing && (
                             <button
@@ -142,7 +144,7 @@ export default function SuppliersIndex({ suppliers = [] }) {
                                 onClick={cancel}
                                 className="px-4 py-2 rounded-xl border border-slate-200 text-slate-600 text-sm font-semibold"
                             >
-                                Batal
+                                {t("common.buttons.cancel")}
                             </button>
                         )}
                     </div>
@@ -191,7 +193,7 @@ export default function SuppliersIndex({ suppliers = [] }) {
                         ))
                     ) : (
                         <div className="p-6 text-center text-slate-500">
-                            Belum ada supplier.
+                            {t("suppliers.noSuppliers")}
                         </div>
                     )}
                 </div>

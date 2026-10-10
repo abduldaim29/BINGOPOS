@@ -11,7 +11,7 @@ class SetLocale
     public function handle(Request $request, Closure $next): Response
     {
         $availableLocales = ['id', 'en'];
-        $defaultLocale = 'id';
+        $defaultLocale = 'en';
 
         $locale = $defaultLocale;
 

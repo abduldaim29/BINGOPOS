@@ -13,13 +13,7 @@ import {
     IconTrash,
 } from "@tabler/icons-react";
 import { useAuthorization } from "@/Utils/authorization";
-
-const formatPrice = (value = 0) =>
-    Number(value || 0).toLocaleString("id-ID", {
-        style: "currency",
-        currency: "IDR",
-        minimumFractionDigits: 0,
-    });
+import { formatCurrency as formatPrice } from "@/Utils/currency";
 
 const statusBadge = (voucher) => {
     if (voucher.is_used) {

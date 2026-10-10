@@ -19,6 +19,7 @@ import ShippingLabel from "@/Components/Receipt/ShippingLabel";
 import { useAuthorization } from "@/Utils/authorization";
 import { hasCachedPrinter, kickDrawer, printReceipt } from "@/Utils/escpos";
 import toast from "react-hot-toast";
+import { formatCurrency as formatPrice } from "@/Utils/currency";
 
 export default function Print({ transaction }) {
     const { storeProfile, printerSettings } = usePage().props;
@@ -57,13 +58,6 @@ export default function Print({ transaction }) {
         }, 4000);
         return () => clearInterval(timer);
     }, [showQris, transaction?.invoice, liveStatus]);
-
-    const formatPrice = (price = 0) =>
-        Number(price || 0).toLocaleString("id-ID", {
-            style: "currency",
-            currency: "IDR",
-            minimumFractionDigits: 0,
-        });
 
     const formatDateTime = (value) =>
         new Date(value).toLocaleString("id-ID", {

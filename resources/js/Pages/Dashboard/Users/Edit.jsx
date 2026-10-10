@@ -42,14 +42,14 @@ export default function Edit() {
     const submit = (e) => {
         e.preventDefault();
         post(route("users.update", user.id), {
-            onSuccess: () => toast.success("Pengguna berhasil diperbarui"),
-            onError: () => toast.error("Gagal memperbarui pengguna"),
+            onSuccess: () => toast.success("User successfully updated"),
+            onError: () => toast.error("Failed to update user"),
         });
     };
 
     return (
         <>
-            <Head title="Edit Pengguna" />
+            <Head title="Edit User" />
 
             <div className="mb-6">
                 <Link
@@ -57,11 +57,11 @@ export default function Edit() {
                     className="inline-flex items-center gap-2 text-sm text-slate-500 hover:text-primary-600 mb-3"
                 >
                     <IconArrowLeft size={16} />
-                    Kembali ke Pengguna
+                    Back to Users
                 </Link>
                 <h1 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
                     <IconUserEdit size={28} className="text-primary-500" />
-                    Edit Pengguna
+                    Edit User
                 </h1>
                 <p className="text-sm text-slate-500 mt-1">
                     {user.name} • {user.email}
@@ -73,7 +73,7 @@ export default function Edit() {
                     {/* Account Info */}
                     <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6">
                         <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-4">
-                            Informasi Akun
+                            Account Information
                         </h3>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div className="md:col-span-2">
@@ -116,8 +116,8 @@ export default function Edit() {
                             </div>
                             <Input
                                 type="text"
-                                label="Nama Lengkap"
-                                placeholder="Nama pengguna"
+                                label="Full Name"
+                                placeholder="User name"
                                 value={data.name}
                                 onChange={(e) =>
                                     setData("name", e.target.value)
@@ -137,8 +137,8 @@ export default function Edit() {
                             />
                             <Input
                                 type="password"
-                                label="Kata Sandi Baru"
-                                placeholder="Kosongkan jika tidak diubah"
+                                label="New Password"
+                                placeholder="Leave blank if unchanged"
                                 value={data.password}
                                 onChange={(e) =>
                                     setData("password", e.target.value)
@@ -147,8 +147,8 @@ export default function Edit() {
                             />
                             <Input
                                 type="password"
-                                label="Konfirmasi Kata Sandi"
-                                placeholder="Ulangi kata sandi baru"
+                                label="Confirm Password"
+                                placeholder="Repeat new password"
                                 value={data.password_confirmation}
                                 onChange={(e) =>
                                     setData(
@@ -162,7 +162,7 @@ export default function Edit() {
                     </div>
 
                     <div className="rounded-2xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900">
-                        <h3 className="mb-4 text-sm font-semibold text-slate-700 dark:text-slate-300">Outlet yang Diizinkan</h3>
+                        <h3 className="mb-4 text-sm font-semibold text-slate-700 dark:text-slate-300">Allowed Outlets</h3>
                         <div className="space-y-3">
                             {outlets.map((outlet) => (
                                 <label key={outlet.id} className="flex items-center gap-3 text-sm text-slate-700 dark:text-slate-300">
@@ -172,7 +172,7 @@ export default function Edit() {
                             ))}
                         </div>
                         <select className="mt-4 h-10 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 text-sm dark:border-slate-700 dark:bg-slate-800" value={data.default_outlet_id ?? ""} onChange={(event) => setData("default_outlet_id", event.target.value ? Number(event.target.value) : null)}>
-                            <option value="">Outlet default (opsional)</option>
+                            <option value="">Default Outlet (optional)</option>
                             {outlets.map((outlet) => <option key={outlet.id} value={outlet.id}>{outlet.name}</option>)}
                         </select>
                     </div>
@@ -181,7 +181,7 @@ export default function Edit() {
                     <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6">
                         <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-4 flex items-center gap-2">
                             <IconShield size={16} />
-                            Akses Group
+                            Access Group
                         </h3>
                         <div className="flex flex-wrap gap-4">
                             {roles.map((role, i) => (
@@ -219,7 +219,7 @@ export default function Edit() {
                             href={route("users.index")}
                             className="px-5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 font-medium transition-colors"
                         >
-                            Batal
+                            Cancel
                         </Link>
                         <button
                             type="submit"
@@ -227,7 +227,7 @@ export default function Edit() {
                             className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary-500 hover:bg-primary-600 text-white font-medium transition-colors disabled:opacity-50"
                         >
                             <IconDeviceFloppy size={18} />
-                            {processing ? "Menyimpan..." : "Simpan Perubahan"}
+                            {processing ? "Saving..." : "Save Changes"}
                         </button>
                     </div>
                 </div>

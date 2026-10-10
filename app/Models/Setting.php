@@ -63,6 +63,11 @@ class Setting extends Model
         return filter_var(static::getForOutlet($key, $outlet, $default ? '1' : '0'), FILTER_VALIDATE_BOOL);
     }
 
+    public static function getIntForOutlet(string $key, ?Outlet $outlet, int $default = 0): int
+    {
+        return (int) static::getForOutlet($key, $outlet, $default);
+    }
+
     public static function setForOutlet(string $key, $value, ?Outlet $outlet, ?string $description = null)
     {
         if (! $outlet) {
@@ -104,5 +109,49 @@ class Setting extends Model
                 $payload['description'] ?? null
             );
         }
+    }
+
+    /**
+     * Get currency code (e.g., PKR, USD, EUR)
+     */
+    public static function getCurrencyCode(?Outlet $outlet = null): string
+    {
+        return static::getForOutlet('currency_code', $outlet, 'PKR');
+    }
+
+    /**
+     * Get currency symbol (e.g., Rs, $, €)
+     */
+    public static function getCurrencySymbol(?Outlet $outlet = null): string
+    {
+        return static::getForOutlet('currency_symbol', $outlet, 'Rs');
+    }
+
+    /**
+     * Get currency locale for formatting (e.g., en-PK, en-US)
+     */
+    public static function getCurrencyLocale(?Outlet $outlet = null): string
+    {
+        return static::getForOutlet('currency_locale', $outlet, 'en-PK');
+    }
+
+    /**
+     * Get decimal places for currency
+     */
+    public static function getCurrencyDecimalPlaces(?Outlet $outlet = null): int
+    {
+        return static::getIntForOutlet('currency_decimal_places', $outlet, 2);
+    }
+
+    /**
+     * Format number as currency
+     */
+    public static function formatCurrency(float $amount, ?Outlet $outlet = null): string
+    {
+        $locale = static::getCurrencyLocale($outlet);
+        $currencyCode = static::getCurrencyCode($outlet);
+        $decimalPlaces = static::getCurrencyDecimalPlaces($outlet);
+
+        return number_format($amount, $decimalPlaces, '.', ',');
     }
 }

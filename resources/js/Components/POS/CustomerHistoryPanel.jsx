@@ -10,13 +10,7 @@ import {
     IconGift,
     IconCrown,
 } from "@tabler/icons-react";
-
-const formatPrice = (value = 0) =>
-    Number(value || 0).toLocaleString("id-ID", {
-        style: "currency",
-        currency: "IDR",
-        minimumFractionDigits: 0,
-    });
+import { formatCurrency } from "@/Utils/currency";
 
 /**
  * CustomerHistoryPanel - Shows customer purchase history
@@ -144,7 +138,7 @@ export default function CustomerHistoryPanel({
                         <IconCoin size={16} className="text-success-500" />
                     </div>
                     <p className="text-sm font-bold text-success-600 dark:text-success-400">
-                        {formatPrice(stats.total_spent)}
+                        {formatCurrency(stats.total_spent)}
                     </p>
                     <p className="text-xs text-slate-500">Total Belanja</p>
                 </div>
@@ -193,7 +187,7 @@ export default function CustomerHistoryPanel({
                                     {voucher.code} - {voucher.name}
                                 </p>
                                 <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                                    Min belanja {formatPrice(voucher.minimum_order)}
+                                    Min belanja {formatCurrency(voucher.minimum_order)}
                                 </p>
                             </div>
                         ))}
@@ -245,7 +239,7 @@ export default function CustomerHistoryPanel({
                                     </p>
                                 </div>
                                 <p className="text-sm font-semibold text-slate-900 dark:text-white">
-                                    {formatPrice(tx.total)}
+                                    {formatCurrency(tx.total)}
                                 </p>
                             </div>
                         ))}

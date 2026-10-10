@@ -84,6 +84,74 @@ class RoleSeeder extends Seeder
         ])->get();
         $cashierRole->syncPermissions($cashierPermissions);
 
+        // Create administrator/manager role with management permissions
+        $adminRole = Role::firstOrCreate(['name' => 'administrator']);
+        $adminPermissions = Permission::whereIn('name', [
+            'dashboard-access',
+            'users-access',
+            'roles-access',
+            'permissions-access',
+            'categories-access',
+            'products-access',
+            'pricing-rules-access',
+            'customers-access',
+            'customer-vouchers-access',
+            'customer-segments-access',
+            'crm-campaigns-access',
+            'crm-reminders-access',
+            'transactions-access',
+            'transactions-confirm-payment',
+            'receivables-access',
+            'payables-access',
+            'suppliers-access',
+            'reports-access',
+            'profits-access',
+            'payment-settings-access',
+            'stock-opnames-access',
+            'stock-mutations-access',
+            'sales-returns-access',
+            'cashier-shifts-access',
+            'audit-logs-access',
+            'purchase-orders-access',
+            'goods-receivings-access',
+            'supplier-returns-access',
+            'stock-transfers-access',
+            'discounts-approve',
+            'price-lists-access',
+            'warehouses-access',
+            'units-access',
+            'dine-tables-access',
+            'dine-orders-access',
+        ])->get();
+        $adminRole->syncPermissions($adminPermissions);
+
+        // Create inventory manager role with inventory-specific permissions
+        $inventoryManagerRole = Role::firstOrCreate(['name' => 'inventory-manager']);
+        $inventoryPermissions = Permission::whereIn('name', [
+            'dashboard-access',
+            'categories-access',
+            'products-access',
+            'products-import',
+            'products-export',
+            'customers-access',
+            'customers-import',
+            'customers-export',
+            'suppliers-access',
+            'reports-access',
+            'stock-opnames-access',
+            'stock-mutations-access',
+            'sales-returns-access',
+            'audit-logs-access',
+            'purchase-orders-access',
+            'goods-receivings-access',
+            'supplier-returns-access',
+            'stock-transfers-access',
+            'price-lists-access',
+            'warehouses-access',
+            'units-access',
+        ])->get();
+        $inventoryManagerRole->syncPermissions($inventoryPermissions);
+
         app(PermissionRegistrar::class)->forgetCachedPermissions();
     }
 

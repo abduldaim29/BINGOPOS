@@ -6,6 +6,7 @@ import React, {
     useRef,
 } from "react";
 import { Head, router, usePage } from "@inertiajs/react";
+import { useTranslation } from "react-i18next";
 import axios from "axios";
 import toast from "react-hot-toast";
 import POSLayout from "@/Layouts/POSLayout";
@@ -33,13 +34,7 @@ import {
     IconAlertTriangle,
     IconWallet,
 } from "@tabler/icons-react";
-
-const formatPrice = (value = 0) =>
-    Number(value || 0).toLocaleString("id-ID", {
-        style: "currency",
-        currency: "IDR",
-        minimumFractionDigits: 0,
-    });
+import { formatCurrency as formatPrice } from "@/Utils/currency";
 
 const roundUpToNearest = (value, step) =>
     Math.ceil(value / step) * step;
@@ -57,6 +52,7 @@ export default function Index({
     bankAccounts = [],
     loyaltyTierOptions = [],
 }) {
+    const { t } = useTranslation();
     const {
         auth,
         errors,
@@ -128,6 +124,14 @@ export default function Index({
         if (flash?.error) toast.error(flash.error);
         if (flash?.success) toast.success(flash.success);
     }, [flash]);
+
+    // Auto-select walk-in customer on load
+    useEffect(() => {
+        const walkInCustomer = customers.find((c) => c.is_walkin);
+        if (walkInCustomer && !selectedCustomer) {
+            setSelectedCustomer(walkInCustomer);
+        }
+    }, [customers]);
 
     // Barcode scanner integration
     const handleBarcodeScan = useCallback(
@@ -259,7 +263,7 @@ export default function Index({
             })
             .catch(() => {
                 if (!cancelled) {
-                    toast.error("Gagal memuat promo aktif");
+                    toast.error("Failed to load active promo");
                 }
             })
             .finally(() => {
@@ -311,8 +315,8 @@ export default function Index({
         return [
             {
                 value: "cash",
-                label: "Tunai",
-                description: "Pembayaran tunai langsung di kasir.",
+                label: t("transactions.cash"),
+                description: t("transactions.directCashPayment"),
             },
             ...options,
         ];
@@ -423,7 +427,7 @@ export default function Index({
 
     const handleHoldCart = async (label = null) => {
         if (carts.length === 0) {
-            toast.error("Keranjang kosong");
+            toast.error(t("transactions.cartEmpty"));
             return;
         }
 
@@ -435,11 +439,11 @@ export default function Index({
             {
                 preserveScroll: true,
                 onSuccess: () => {
-                    toast.success("Transaksi ditahan");
+                    toast.success(t("transactions.transactionHeld"));
                     setIsHolding(false);
                 },
                 onError: (errors) => {
-                    toast.error(errors?.message || "Gagal menahan transaksi");
+                    toast.error(errors?.message || t("transactions.transactionHeldError"));
                     setIsHolding(false);
                 },
             }
@@ -598,7 +602,7 @@ export default function Index({
 
         // ponytail: walk-in tanpa pelanggan boleh; nota piutang wajib pelanggan (piutang butuh customer)
         if (payLater && !selectedCustomer?.id) {
-            toast.error("Nota barang memerlukan pelanggan");
+            toast.error(t("transactions.messages.payLaterRequiresCustomer"));
             return;
         }
 
@@ -608,32 +612,32 @@ export default function Index({
         }
 
         if (!payLater && isCashPayment && cash < payable) {
-            toast.error("Jumlah pembayaran kurang dari total");
+            toast.error(t("transactions.paymentInsufficient"));
             return;
         }
 
         // Validate bank transfer requires bank selection
         const isBankTransfer = paymentMethod === "bank_transfer";
         if (!splitMode && isBankTransfer && !selectedBankAccount) {
-            toast.error("Pilih rekening bank tujuan");
+            toast.error(t("transactions.selectBankAccount"));
             return;
         }
 
         // Split payment validation
         if (splitMode) {
             if (payLater) {
-                toast.error("Pembayaran split tidak berlaku untuk nota barang");
+                toast.error("Split payment not applicable for credit notes");
                 return;
             }
             if (activeSplitTenders.length < 2) {
-                toast.error("Split pembayaran memerlukan 2 metode");
+                toast.error("Split payment requires 2 methods");
                 return;
             }
             if (splitRemaining !== 0) {
                 toast.error(
                     splitRemaining > 0
-                        ? `Kurang ${formatPrice(splitRemaining)} untuk melengkapi pembayaran`
-                        : `Kelebihan ${formatPrice(-splitRemaining)} dari total`
+                        ? t("transactions.shortMessage", { amount: formatPrice(splitRemaining) })
+                        : t("transactions.excessMessage", { amount: formatPrice(-splitRemaining) })
                 );
                 return;
             }
@@ -641,7 +645,7 @@ export default function Index({
                 (t) => t.method === "bank_transfer"
             );
             if (bankTender && !bankTender.bank_account_id) {
-                toast.error("Pilih rekening bank tujuan untuk tender transfer");
+                toast.error("Select destination bank account for transfer tender");
                 return;
             }
             const cashTender = activeSplitTenders.find(
@@ -651,7 +655,7 @@ export default function Index({
                 cashTender &&
                 Number(cashTender.cash_received || 0) < Number(cashTender.amount)
             ) {
-                toast.error("Uang tunai split kurang dari nominal tender");
+                toast.error(t("transactions.splitCashError"));
                 return;
             }
         }
@@ -659,7 +663,7 @@ export default function Index({
         setIsSubmitting(true);
 
         if (!navigator.onLine && splitMode) {
-            toast.error("Split pembayaran tidak tersedia saat offline");
+            toast.error("Split payment not available offline");
             setIsSubmitting(false);
             return;
         }
@@ -690,7 +694,7 @@ export default function Index({
                 refreshPendingCount();
                 setCarts([]);
                 setPricingPreview(initialPricingPreview);
-                toast.success("Transaksi disimpan offline. Akan dikirim saat online.");
+                toast.success("Transaction saved offline. Will be sent when online.");
             });
             setIsSubmitting(false);
             return;
@@ -753,11 +757,11 @@ export default function Index({
                     setOrderType("in_store");
                     setOrderNote("");
                     setIsSubmitting(false);
-                    toast.success("Transaksi berhasil!");
+                    toast.success("Transaction successful!");
                 },
                 onError: () => {
                     setIsSubmitting(false);
-                    toast.error("Gagal menyimpan transaksi");
+                    toast.error("Failed to save transaction");
                 },
             }
         );
@@ -784,7 +788,7 @@ export default function Index({
     if (!activeCashierShift) {
         return (
             <>
-                <Head title="Buka Shift Kasir" />
+                <Head title={t("transactions.openShift")} />
 
                 <div className="mx-auto flex min-h-[calc(100vh-8rem)] max-w-3xl items-center justify-center px-4 py-10">
                     <div className="w-full rounded-3xl border border-slate-200 bg-white p-8 shadow-xl shadow-slate-200/60 dark:border-slate-800 dark:bg-slate-900 dark:shadow-none">
@@ -792,16 +796,16 @@ export default function Index({
                             <IconWallet size={28} />
                         </div>
                         <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
-                            Shift kasir belum dibuka
+                            Cashier shift not opened
                         </h1>
                         <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
-                            Buka shift terlebih dulu untuk mengaktifkan transaksi, keranjang, dan cash closing.
+                            Open shift first to enable transactions, cart, and cash closing.
                         </p>
 
                         <div className="mt-6 grid gap-4 md:grid-cols-2">
                             <div>
                                 <label className="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-300">
-                                    Modal Awal
+                                    Opening Cash
                                 </label>
                                 <input
                                     type="number"
@@ -817,14 +821,14 @@ export default function Index({
                             </div>
                             <div>
                                 <label className="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-300">
-                                    Catatan
+                                    Notes
                                 </label>
                                 <input
                                     type="text"
                                     value={shiftNotesInput}
                                     onChange={(event) => setShiftNotesInput(event.target.value)}
                                     className="h-12 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 text-sm text-slate-800 outline-none transition focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
-                                    placeholder="Opsional"
+                                    placeholder={t("common.labels.optional")}
                                 />
                             </div>
                         </div>
@@ -837,7 +841,7 @@ export default function Index({
                                     className="inline-flex items-center justify-center gap-2 rounded-2xl bg-primary-500 px-5 py-3 text-sm font-medium text-white transition-colors hover:bg-primary-600"
                                 >
                                     <IconWallet size={18} />
-                                    <span>Buka Shift Sekarang</span>
+                                    <span>Open Shift Now</span>
                                 </button>
                             )}
                             <button
@@ -845,7 +849,7 @@ export default function Index({
                                 onClick={() => router.visit(route("cashier-shifts.index"))}
                                 className="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 px-5 py-3 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
                             >
-                                <span>Lihat Histori Shift</span>
+                                <span>View Shift History</span>
                             </button>
                         </div>
                     </div>
@@ -856,7 +860,7 @@ export default function Index({
 
     return (
         <>
-            <Head title="Transaksi" />
+            <Head title={t("transactions.title")} />
 
             <div className="h-[calc(100vh-4rem)] flex flex-col lg:flex-row">
                 {/* Mobile Tab Switcher */}
@@ -870,7 +874,7 @@ export default function Index({
                         }`}
                     >
                         <IconShoppingCart size={18} />
-                        <span>Produk</span>
+                        <span>Products</span>
                     </button>
                     <button
                         onClick={() => setMobileView("cart")}
@@ -882,7 +886,7 @@ export default function Index({
                     >
                         <IconReceipt size={18} />
                         <span className="relative inline-flex items-center gap-1">
-                            Keranjang
+                            Cart
                             {cartCount > 0 && (
                                 <span className="inline-flex items-center justify-center px-1.5 min-w-[20px] h-5 text-[11px] font-bold bg-primary-500 text-white rounded-full">
                                     {cartCount}
@@ -935,9 +939,9 @@ export default function Index({
                             customers={customers}
                             selected={selectedCustomer}
                             onSelect={setSelectedCustomer}
-                            placeholder="Pilih pelanggan..."
+                            placeholder={t("transactions.selectCustomer")}
                             error={errors?.customer_id}
-                            label="Pelanggan"
+                            label={t("transactions.customer")}
                             tierOptions={loyaltyTierOptions}
                         />
                     </div>
@@ -969,7 +973,7 @@ export default function Index({
                             <div className="flex items-center justify-between mb-3">
                                 <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-2">
                                     <IconShoppingCart size={16} />
-                                    Keranjang
+                                    Cart
                                 </h3>
                                 {carts.length > 0 && (
                                     <span className="px-2.5 py-0.5 text-xs font-bold bg-primary-100 text-primary-700 dark:bg-primary-900/50 dark:text-primary-300 rounded-full whitespace-nowrap">
@@ -1117,7 +1121,7 @@ export default function Index({
                                         className="mx-auto text-slate-300 dark:text-slate-600 mb-2"
                                     />
                                     <p className="text-sm text-slate-400">
-                                        Keranjang kosong
+                                        {t("transactions.cartEmpty")}
                                     </p>
                                 </div>
                             )}
@@ -1129,10 +1133,10 @@ export default function Index({
                             <div className="flex items-center justify-between p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800">
                                 <div>
                                     <p className="text-sm font-semibold text-slate-800 dark:text-white">
-                                        Bayar Belakangan (Nota Barang)
+                                        {t("transactions.payLaterLabel")}
                                     </p>
                                     <p className="text-xs text-slate-500">
-                                        Tidak perlu bayar sekarang, catat sebagai piutang.
+                                        {t("transactions.payLaterDescription")}
                                     </p>
                                 </div>
                                 <label className="inline-flex items-center cursor-pointer">
@@ -1165,7 +1169,7 @@ export default function Index({
                             {payLater && (
                                 <div>
                                     <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-2">
-                                        Tanggal Jatuh Tempo
+                                        {t("transactions.dueDate")}
                                     </label>
                                     <input
                                         type="date"
@@ -1184,13 +1188,13 @@ export default function Index({
 
                                 <div>
                                     <label className="mb-2 block text-xs font-medium text-slate-600 dark:text-slate-400">
-                                        Tipe Pesanan
+                                        {t("transactions.orderType")}
                                     </label>
                                     <div className="grid grid-cols-3 gap-2">
                                         {[
-                                            { value: "in_store", label: "Di Tempat" },
-                                            { value: "takeaway", label: "Bawa Pulang" },
-                                            { value: "delivery", label: "Diantar" },
+                                            { value: "in_store", label: t("transactions.inStore") },
+                                            { value: "takeaway", label: t("transactions.takeaway") },
+                                            { value: "delivery", label: t("transactions.delivery") },
                                         ].map((type) => (
                                             <button
                                                 key={type.value}
@@ -1249,7 +1253,7 @@ export default function Index({
 
                                 <div>
                                     <label className="mb-2 block text-xs font-medium text-slate-600 dark:text-slate-400">
-                                        Diskon Manual (Rp)
+                                        {t("transactions.manualDiscountRp")}
                                     </label>
                                     <div className="relative">
                                         <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-slate-400">
@@ -1286,7 +1290,7 @@ export default function Index({
                             {/* Payment Method Selection */}
                             <div>
                                 <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-2">
-                                    Metode Pembayaran
+                                    {t("transactions.paymentMethod")}
                                 </label>
                                 <div className="grid grid-cols-2 gap-2">
                                     {paymentOptions.map((method) => (
@@ -1359,8 +1363,8 @@ export default function Index({
                                         }`}
                                     >
                                         {splitMode
-                                            ? "Batalkan Split Pembayaran"
-                                            : "Split Pembayaran (2 metode)"}
+                                            ? t("transactions.cancelSplitPayment")
+                                            : t("transactions.splitPaymentLabel")}
                                     </button>
                                 )}
                             </div>
@@ -1370,7 +1374,7 @@ export default function Index({
                                 <div className="space-y-3 rounded-2xl border border-primary-100 bg-primary-50/50 p-3 dark:border-primary-900/50 dark:bg-primary-950/20">
                                     <div className="flex items-center justify-between">
                                         <p className="text-sm font-semibold text-slate-800 dark:text-white">
-                                            Split Pembayaran
+                                            {t("transactions.splitPayment")}
                                         </p>
                                         <span
                                             className={`text-xs font-semibold ${
@@ -1380,8 +1384,8 @@ export default function Index({
                                             }`}
                                         >
                                             {splitRemaining === 0
-                                                ? "Lengkap"
-                                                : `Sisa ${formatPrice(splitRemaining)}`}
+                                                ? t("transactions.complete")
+                                                : `${t("transactions.remaining")} ${formatPrice(splitRemaining)}`}
                                         </span>
                                     </div>
                                     {splitTenders.map((tender, index) => (
@@ -1503,7 +1507,7 @@ export default function Index({
                                 !payLater && (
                                     <div>
                                         <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-2">
-                                            Rekening Tujuan
+                                            {t("transactions.destinationBank")}
                                         </label>
                                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                                             {bankAccounts.map((bank) => {
@@ -1578,22 +1582,22 @@ export default function Index({
                                     <div className="flex items-center justify-between gap-3">
                                         <div>
                                             <p className="text-sm font-semibold text-slate-800 dark:text-white">
-                                                Pembayaran Tunai
+                                                {t("transactions.cashPayment")}
                                             </p>
                                             <p className="text-xs text-slate-500 dark:text-slate-400">
-                                                Total tagihan {formatPrice(payable)}
+                                                {t("transactions.totalDue")} {formatPrice(payable)}
                                             </p>
                                         </div>
                                         {cash < payable && payable > 0 && (
                                             <span className="text-right text-xs font-semibold text-amber-600 dark:text-amber-400">
-                                                Kurang {formatPrice(payable - cash)}
+                                                {t("transactions.insufficientMessage", { amount: formatPrice(payable - cash) })}
                                             </span>
                                         )}
                                     </div>
 
                                     <div>
                                         <label className="mb-2 block text-xs font-medium text-slate-600 dark:text-slate-400">
-                                            Jumlah Bayar
+                                            {t("transactions.amountPaid")}
                                         </label>
                                         <div className="relative">
                                             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-slate-400">
@@ -1649,7 +1653,7 @@ export default function Index({
                                             : "bg-white/70 dark:bg-slate-900/50"
                                     }`}>
                                         <span className="text-sm text-slate-600 dark:text-slate-400">
-                                            Kembalian
+                                            {t("transactions.change")}
                                         </span>
                                         <span className={`text-lg font-bold ${
                                             cash >= payable && payable > 0
@@ -1668,7 +1672,7 @@ export default function Index({
                                     <div className="flex items-start justify-between gap-3">
                                         <div>
                                             <p className="text-sm font-semibold text-emerald-700 dark:text-emerald-300">
-                                                Promo otomatis aktif
+                                                {t("transactions.autoPromoActive")}
                                             </p>
                                             <p className="text-xs text-emerald-600/80 dark:text-emerald-400/80">
                                                 Harga item sudah disesuaikan berdasarkan rule promo yang berlaku.
@@ -1686,14 +1690,14 @@ export default function Index({
                                     <div className="flex items-start justify-between gap-3">
                                         <div>
                                             <p className="text-sm font-semibold text-primary-700 dark:text-primary-300">
-                                                Loyalty Member
+                                                {t("transactions.loyaltyMember")}
                                             </p>
                                             <p className="text-xs text-primary-600/80 dark:text-primary-400/80">
-                                                Tier {selectedCustomer.loyalty_tier} | saldo{" "}
+                                                {t("transactions.tier")} {selectedCustomer.loyalty_tier} | {t("transactions.balance")}{" "}
                                                 {pricingPreview?.summary
                                                     ?.available_loyalty_points ??
                                                     0}{" "}
-                                                poin
+                                                {t("transactions.points")}
                                             </p>
                                         </div>
                                     </div>
@@ -1703,7 +1707,7 @@ export default function Index({
                             {selectedCustomer?.is_loyalty_member && (
                                 <div>
                                     <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-2">
-                                        Redeem Poin
+                                        {t("transactions.redeemPoints")}
                                     </label>
                                     <input
                                         type="text"
@@ -1731,7 +1735,7 @@ export default function Index({
                                     .length > 0 && (
                                     <div>
                                         <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-2">
-                                            Voucher Customer
+                                            {t("transactions.customerVoucher")}
                                         </label>
                                         <select
                                             value={selectedVoucherId}
@@ -1768,7 +1772,7 @@ export default function Index({
                     <div className="flex-shrink-0 border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/80 p-3">
                         {/* Summary Row */}
                         <div className="flex justify-between items-center mb-2 text-sm">
-                            <span className="text-slate-500">Subtotal Dasar</span>
+                            <span className="text-slate-500">{t("transactions.baseSubtotal")}</span>
                             <span className="font-medium">
                                 {formatPrice(baseSubtotal)}
                             </span>
@@ -1776,7 +1780,7 @@ export default function Index({
                         {promoDiscount > 0 && (
                             <div className="flex justify-between items-center mb-2 text-sm">
                                 <span className="text-slate-500">
-                                    Promo Otomatis
+                                    {t("transactions.autoPromo")}
                                 </span>
                                 <span className="text-emerald-600">
                                     -{formatPrice(promoDiscount)}
@@ -1786,7 +1790,7 @@ export default function Index({
                         {(pricingPreview?.applied_groups || []).length > 0 && (
                             <div className="mb-3 rounded-xl border border-slate-200 bg-white/70 p-2 dark:border-slate-700 dark:bg-slate-900/60">
                                 <div className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                                    Grup Promo Aktif
+                                    {t("transactions.activePromoGroup")}
                                 </div>
                                 <div className="space-y-1.5">
                                     {(pricingPreview?.applied_groups || []).map(
@@ -1809,7 +1813,7 @@ export default function Index({
                         )}
                         {voucherDiscount > 0 && (
                             <div className="flex justify-between items-center mb-2 text-sm">
-                                <span className="text-slate-500">Voucher</span>
+                                <span className="text-slate-500">{t("transactions.voucher")}</span>
                                 <span className="text-primary-600">
                                     -{formatPrice(voucherDiscount)}
                                 </span>
@@ -1818,7 +1822,7 @@ export default function Index({
                         {loyaltyDiscount > 0 && (
                             <div className="flex justify-between items-center mb-2 text-sm">
                                 <span className="text-slate-500">
-                                    Redeem Poin
+                                    {t("transactions.redeemPoints")}
                                 </span>
                                 <span className="text-primary-600">
                                     -{formatPrice(loyaltyDiscount)}
@@ -1827,7 +1831,7 @@ export default function Index({
                         )}
                         {discount > 0 && (
                             <div className="flex justify-between items-center mb-2 text-sm">
-                                <span className="text-slate-500">Diskon Manual</span>
+                                <span className="text-slate-500">{t("transactions.manualDiscount")}</span>
                                 <span className="text-danger-500">
                                     -{formatPrice(discount)}
                                 </span>
@@ -1905,12 +1909,10 @@ export default function Index({
                                             ? "Pilih Pelanggan"
                                             : paymentMethod === "cash" &&
                                               cash < payable
-                                            ? `Kurang ${formatPrice(
-                                                  payable - cash
-                                              )}`
+                                            ? `${t("transactions.insufficientMessage", { amount: formatPrice(payable - cash) })}`
                                             : isLoadingPricing
-                                            ? "Menghitung Promo..."
-                                            : "Selesaikan Transaksi"}
+                                            ? t("transactions.calculatingPromo")
+                                            : t("transactions.completeTransaction")}
                                     </span>
                                 </>
                             )}
@@ -1924,7 +1926,7 @@ export default function Index({
                 isOpen={numpadOpen}
                 onClose={() => setNumpadOpen(false)}
                 onConfirm={handleNumpadConfirm}
-                title="Jumlah Bayar"
+                title={t("transactions.paymentAmount")}
                 initialValue={Number(cashInput) || 0}
                 isCurrency={true}
             />
@@ -1939,15 +1941,15 @@ export default function Index({
                     <div className="relative bg-white dark:bg-slate-900 rounded-2xl shadow-xl p-6 max-w-sm w-full">
                         <h3 className="text-lg font-bold text-slate-800 dark:text-white mb-4 flex items-center gap-2">
                             <IconKeyboard size={24} />
-                            Keyboard Shortcuts
+                            {t("transactions.keyboardShortcuts")}
                         </h3>
                         <div className="space-y-3">
                             {[
-                                ["F1", "Buka Numpad"],
-                                ["F2", "Selesaikan Transaksi"],
-                                ["F3", "Toggle Produk/Keranjang"],
-                                ["F4", "Tampilkan Bantuan"],
-                                ["Esc", "Tutup Modal"],
+                                ["F1", t("transactions.openNumpad")],
+                                ["F2", t("transactions.completeTransaction")],
+                                ["F3", t("transactions.toggleProductCart")],
+                                ["F4", t("transactions.showHelp")],
+                                ["Esc", t("transactions.closeModal")],
                             ].map(([key, desc]) => (
                                 <div
                                     key={key}

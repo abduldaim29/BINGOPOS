@@ -18,6 +18,8 @@ use App\Http\Controllers\Apps\ImportExportController;
 use App\Http\Controllers\Apps\MemberController;
 use App\Http\Controllers\Apps\OutletController;
 use App\Http\Controllers\Apps\PayableController;
+use App\Http\Controllers\Apps\ProductTypeController;
+use App\Http\Controllers\Apps\SubCategoryController;
 use App\Http\Controllers\Apps\PaymentSettingController;
 use App\Http\Controllers\Apps\PriceListController;
 use App\Http\Controllers\Apps\PricingRuleController;
@@ -31,6 +33,7 @@ use App\Http\Controllers\Apps\StockOpnameController;
 use App\Http\Controllers\Apps\StockTransferController;
 use App\Http\Controllers\Apps\SupplierController;
 use App\Http\Controllers\Apps\SupplierReturnController;
+use App\Http\Controllers\Apps\SalesInvoiceController;
 use App\Http\Controllers\Apps\TransactionController;
 use App\Http\Controllers\Apps\UnitController;
 use App\Http\Controllers\Apps\WarehouseController;
@@ -131,6 +134,19 @@ Route::group(['prefix' => 'dashboard', 'middleware' => ['auth', 'verified']], fu
         ->middlewareFor(['create', 'store'], 'permission:categories-create')
         ->middlewareFor(['edit', 'update'], 'permission:categories-edit')
         ->middlewareFor('destroy', 'permission:categories-delete');
+    Route::resource('product-types', ProductTypeController::class)
+        ->middlewareFor(['index', 'show'], 'permission:categories-access')
+        ->middlewareFor(['create', 'store'], 'permission:categories-create')
+        ->middlewareFor(['edit', 'update'], 'permission:categories-edit')
+        ->middlewareFor('destroy', 'permission:categories-delete');
+    Route::resource('sub-categories', SubCategoryController::class)
+        ->middlewareFor(['index', 'show'], 'permission:categories-access')
+        ->middlewareFor(['create', 'store'], 'permission:categories-create')
+        ->middlewareFor(['edit', 'update'], 'permission:categories-edit')
+        ->middlewareFor('destroy', 'permission:categories-delete');
+    Route::get('/categories/{category}/sub-categories', [SubCategoryController::class, 'getByCategory'])
+        ->middleware('permission:categories-access')
+        ->name('categories.sub-categories');
     Route::resource('products', ProductController::class)
         ->middlewareFor(['index', 'show'], 'permission:products-access')
         ->middlewareFor(['create', 'store'], 'permission:products-create')
@@ -264,6 +280,15 @@ Route::group(['prefix' => 'dashboard', 'middleware' => ['auth', 'verified']], fu
     Route::get('/sales-returns/{salesReturn}', [SalesReturnController::class, 'show'])->middleware('permission:sales-returns-access')->name('sales-returns.show');
     Route::patch('/sales-returns/{salesReturn}', [SalesReturnController::class, 'update'])->middleware('permission:sales-returns-create')->name('sales-returns.update');
     Route::post('/sales-returns/{salesReturn}/complete', [SalesReturnController::class, 'complete'])->middleware('permission:sales-returns-complete')->name('sales-returns.complete');
+    // route sales invoices
+    Route::get('/sales-invoices', [SalesInvoiceController::class, 'index'])->middleware('permission:transactions-access')->name('sales-invoices.index');
+    Route::get('/sales-invoices/create', [SalesInvoiceController::class, 'create'])->middleware('permission:transactions-access')->name('sales-invoices.create');
+    Route::post('/sales-invoices', [SalesInvoiceController::class, 'store'])->middleware('permission:transactions-access')->name('sales-invoices.store');
+    Route::get('/sales-invoices/{salesInvoice}', [SalesInvoiceController::class, 'show'])->middleware('permission:transactions-access')->name('sales-invoices.show');
+    Route::get('/sales-invoices/{salesInvoice}/edit', [SalesInvoiceController::class, 'edit'])->middleware('permission:transactions-access')->name('sales-invoices.edit');
+    Route::patch('/sales-invoices/{salesInvoice}', [SalesInvoiceController::class, 'update'])->middleware('permission:transactions-access')->name('sales-invoices.update');
+    Route::delete('/sales-invoices/{salesInvoice}', [SalesInvoiceController::class, 'destroy'])->middleware('permission:transactions-access')->name('sales-invoices.destroy');
+    Route::post('/sales-invoices/{salesInvoice}/receipts', [SalesInvoiceController::class, 'addReceipt'])->middleware('permission:transactions-access')->name('sales-invoices.receipts.add');
     // route purchase orders
     Route::get('/purchase-orders', [PurchaseOrderController::class, 'index'])->middleware('permission:purchase-orders-access')->name('purchase-orders.index');
     Route::get('/purchase-orders/create', [PurchaseOrderController::class, 'create'])->middleware('permission:purchase-orders-create')->name('purchase-orders.create');
@@ -321,6 +346,7 @@ Route::group(['prefix' => 'dashboard', 'middleware' => ['auth', 'verified']], fu
     Route::get('/documents/transactions/{invoice}/pdf/shipping', [DocumentController::class, 'shipping'])->middleware('permission:transactions-access')->name('pdf.transactions.shipping');
     Route::get('/documents/receivables/{receivable}/pdf', [DocumentController::class, 'receivable'])->middleware('permission:receivables-access')->name('pdf.receivables.show');
     Route::get('/documents/payables/{payable}/pdf', [DocumentController::class, 'payable'])->middleware('permission:payables-access')->name('pdf.payables.show');
+    Route::get('/documents/sales-invoices/{invoice}/pdf', [DocumentController::class, 'salesInvoice'])->middleware('permission:transactions-access')->name('pdf.sales-invoices.show');
 
     Route::get('/settings/payments', [PaymentSettingController::class, 'edit'])->middleware('permission:payment-settings-access')->name('settings.payments.edit');
     Route::put('/settings/payments', [PaymentSettingController::class, 'update'])->middleware(['permission:payment-settings-update', 'step_up'])->name('settings.payments.update');

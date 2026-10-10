@@ -17,8 +17,9 @@ import {
     IconPackages,
     IconRulerMeasure,
 } from "@tabler/icons-react";
+import { formatCurrency } from "@/Utils/currency";
 
-export default function Create({ categories, products, units = [] }) {
+export default function Create({ categories, productTypes = [], products, units = [] }) {
     const { errors } = usePage().props;
 
     const { data, setData, post, processing } = useForm({
@@ -27,6 +28,8 @@ export default function Create({ categories, products, units = [] }) {
         sku: "",
         title: "",
         category_id: "",
+        product_type_id: "",
+        sub_category_id: "",
         description: "",
         buy_price: "",
         sell_price: "",
@@ -41,11 +44,33 @@ export default function Create({ categories, products, units = [] }) {
     });
 
     const [selectedCategory, setSelectedCategory] = useState(null);
+    const [selectedProductType, setSelectedProductType] = useState(null);
+    const [subCategories, setSubCategories] = useState([]);
     const [imagePreview, setImagePreview] = useState(null);
 
-    const setSelectedCategoryHandler = (value) => {
+    const setSelectedCategoryHandler = async (value) => {
         setSelectedCategory(value);
         setData("category_id", value?.id || "");
+        setData("sub_category_id", ""); // Reset subcategory when category changes
+
+        // Load subcategories for the selected category
+        if (value?.id) {
+            try {
+                const response = await fetch(`/dashboard/categories/${value.id}/sub-categories`);
+                const data = await response.json();
+                setSubCategories(data);
+            } catch (error) {
+                console.error("Failed to load subcategories:", error);
+                setSubCategories([]);
+            }
+        } else {
+            setSubCategories([]);
+        }
+    };
+
+    const setSelectedProductTypeHandler = (value) => {
+        setSelectedProductType(value);
+        setData("product_type_id", value?.id || "");
     };
 
     const toggleComposite = (checked) => {
@@ -234,6 +259,31 @@ export default function Create({ categories, products, units = [] }) {
                                         errors={errors.category_id}
                                         searchable={true}
                                         displayKey="name"
+                                    />
+                                </div>
+                                <div className="md:col-span-2">
+                                    <InputSelect
+                                        label="Item"
+                                        data={productTypes}
+                                        selected={selectedProductType}
+                                        setSelected={setSelectedProductTypeHandler}
+                                        placeholder="Pilih item (opsional)"
+                                        errors={errors.product_type_id}
+                                        searchable={true}
+                                        displayKey="name"
+                                    />
+                                </div>
+                                <div className="md:col-span-2">
+                                    <InputSelect
+                                        label="Sub Kategori"
+                                        data={subCategories}
+                                        selected={null}
+                                        setSelected={(value) => setData("sub_category_id", value?.id || "")}
+                                        placeholder="Pilih sub kategori (opsional)"
+                                        errors={errors.sub_category_id}
+                                        searchable={true}
+                                        displayKey="name"
+                                        disabled={!selectedCategory}
                                     />
                                 </div>
                                 <Input

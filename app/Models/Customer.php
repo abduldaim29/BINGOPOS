@@ -17,8 +17,10 @@ class Customer extends Model
     protected $fillable = [
         'name',
         'no_telp',
+        'email',
         'address',
         'is_loyalty_member',
+        'is_walkin',
         'member_code',
         'loyalty_tier',
         'loyalty_points',
@@ -34,10 +36,15 @@ class Customer extends Model
         'district_name',
         'village_id',
         'village_name',
+        'tax_id',
+        'tax_name',
+        'cnic',
+        'ntn',
     ];
 
     protected $casts = [
         'is_loyalty_member' => 'boolean',
+        'is_walkin' => 'boolean',
         'loyalty_points' => 'integer',
         'loyalty_total_spent' => 'integer',
         'loyalty_transaction_count' => 'integer',
@@ -85,5 +92,21 @@ class Customer extends Model
         return $this->belongsToMany(CustomerSegment::class, 'customer_segment_memberships')
             ->withPivot(['source', 'matched_at'])
             ->withTimestamps();
+    }
+
+    /**
+     * Scope to get only walk-in customers
+     */
+    public function scopeWalkIn($query)
+    {
+        return $query->where('is_walkin', true);
+    }
+
+    /**
+     * Scope to get only regular (non-walk-in) customers
+     */
+    public function scopeRegular($query)
+    {
+        return $query->where('is_walkin', false);
     }
 }

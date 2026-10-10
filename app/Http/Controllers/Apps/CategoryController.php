@@ -57,11 +57,11 @@ class CategoryController extends Controller
 
         // upload image
         $image = $request->file('image');
-        $image->storeAs('public/category', $image->hashName());
+        $imagePath = $image->store('category', 'public');
 
         // create category
         Category::create([
-            'image' => $image->hashName(),
+            'image' => basename($imagePath),
             'name' => $request->name,
             'description' => $request->description,
         ]);
@@ -95,6 +95,7 @@ class CategoryController extends Controller
          * validate
          */
         $request->validate([
+            'image' => 'nullable|image|mimes:jpeg,jpg,png|max:2048',
             'name' => 'required',
             'description' => 'required',
         ]);
@@ -103,28 +104,32 @@ class CategoryController extends Controller
         if ($request->file('image')) {
 
             // remove old image
-            Storage::disk('local')->delete('public/category/'.basename($category->image));
+            if ($category->image) {
+                Storage::disk('public')->delete('category/'.basename($category->image));
+            }
 
             // upload new image
             $image = $request->file('image');
-            $image->storeAs('public/category', $image->hashName());
+            $imagePath = $image->store('category', 'public');
 
             // update category with new image
             $category->update([
-                'image' => $image->hashName(),
+                'image' => basename($imagePath),
+                'name' => $request->name,
+                'description' => $request->description,
+            ]);
+        } else {
+            // update category without image
+            $category->update([
                 'name' => $request->name,
                 'description' => $request->description,
             ]);
         }
 
-        // update category without image
-        $category->update([
-            'name' => $request->name,
-            'description' => $request->description,
-        ]);
-
         // redirect
-        return to_route('categories.index');
+        return Inertia::render('Dashboard/Categories/Edit', [
+            'category' => $category->fresh(),
+        ])->with('success', 'Kategori berhasil diperbarui');
     }
 
     /**
@@ -139,7 +144,9 @@ class CategoryController extends Controller
         $category = Category::findOrFail($id);
 
         // remove image
-        Storage::disk('local')->delete('public/category/'.basename($category->image));
+        if ($category->image) {
+            Storage::disk('public')->delete('category/'.basename($category->image));
+        }
 
         // delete
         $category->delete();

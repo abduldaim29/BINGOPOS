@@ -10,4 +10,17 @@ export default defineConfig({
         }),
         react(),
     ],
+    build: {
+        chunkSizeWarningLimit: 1000,
+        rollupOptions: {
+            output: {
+                manualChunks: {
+                    'vendor': ['react', 'react-dom', '@inertiajs/react'],
+                    'icons': ['@tabler/icons-react'],
+                    'charts': ['chart.js'],
+                    'utils': ['react-hot-toast', 'sweetalert2'],
+                },
+            },
+        },
+    },
 });

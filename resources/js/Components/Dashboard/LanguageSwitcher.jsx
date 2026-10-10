@@ -1,26 +1,52 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { usePage, useForm } from "@inertiajs/react";
 import { IconLanguage } from "@tabler/icons-react";
 import { Menu, Transition } from "@headlessui/react";
+import { useTranslation } from "react-i18next";
+import i18n from "@/i18n";
 
 export default function LanguageSwitcher() {
+    const { t } = useTranslation();
     const { locale } = usePage().props;
+
+    // Sync i18n with backend locale on mount and when locale changes
+    React.useEffect(() => {
+        if (locale?.current && locale.current !== i18n.language) {
+            i18n.changeLanguage(locale.current);
+            localStorage.setItem('locale', locale.current);
+        }
+    }, [locale?.current]);
+
     const { post, processing } = useForm({
-        locale: locale?.current || "id",
+        locale: locale?.current || "en",
     });
 
-    const handleChange = (e) => {
-        post(route("language.switch", { locale: e }), {
-            preserveScroll: true,
+    const handleChange = (newLocale) => {
+        console.log('Changing language to:', newLocale);
+
+        // Change frontend language immediately
+        i18n.changeLanguage(newLocale);
+
+        // Save to localStorage for persistence
+        localStorage.setItem('locale', newLocale);
+
+        // Update backend and reload page to ensure all components update
+        post(route("language.switch"), {
+            locale: newLocale,
             onSuccess: () => {
+                console.log('Language switched successfully');
+                // Reload page to ensure all components re-render with new language
                 window.location.reload();
+            },
+            onError: (errors) => {
+                console.error('Language switch error:', errors);
             },
         });
     };
 
     const languages = [
-        { code: "id", name: "Indonesia", flag: "🇮🇩" },
         { code: "en", name: "English", flag: "🇬🇧" },
+        { code: "id", name: "Indonesia", flag: "🇮🇩" },
     ];
 
     const currentLang = languages.find((l) => l.code === locale?.current) || languages[0];
@@ -29,7 +55,7 @@ export default function LanguageSwitcher() {
         <Menu as="div" className="relative">
             <Menu.Button
                 className="flex items-center gap-2 p-2.5 rounded-xl text-slate-500 hover:text-slate-700 hover:bg-slate-100 dark:text-slate-400 dark:hover:text-slate-200 dark:hover:bg-slate-800 transition-colors"
-                title="Change Language"
+                title={t("language.switch")}
             >
                 <IconLanguage size={20} strokeWidth={1.5} />
                 <span className="hidden lg:inline text-sm font-medium">{currentLang.code.toUpperCase()}</span>
@@ -46,7 +72,7 @@ export default function LanguageSwitcher() {
                 <Menu.Items className="absolute right-0 mt-2 w-48 origin-top-right rounded-xl bg-white dark:bg-slate-800 shadow-lg ring-1 ring-slate-200 dark:ring-slate-700 focus:outline-none overflow-hidden">
                     <div className="p-1">
                         <div className="px-3 py-2 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                            Select Language
+                            {t("language.select")}
                         </div>
                         {languages.map((lang) => (
                             <Menu.Item key={lang.code}>

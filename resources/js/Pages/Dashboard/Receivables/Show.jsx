@@ -10,13 +10,7 @@ import {
 } from "@tabler/icons-react";
 import toast from "react-hot-toast";
 import { useAuthorization } from "@/Utils/authorization";
-
-const formatCurrency = (value = 0) =>
-    new Intl.NumberFormat("id-ID", {
-        style: "currency",
-        currency: "IDR",
-        minimumFractionDigits: 0,
-    }).format(value);
+import { formatCurrency } from "@/Utils/currency";
 
 export default function ReceivableShow({ receivable, bankAccounts = [] }) {
     const { flash, storeProfile } = usePage().props;
