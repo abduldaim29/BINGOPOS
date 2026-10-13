@@ -1,5 +1,5 @@
-import React, { useEffect } from "react";
-import { usePage, useForm } from "@inertiajs/react";
+import React, { useEffect, useState } from "react";
+import { usePage } from "@inertiajs/react";
 import { IconLanguage } from "@tabler/icons-react";
 import { Menu, Transition } from "@headlessui/react";
 import { useTranslation } from "react-i18next";
@@ -8,48 +8,60 @@ import i18n from "@/i18n";
 export default function LanguageSwitcher() {
     const { t } = useTranslation();
     const { locale } = usePage().props;
+    const [currentLocale, setCurrentLocale] = useState(i18n.language);
 
     // Sync i18n with backend locale on mount and when locale changes
-    React.useEffect(() => {
+    useEffect(() => {
         if (locale?.current && locale.current !== i18n.language) {
-            i18n.changeLanguage(locale.current);
-            localStorage.setItem('locale', locale.current);
+            // Only accept English locale, default to English otherwise
+            const targetLocale = locale.current === 'en' ? 'en' : 'en';
+            i18n.changeLanguage(targetLocale);
+            localStorage.setItem('locale', targetLocale);
+            setCurrentLocale(targetLocale);
         }
     }, [locale?.current]);
 
-    const { post, processing } = useForm({
-        locale: locale?.current || "en",
-    });
+    // Listen for storage changes
+    useEffect(() => {
+        const handleStorageChange = (e) => {
+            if (e.key === 'locale' && e.newValue && e.newValue !== i18n.language) {
+                i18n.changeLanguage(e.newValue);
+                setCurrentLocale(e.newValue);
+            }
+        };
+        window.addEventListener('storage', handleStorageChange);
+        return () => window.removeEventListener('storage', handleStorageChange);
+    }, []);
 
     const handleChange = (newLocale) => {
+        // Only allow English locale
+        if (newLocale !== 'en') {
+            return;
+        }
+
         console.log('Changing language to:', newLocale);
+
+        // Save to localStorage
+        localStorage.setItem('locale', newLocale);
 
         // Change frontend language immediately
         i18n.changeLanguage(newLocale);
+        setCurrentLocale(newLocale);
 
-        // Save to localStorage for persistence
-        localStorage.setItem('locale', newLocale);
-
-        // Update backend and reload page to ensure all components update
-        post(route("language.switch"), {
-            locale: newLocale,
-            onSuccess: () => {
-                console.log('Language switched successfully');
-                // Reload page to ensure all components re-render with new language
-                window.location.reload();
-            },
-            onError: (errors) => {
-                console.error('Language switch error:', errors);
-            },
-        });
+        // Reload page to ensure all components re-render with new language
+        window.location.reload();
     };
 
     const languages = [
         { code: "en", name: "English", flag: "🇬🇧" },
-        { code: "id", name: "Indonesia", flag: "🇮🇩" },
     ];
 
-    const currentLang = languages.find((l) => l.code === locale?.current) || languages[0];
+    const currentLang = languages.find((l) => l.code === currentLocale) || languages[0];
+
+    // If there's only one language, don't show the switcher
+    if (languages.length <= 1) {
+        return null;
+    }
 
     return (
         <Menu as="div" className="relative">
@@ -79,18 +91,17 @@ export default function LanguageSwitcher() {
                                 {({ active }) => (
                                     <button
                                         onClick={() => handleChange(lang.code)}
-                                        disabled={processing}
                                         className={`${
                                             active ? "bg-slate-100 dark:bg-slate-700" : ""
                                         } ${
-                                            locale?.current === lang.code
+                                            currentLocale === lang.code
                                                 ? "bg-primary-50 dark:bg-primary-900/20"
                                                 : ""
-                                        } flex w-full items-center gap-3 px-3 py-2.5 text-sm text-slate-700 dark:text-slate-200 rounded-lg transition-colors disabled:opacity-50`}
+                                        } flex w-full items-center gap-3 px-3 py-2.5 text-sm text-slate-700 dark:text-slate-200 rounded-lg transition-colors`}
                                     >
                                         <span className="text-lg">{lang.flag}</span>
                                         <span className="flex-1 text-left">{lang.name}</span>
-                                        {locale?.current === lang.code && (
+                                        {currentLocale === lang.code && (
                                             <svg
                                                 className="w-4 h-4 text-primary-600"
                                                 fill="none"

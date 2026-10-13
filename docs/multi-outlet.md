@@ -1,93 +1,113 @@
-# Multi-Outlet
+# Getting Started
 
-The POS supports multiple branches (outlets) from a single shared database. Each outlet owns one or more warehouses; the cashier shift picks the warehouse the POS will sell from. This page documents the model and how to use it day-to-day. For staging/production rollout of an existing single-outlet install see the **Rollout** section below.
+Return to the documentation index: `docs/README.md`
 
-## Model
+## Purpose
 
-- `outlets` is the business boundary above `warehouses`.
-- `warehouses.outlet_id` ties every warehouse to its outlet.
-- `PUSAT` is the central warehouse/outlet for stock distribution and is **not sales-enabled**.
-- Sales outlets (branches) each have a `branch`-type warehouse and can open cashier shifts.
-- Cashier assignments are stored in `user_outlets` (one default per user).
-- Active outlet context is session-based; the active shift warehouse/outlet is the source of truth and locks outlet switching while a shift is open.
-- Global fallback remains for legacy single-outlet installations.
+This guide helps new developers run the application from scratch until they can log in and access the dashboard modules.
 
-## Scope Policy
+## Minimum Requirements
 
-- Customers, loyalty, suppliers, receivables, and payables remain global.
-- Transactions, stock, shifts, purchasing, returns, reports, settings, pricing, and dine-in data use outlet context.
-- `PUSAT` is the central warehouse and is not sales-enabled.
-- A cashier uses one active shift and one outlet warehouse at a time.
-- Global configuration remains a fallback for legacy single-outlet installations.
+- PHP 8.3+ as required by Laravel 13
+- Composer
+- Node.js 18+ + npm
+- MySQL / MariaDB
+- Standard Laravel PHP extensions
+- Chrome/Chromium (for WhatsApp Gateway — optional)
 
-## Day-to-Day Operations
+For production deployments that use automation, configure the Laravel queue worker and scheduler. Run `php artisan schedule:run` every minute. The WhatsApp Gateway also requires a separate Node.js service and a process manager such as PM2.
 
-After the first install the active outlet is set in the navbar selector (`OutletSwitcher`). While a shift is open the selector is locked to the shift's warehouse/outlet.
+## Setup Steps
 
-- **Opening a shift** — pick the branch warehouse from the cashiers' assigned active warehouses only.
-- **Switching outlets** — close all open shifts first; the selector allows switching between assigned active outlets.
-- **Stock transfers** — `PUSAT → branch` is the typical replenishment path; cross-outlet transfers require both endpoints to be assigned to the operator.
-- **Per-outlet settings** — store profile, printer, payment settings, bank accounts, pricing, vouchers, dine-in, WhatsApp, and sales target each have an outlet override and a global fallback.
-- **Reports** — sales, profit, and dashboard reflect the operator's accessible outlets. Use the warehouse filter for finer selection.
-- **Receivables and payables** — remain in a global ledger; visibility and payment authorization derive from the source transaction/purchase-order outlet.
+```bash
+cp .env.example .env
+composer install
+PUPPETEER_SKIP_DOWNLOAD=true npm install
+php artisan key:generate
+php artisan migrate --seed
+php artisan storage:link
+# Start all local processes
+composer run dev
+# Open http://localhost:8000 after the server starts
+```
 
-## Rollout (existing single-outlet installs)
+## Recommended Bootstrapping Sequence
 
-> Read-only until the business approves every data mapping. Do not run `--fix` or `--strict` until staging has been exercised end-to-end.
+1. Configure the database settings in `.env`.
+2. Run `php artisan migrate --seed`.
+3. Run `php artisan storage:link`.
+4. Run `composer run dev`.
+5. Open `http://localhost:8000`; on the first installation, the application automatically opens the `/setup` wizard.
+6. Complete the wizard to create the admin account, store profile, categories, and main warehouse.
+7. Log in using the account created in the setup wizard.
 
-### Preflight
+## Seed Data
 
-1. Back up the database and restore that backup into staging.
-2. Run `php artisan migrate --pretend`, then `php artisan migrate` on staging.
-3. Run `php artisan outlet:audit` and `php artisan outlet:legacy-audit`.
-4. Run `php artisan inventory:reconcile` and save the output.
-5. Do not run `inventory:reconcile --fix` until the team confirms that warehouse pivot stock is authoritative.
-6. Classify every warehouse-less transaction, shift, stock mutation, purchase, receiving, return, and opname.
-7. Assign every active user to the correct outlet and verify one default outlet.
+`DatabaseSeeder` creates only:
 
-## Outlet Setup
+- Permissions
+- Roles
+- Initial payment settings
+- Dine-in settings
+- Main warehouse `PUSAT`
 
-Create or verify:
+There is no default user or sample data in the main seeder. The `PUSAT` outlet is created as a central, non-selling warehouse. On the first installation, open the application root, and the `/setup` wizard will open automatically to create the admin account.
 
-| Code | Role | Sales |
-| --- | --- | --- |
-| `PUSAT` | Central warehouse | No |
-| `MAL` | Malabar outlet | Yes |
-| `TKB` | Taman Kencana outlet | Yes |
-| `PUT` | Puter outlet | Yes |
+To explicitly seed the complete demo dataset:
 
-For every sales outlet:
+```bash
+php artisan db:seed --class=DemoSeeder --force
+```
 
-- Link one active branch warehouse.
-- Attach product stock rows and load opening stock through approved transfers or opname.
-- Assign cashiers and managers through user outlet assignments.
-- Configure store profile, printer, payment settings, bank accounts, pricing, vouchers, dine-in tables, WhatsApp, and sales target as required.
+`DemoSeeder` creates demo outlets `MAL`, `TKB`, and `PUT`, demo users, products, transactions, shifts, purchasing, inventory, pricing, dine-in, and feature coverage. Sales transactions are created only at selling outlets; no real payment gateway calls are made.
 
-## Pilot Checklist
+The following compatibility alias is also available:
 
-Run the following with a test user assigned to one outlet:
+```bash
+php artisan seed:demo --force
+```
 
-- Switch only between assigned active outlets.
-- Confirm outlet switching is blocked while a shift is open.
-- Confirm PUSAT cannot open a sales shift.
-- Open and close a shift with cash movement.
-- Complete cash, bank transfer, QRIS, and split-payment sales.
-- Confirm transaction, stock, receipt, and payment webhook outlet context.
-- Test offline sync and confirm it cannot post without the correct active shift.
-- Test return, stock opname, transfer, purchase order, goods receiving, and supplier return.
-- Test dine-in QR ordering at the correct outlet table.
-- Verify sales, profit, insights, receivable, payable, and dashboard totals for the active outlet.
-- Verify an Outlet A user cannot read or mutate Outlet B records.
-- Run `php artisan outlet:audit --strict` and require success.
+`DatabaseSeeder` is safe for installation and production. Do not run `DemoSeeder` or `seed:demo` against a production database because demo operational data will be regenerated.
 
-## Production Gate
+Important notes:
 
-Do not enable the second sales outlet until all of the following are true:
+- Features that depend on new permissions should always be tested after running `db:seed`.
+- If permissions appear out of sync, log out and log back in after seeding is complete.
 
-- `php artisan outlet:audit --strict` exits successfully.
-- `php artisan outlet:legacy-audit` output has been reviewed and mapped where appropriate.
-- Stock reconciliation output is clean or formally accepted.
-- Staging pilot passes and the rollback plan is documented.
-- Backups and queue/scheduler/WhatsApp monitoring are confirmed.
+## After the Application Starts
 
-The final major release should be `v3.0.0` only after this gate and the first production pilot are accepted.
+Perform these minimum checks:
+
+1. `dashboard/settings/store`
+2. `dashboard/settings/payments`
+3. `dashboard/settings/bank-accounts`
+4. `dashboard/settings/target`
+
+## Multi-Branch Scenario
+
+If the store has more than one branch, use the following scenario:
+
+1. During the initial installation (`/setup`), enter at least one branch in the "Branches" step. For example, for Cafe UD Djaya:
+   - `PUSAT` (head office) is created automatically as a central, non-selling warehouse.
+   - `MAL` / Malabar (selling branch)
+   - `TKB` / Taman Kencana (selling branch)
+   - `PUT` / Puter (selling branch)
+2. The Super Admin account is automatically associated with every outlet. New cashiers are created through `Users`, with an outlet assignment and one default outlet.
+3. Initial branch stock: transfer from `PUSAT → WH-MAL/WH-TKB/WH-PUT` through the **Stock Transfer** menu, or enter stock through **Stock Opname**.
+4. Per-branch settings (logo, receipt, payment gateway, bank account, printer, WhatsApp, and target) are available on the Settings pages using the outlet switcher in the navbar.
+5. Close the shift before switching outlets — the outlet selector is locked while a cashier shift is active.
+
+## Quick Validation Tips
+
+- Open the main dashboard.
+- Open the cashier transaction screen.
+- Check transaction history.
+- Check stock opname / cashier shift / audit logs if their feature migrations are available.
+
+## Common Errors
+
+- Images not displaying: run `php artisan storage:link`.
+- Payment webhook not working: check `APP_URL`.
+- New module returning error 500: check whether the feature migration has been run.
+- Reminders, reorder alerts, or campaigns not running: check the queue worker and `schedule:run`.
+- WhatsApp messages not being sent: check `WA_SERVICE_URL`, device status, `wa_enabled`, and the Node.js service.

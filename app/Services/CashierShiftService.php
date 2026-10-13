@@ -39,7 +39,7 @@ class CashierShiftService
 
         if (! $shift) {
             throw ValidationException::withMessages([
-                'shift' => 'Shift kasir belum dibuka.',
+                'shift' => 'The cashier shift has not been opened.',
             ]);
         }
 
@@ -55,7 +55,7 @@ class CashierShiftService
 
         if ($existing) {
             throw ValidationException::withMessages([
-                'opening_cash' => 'Kasir ini masih memiliki shift aktif.',
+                'opening_cash' => 'This cashier already has an active shift.',
             ]);
         }
 
@@ -86,7 +86,7 @@ class CashierShiftService
             ->sum('grand_total');
 
         // Split payments: cash tender portions must count toward the drawer,
-        // the parent row's payment_method ('split') puts grand_total in the non-cash bucket.
+        // while the parent row's payment_method ('split') places grand_total in the non-cash bucket.
         $splitCashTenderTotal = (int) TransactionTender::query()
             ->whereHas('transaction', fn ($q) => $q
                 ->where('cashier_shift_id', $shift->id)
@@ -101,7 +101,7 @@ class CashierShiftService
             ->where('payment_method', '!=', 'cash')
             ->sum('grand_total');
 
-        // Split payments: non-cash portion = grand_total minus cash tenders.
+        // Split payments: the non-cash portion equals grand_total minus cash tenders.
         $nonCashSalesTotal -= $splitCashTenderTotal;
 
         $cashRefundTotal = (int) (clone $salesReturns)
@@ -118,6 +118,7 @@ class CashierShiftService
         $cashInTotal = (int) $shift->cashMovements()
             ->where('type', ShiftCashMovement::TYPE_IN)
             ->sum('amount');
+
         $cashOutTotal = (int) $shift->cashMovements()
             ->where('type', ShiftCashMovement::TYPE_OUT)
             ->sum('amount');
@@ -141,19 +142,19 @@ class CashierShiftService
     {
         if (! $shift->isOpen()) {
             throw ValidationException::withMessages([
-                'shift' => 'Shift sudah ditutup, tidak dapat mencatat pergerakan kas.',
+                'shift' => 'The shift is already closed. Cash movements cannot be recorded.',
             ]);
         }
 
         if ($amount <= 0) {
             throw ValidationException::withMessages([
-                'amount' => 'Nominal harus lebih besar dari nol.',
+                'amount' => 'The amount must be greater than zero.',
             ]);
         }
 
         if (! in_array($type, [ShiftCashMovement::TYPE_IN, ShiftCashMovement::TYPE_OUT], true)) {
             throw ValidationException::withMessages([
-                'type' => 'Tipe pergerakan kas tidak valid.',
+                'type' => 'Invalid cash movement type.',
             ]);
         }
 
@@ -175,7 +176,7 @@ class CashierShiftService
     ): CashierShift {
         if (! $shift->isOpen()) {
             throw ValidationException::withMessages([
-                'shift' => 'Shift yang sudah ditutup tidak dapat diubah.',
+                'shift' => 'A closed shift cannot be modified.',
             ]);
         }
 
@@ -184,7 +185,7 @@ class CashierShiftService
 
             if (! $lockedShift->isOpen()) {
                 throw ValidationException::withMessages([
-                    'shift' => 'Shift yang sudah ditutup tidak dapat diubah.',
+                    'shift' => 'A closed shift cannot be modified.',
                 ]);
             }
 

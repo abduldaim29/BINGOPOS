@@ -88,23 +88,23 @@ class GoodsReceivingController extends Controller
         }
 
         if (! in_array($order->status, ['ordered', 'partial_received'])) {
-            return back()->with('error', 'Hanya PO berstatus ordered/partial yang dapat diterima.');
+            return back()->with('error', 'Only purchase orders with ordered or partially received status can be received.');
         }
 
         $seen = [];
         foreach ($data['items'] as $item) {
             if (in_array($item['purchase_order_item_id'], $seen)) {
-                return back()->with('error', 'Item PO duplikat dalam satu penerimaan.');
+                return back()->with('error', 'Duplicate purchase order items are not allowed in a single receiving record.');
             }
             $seen[] = $item['purchase_order_item_id'];
 
             $poItem = $order->items->firstWhere('id', $item['purchase_order_item_id']);
             if (! $poItem) {
-                return back()->with('error', 'Item tidak ditemukan di PO.');
+                return back()->with('error', 'Item not found in the purchase order.');
             }
             $outstanding = $poItem->qty_ordered - $poItem->qty_received;
             if ($item['qty_received'] > $outstanding) {
-                return back()->with('error', "Qty diterima melebihi sisa item {$poItem->product_id}.");
+                return back()->with('error', "Received quantity exceeds the outstanding quantity for item {$poItem->product_id}.");
             }
         }
 
@@ -117,7 +117,7 @@ class GoodsReceivingController extends Controller
 
         return redirect()
             ->route('goods-receivings.show', $receiving)
-            ->with('success', 'Penerimaan barang berhasil dicatat.');
+            ->with('success', 'Goods receipt recorded successfully.');
     }
 
     public function show(GoodsReceiving $goodsReceiving)

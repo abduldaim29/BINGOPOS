@@ -52,11 +52,11 @@ export default function CustomerHistoryPanel({
                 if (result.success) {
                     setData(result);
                 } else {
-                    setError(result.message || "Gagal memuat data");
+                    setError(result.message || "Failed to load data");
                 }
             } catch (err) {
                 console.error("Customer history error:", err);
-                setError("Gagal memuat data pelanggan");
+                setError("Failed to load customer data");
             } finally {
                 setLoading(false);
             }
@@ -102,7 +102,7 @@ export default function CustomerHistoryPanel({
                 <div className="flex items-center gap-2 text-white">
                     <IconHistory size={18} />
                     <span className="font-semibold text-sm">
-                        Riwayat Pelanggan
+                        Customer History
                     </span>
                 </div>
                 {onClose && (
@@ -131,7 +131,7 @@ export default function CustomerHistoryPanel({
                     <p className="text-lg font-bold text-slate-900 dark:text-white">
                         {stats.total_transactions}
                     </p>
-                    <p className="text-xs text-slate-500">Transaksi</p>
+                    <p className="text-xs text-slate-500">Transactions</p>
                 </div>
                 <div className="bg-white dark:bg-slate-900 p-3 text-center">
                     <div className="flex items-center justify-center mb-1">
@@ -140,7 +140,7 @@ export default function CustomerHistoryPanel({
                     <p className="text-sm font-bold text-success-600 dark:text-success-400">
                         {formatCurrency(stats.total_spent)}
                     </p>
-                    <p className="text-xs text-slate-500">Total Belanja</p>
+                    <p className="text-xs text-slate-500">Total Spent</p>
                 </div>
                 <div className="bg-white dark:bg-slate-900 p-3 text-center">
                     <div className="flex items-center justify-center mb-1">
@@ -149,7 +149,7 @@ export default function CustomerHistoryPanel({
                     <p className="text-sm font-medium text-slate-700 dark:text-slate-300">
                         {stats.last_visit || "-"}
                     </p>
-                    <p className="text-xs text-slate-500">Kunjungan Terakhir</p>
+                    <p className="text-xs text-slate-500">Last Visit</p>
                 </div>
                 <div className="bg-white dark:bg-slate-900 p-3 text-center">
                     <div className="flex items-center justify-center mb-1">
@@ -167,7 +167,7 @@ export default function CustomerHistoryPanel({
                     <p className="text-sm font-bold text-primary-600 dark:text-primary-300">
                         {loyalty?.points || 0}
                     </p>
-                    <p className="text-xs text-slate-500">Poin</p>
+                    <p className="text-xs text-slate-500">Points</p>
                 </div>
             </div>
 
@@ -175,7 +175,7 @@ export default function CustomerHistoryPanel({
                 <div className="px-4 py-3 border-t border-slate-100 dark:border-slate-800">
                     <p className="text-xs font-semibold text-slate-500 uppercase mb-2 flex items-center gap-1">
                         <IconGift size={12} />
-                        Voucher Aktif
+                        Active Vouchers
                     </p>
                     <div className="space-y-2">
                         {eligible_vouchers.map((voucher) => (
@@ -187,7 +187,7 @@ export default function CustomerHistoryPanel({
                                     {voucher.code} - {voucher.name}
                                 </p>
                                 <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                                    Min belanja {formatCurrency(voucher.minimum_order)}
+                                    Minimum spend {formatCurrency(voucher.minimum_order)}
                                 </p>
                             </div>
                         ))}
@@ -200,7 +200,7 @@ export default function CustomerHistoryPanel({
                 <div className="px-4 py-3 border-t border-slate-100 dark:border-slate-800">
                     <p className="text-xs font-semibold text-slate-500 uppercase mb-2 flex items-center gap-1">
                         <IconShoppingBag size={12} />
-                        Produk Favorit
+                        Favorite Products
                     </p>
                     <div className="flex flex-wrap gap-2">
                         {frequent_products.map((product) => (
@@ -222,7 +222,7 @@ export default function CustomerHistoryPanel({
             {recent_transactions && recent_transactions.length > 0 && (
                 <div className="px-4 py-3 border-t border-slate-100 dark:border-slate-800">
                     <p className="text-xs font-semibold text-slate-500 uppercase mb-2">
-                        Transaksi Terakhir
+                        Recent Transactions
                     </p>
                     <div className="space-y-2 max-h-[150px] overflow-y-auto">
                         {recent_transactions.map((tx) => (
@@ -250,7 +250,7 @@ export default function CustomerHistoryPanel({
             {loyalty_history && loyalty_history.length > 0 && (
                 <div className="px-4 py-3 border-t border-slate-100 dark:border-slate-800">
                     <p className="text-xs font-semibold text-slate-500 uppercase mb-2">
-                        Aktivitas Loyalty
+                        Loyalty Activity
                     </p>
                     <div className="space-y-2 max-h-[150px] overflow-y-auto">
                         {loyalty_history.map((entry) => (
@@ -274,7 +274,7 @@ export default function CustomerHistoryPanel({
                                     }`}
                                 >
                                     {entry.points_delta >= 0 ? "+" : ""}
-                                    {entry.points_delta} poin
+                                    {entry.points_delta} points
                                 </p>
                             </div>
                         ))}
@@ -290,7 +290,7 @@ export default function CustomerHistoryPanel({
                         className="mx-auto text-slate-300 mb-2"
                     />
                     <p className="text-sm text-slate-500">
-                        Belum ada transaksi
+                        No transactions yet
                     </p>
                 </div>
             )}
@@ -315,7 +315,7 @@ export function CustomerHistoryButton({
             <button
                 onClick={() => setShowHistory(true)}
                 className={`p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 hover:text-primary-500 transition-colors ${className}`}
-                title="Lihat riwayat"
+                title="View history"
             >
                 <IconHistory size={16} />
             </button>

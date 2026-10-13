@@ -4,6 +4,7 @@ import { Head, useForm, usePage, Link } from "@inertiajs/react";
 import Input from "@/Components/Dashboard/Input";
 import Textarea from "@/Components/Dashboard/TextArea";
 import Checkbox from "@/Components/Dashboard/Checkbox";
+import InputSelect from "@/Components/Dashboard/InputSelect";
 import toast from "react-hot-toast";
 import {
     IconTag,
@@ -12,7 +13,7 @@ import {
 } from "@tabler/icons-react";
 
 export default function Edit({ productType }) {
-    const { errors } = usePage().props;
+    const { errors, categories, products } = usePage().props;
 
     const { data, setData, post, processing } = useForm({
         id: productType.id,
@@ -20,6 +21,8 @@ export default function Edit({ productType }) {
         code: productType.code,
         description: productType.description,
         is_active: productType.is_active,
+        category_id: productType.category_id || "",
+        product_id: productType.product_id || "",
         _method: "PUT",
     });
 
@@ -73,6 +76,23 @@ export default function Edit({ productType }) {
                                     setData("name", e.target.value)
                                 }
                                 value={data.name}
+                            />
+                            <InputSelect
+                                label="Category"
+                                data={categories || []}
+                                selected={categories?.find(c => c.id === data.category_id)}
+                                setSelected={(category) => setData("category_id", category?.id || "")}
+                                placeholder="Select Category"
+                                errors={errors.category_id}
+                            />
+                            <InputSelect
+                                label="Product"
+                                data={products || []}
+                                selected={products?.find(p => p.id === data.product_id)}
+                                setSelected={(product) => setData("product_id", product?.id || "")}
+                                placeholder="Select Product"
+                                errors={errors.product_id}
+                                displayKey="title"
                             />
                             <Textarea
                                 label="Description"

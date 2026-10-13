@@ -689,7 +689,7 @@ export default function Edit({ categories, productTypes = [], subCategories = []
                                                 Estimasi Profit per Item
                                             </p>
                                             <p className="text-2xl font-bold text-success-600 dark:text-success-500 mt-1">
-                                                + Rp{" "}
+                                                + Rs{" "}
                                                 {(
                                                     data.sell_price -
                                                     data.buy_price
@@ -823,7 +823,7 @@ export default function Edit({ categories, productTypes = [], subCategories = []
                                             <p className="mt-4 text-sm text-slate-500 dark:text-slate-400">
                                                 Estimasi harga jual dari komponen:{" "}
                                                 <span className="font-semibold text-slate-700 dark:text-slate-200">
-                                                    Rp{" "}
+                                                    Rs{" "}
                                                     {estimatedSellPrice.toLocaleString(
                                                         "id-ID"
                                                     )}

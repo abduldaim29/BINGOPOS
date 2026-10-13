@@ -41,7 +41,7 @@ class CheckoutService
                 ->get();
 
             if ($carts->isEmpty()) {
-                abort(422, 'Keranjang kosong.');
+                abort(422, 'The cart is empty.');
             }
 
             $pricingPreview = $this->pricingService->previewCart($carts, $ctx->customer, null, $ctx->outlet);
@@ -66,7 +66,7 @@ class CheckoutService
 
             if ($ctx->isCashPayment && $ctx->cashAmount < $grandTotal) {
                 throw ValidationException::withMessages([
-                    'cash' => 'Uang tunai kurang dari total belanja.',
+                    'cash' => 'The cash amount is less than the total purchase amount.',
                 ]);
             }
 
@@ -201,6 +201,7 @@ class CheckoutService
 
             if ($product->is_composite) {
                 $product->load('components');
+
                 foreach ($product->components as $component) {
                     $componentQty = (int) round((float) $component->pivot->qty * $cart->qty);
                     $pw = $warehouseId
@@ -209,15 +210,19 @@ class CheckoutService
                             'warehouse_id' => $warehouseId,
                         ])->lockForUpdate()->first()
                         : null;
+
                     $available = $pw ? (int) $pw->stock : (int) $component->stock;
+
                     if ($available < $componentQty) {
                         throw ValidationException::withMessages([
-                            'stock' => "Stok komponen {$component->title} tidak mencukupi. Tersedia: {$available}.",
+                            'stock' => "Insufficient stock for component {$component->title}. Available: {$available}.",
                         ]);
                     }
+
                     if ($pw) {
                         $pw->decrement('stock', $componentQty);
                     }
+
                     $component->decrement('stock', $componentQty);
                 }
             } else {
@@ -229,15 +234,19 @@ class CheckoutService
                         'warehouse_id' => $warehouseId,
                     ])->lockForUpdate()->first()
                     : null;
+
                 $available = $pw ? (int) $pw->stock : (int) $product->stock;
+
                 if ($available < $baseQty) {
                     throw ValidationException::withMessages([
-                        'stock' => "Stok {$product->title} tidak mencukupi. Tersedia: {$available}.",
+                        'stock' => "Insufficient stock for {$product->title}. Available: {$available}.",
                     ]);
                 }
+
                 if ($pw) {
                     $pw->decrement('stock', $baseQty);
                 }
+
                 $product->decrement('stock', $baseQty);
 
                 if ($warehouseId) {
@@ -254,26 +263,32 @@ class CheckoutService
 
                     if ($batches->isNotEmpty()) {
                         $covered = (int) $batches->sum('stock');
+
                         if ($covered < $baseQty) {
                             throw ValidationException::withMessages([
-                                'stock' => "Stok batch {$product->title} tidak mencukupi. Tersedia: {$covered}.",
+                                'stock' => "Insufficient batch stock for {$product->title}. Available: {$covered}.",
                             ]);
                         }
+
                         $remaining = $baseQty;
                         $firstBatchId = null;
+
                         foreach ($batches as $batch) {
                             if ($remaining <= 0) {
                                 break;
                             }
+
                             $take = min((int) $batch->stock, $remaining);
                             $batch->decrement('stock', $take);
                             $remaining -= $take;
                             $firstBatchId ??= $batch->id;
+
                             $detail->batchAllocations()->create([
                                 'product_batch_id' => $batch->id,
                                 'qty' => $take,
                             ]);
                         }
+
                         $detail->update(['product_batch_id' => $firstBatchId]);
                     }
                 }

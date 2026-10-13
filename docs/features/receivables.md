@@ -1,42 +1,42 @@
 # Receivables
 
-Kembali ke indeks dokumentasi: `docs/README.md`
+Back to the documentation index: `docs/README.md`
 
-## Tujuan
+## Purpose
 
-Mencatat piutang pelanggan yang berasal dari transaksi `pay_later` dan menyediakan alur pelunasan bertahap.
+Records customer receivables arising from `pay_later` transactions and provides a workflow for installment payments.
 
-## Fitur Saat Ini
+## Current Features
 
-- list piutang
-- filter status, customer, invoice, due date
-- detail piutang
-- pembayaran parsial
-- status `unpaid`, `partial`, `paid`, `overdue`
-- PDF receivable
-- reminder jatuh tempo dan overdue melalui automation CRM
-- pengiriman langsung melalui WhatsApp jika service aktif dan device terhubung
+- Receivables list.
+- Filter by status, customer, invoice, and due date.
+- Receivable details.
+- Partial payments.
+- Statuses: `unpaid`, `partial`, `paid`, `overdue`.
+- Receivable PDF.
+- Due-date and overdue reminders through CRM automation.
+- Direct delivery via WhatsApp when the service is enabled and the device is connected.
 
-## Halaman dan Route
+## Pages and Routes
 
 - `dashboard/receivables`
 - `receivables.show`
 - `receivables.pay`
 - `pdf.receivables.show`
 
-## Permission
+## Permissions
 
 - `receivables-access`
 - `receivables-pay`
 
-## Alur User
+## User Workflow
 
-1. checkout `pay_later` membuat receivable
-2. user memantau daftar piutang
-3. user mencatat pembayaran
-4. sistem memperbarui nilai `paid`, `remaining`, dan `status`
+1. A `pay_later` checkout creates a receivable.
+2. The user monitors the receivables list.
+3. The user records a payment.
+4. The system updates the `paid` amount, `remaining` balance, and `status`.
 
-## Integrasi Data
+## Data Integration
 
 - `receivables`
 - `receivable_payments`
@@ -44,21 +44,20 @@ Mencatat piutang pelanggan yang berasal dari transaksi `pay_later` dan menyediak
 - `customers`
 - `bank_accounts`
 
-## Efek Bisnis Penting
+## Important Business Effects
 
-- pembayaran receivable ikut memengaruhi `payment_status` transaksi terkait
-- sales return dapat mengoreksi total receivable jika retur berasal dari transaksi piutang
+- Receivable payments also affect the `payment_status` of the associated transaction.
+- A sales return can adjust the total receivable if the return originates from a credit transaction.
 
-## Reminder dan Delivery
+## Reminders and Delivery
 
-Reminder dapat dibuat untuk jatuh tempo, overdue, dan repeat order. Command scheduler
-menghasilkan pekerjaan reminder secara berkala. Delivery dapat menggunakan WhatsApp
-Gateway jika `wa_enabled=true` dan device sudah terhubung; jika tidak, campaign dapat
-ditangani melalui link WhatsApp atau follow-up manual.
+Reminders can be created for upcoming due dates, overdue payments, and repeat orders. The scheduler command periodically generates reminder tasks.
 
-Belum ada approval flow terpisah untuk pencatatan pembayaran receivable.
+Delivery can use the WhatsApp Gateway when `wa_enabled=true` and the device is connected. Otherwise, campaigns can be handled through WhatsApp links or manual follow-ups.
 
-## File Sentral
+There is no separate approval workflow for recording receivable payments.
+
+## Central Files
 
 - `app/Http/Controllers/Apps/ReceivableController.php`
 - `resources/js/Pages/Dashboard/Receivables`

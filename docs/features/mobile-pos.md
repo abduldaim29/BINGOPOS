@@ -1,64 +1,71 @@
 # Mobile POS / PWA
 
-Kembali ke indeks dokumentasi: `docs/README.md`
+Back to the documentation index: `docs/README.md`
 
-## Tujuan
+## Purpose
 
-Akses POS dari tablet/handphone dengan barcode scanner via kamera, install ke home screen, dan fullscreen mode.
+Access the POS from a tablet or mobile phone with camera-based barcode scanning, home screen installation, and fullscreen mode.
 
-## Fitur Saat Ini
+## Current Features
 
 ### Camera Barcode Scanner
+
 - Library: `html5-qrcode`
-- Scan barcode via kamera belakang (environment-facing)
-- Auto-search produk setelah scan
-- Modal fullscreen scanner — buka kamera, scan, tutup otomatis
-- Tombol kamera di search bar POS
+- Scan barcodes using the rear-facing camera (`environment-facing`).
+- Automatically search for products after scanning.
+- Fullscreen scanner modal — open the camera, scan, and close automatically.
+- Camera button in the POS search bar.
 
 ### Progressive Web App (PWA)
-- `manifest.json` — name, icons, display standalone, theme color
-- `sw.js` — service worker untuk cache asset + API master data
-- Theme-color meta tag
-- Install prompt ke home screen (Android Chrome)
-- Support offline (cache-first untuk master data)
-- Offline checkout: transaksi yang sudah disiapkan diantrekan di IndexedDB (`pending_transactions`) lalu tersinkron otomatis saat koneksi kembali (`Utils/offlineDb.js`, endpoint `POST /api/v1/pos/transactions/sync`)
-- Penambahan produk baru ke cart saat offline tetap terbatas karena cart utama berbasis server
+
+- `manifest.json` — name, icons, standalone display mode, and theme color.
+- `sw.js` — service worker for caching assets and master data API responses.
+- Theme-color meta tag.
+- Home screen installation prompt (Android Chrome).
+- Offline support (cache-first strategy for master data).
+- Offline checkout: prepared transactions are queued in IndexedDB (`pending_transactions`) and automatically synchronized when the connection is restored (`Utils/offlineDb.js`, endpoint `POST /api/v1/pos/transactions/sync`).
+- Adding new products to the cart while offline remains limited because the main cart is server-based.
 
 ### Fullscreen Mode
-- Tombol fullscreen di header POS
-- Sembunyikan browser chrome
-- Toggle masuk/keluar fullscreen
+
+- Fullscreen button in the POS header.
+- Hide browser chrome.
+- Toggle between entering and exiting fullscreen mode.
 
 ### Touch Optimization
-- Semua interactive element: `min-h-touch` (44px) dan `min-w-touch`
-- Gap aman antar tombol
-- Layout responsive untuk tablet landscape
 
-## File Terkait
+- All interactive elements use `min-h-touch` (44px) and `min-w-touch`.
+- Safe spacing between buttons.
+- Responsive layout for landscape tablets.
 
-| File | Fungsi |
-|------|--------|
+## Related Files
+
+| File | Function |
+|------|----------|
 | `resources/js/Components/POS/BarcodeScanner.jsx` | Camera scanner component |
 | `public/manifest.json` | PWA manifest |
 | `public/sw.js` | Service worker |
-| `resources/js/app.jsx` | SW registration |
+| `resources/js/app.jsx` | Service worker registration |
 | `resources/js/Layouts/POSLayout.jsx` | Fullscreen toggle |
 | `resources/js/Context/OnlineStatusContext.jsx` | Online/offline detection |
 
-## Cara Pakai
+## How to Use
 
 ### Barcode Scanner
-1. Klik ikon kamera di search bar POS
-2. Izinkan akses kamera
-3. Arahkan kamera ke barcode produk
-4. Scanner otomatis mencari produk dan menutup
 
-### PWA Install
-1. Buka aplikasi di Chrome Android
-2. Muncul prompt "Add to Home Screen"
-3. Install — aplikasi terbuka tanpa browser chrome
+1. Click the camera icon in the POS search bar.
+2. Allow camera access.
+3. Point the camera at the product barcode.
+4. The scanner automatically searches for the product and closes.
+
+### PWA Installation
+
+1. Open the application in Chrome on Android.
+2. Wait for the "Add to Home Screen" prompt.
+3. Install the application — it opens without browser chrome.
 
 ### Fullscreen
-1. Klik ikon fullscreen di header POS
-2. Browser masuk mode fullscreen
-3. Klik lagi untuk keluar
+
+1. Click the fullscreen icon in the POS header.
+2. The browser enters fullscreen mode.
+3. Click the icon again to exit.

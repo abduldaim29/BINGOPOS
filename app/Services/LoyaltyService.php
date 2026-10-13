@@ -92,35 +92,35 @@ class LoyaltyService
         Setting::setMany([
             'loyalty_enable_earn' => [
                 'value' => $payload['enable_earn'] ? '1' : '0',
-                'description' => 'Aktifkan perolehan poin loyalty',
+                'description' => 'Enable loyalty point earning',
             ],
             'loyalty_enable_redeem' => [
                 'value' => $payload['enable_redeem'] ? '1' : '0',
-                'description' => 'Aktifkan redeem poin loyalty',
+                'description' => 'Enable loyalty point redemption',
             ],
             'loyalty_earn_rate_amount' => [
                 'value' => (string) $payload['earn_rate_amount'],
-                'description' => 'Nominal belanja untuk mendapatkan 1 poin',
+                'description' => 'Purchase amount required to earn 1 point',
             ],
             'loyalty_redeem_point_value' => [
                 'value' => (string) $payload['redeem_point_value'],
-                'description' => 'Nilai rupiah untuk 1 poin redeem',
+                'description' => 'Currency value of 1 redeemed point',
             ],
             'loyalty_tier_regular_threshold' => [
                 'value' => (string) $payload['tiers'][self::TIER_REGULAR],
-                'description' => 'Ambang total belanja tier Regular',
+                'description' => 'Minimum total spending for the Regular tier',
             ],
             'loyalty_tier_silver_threshold' => [
                 'value' => (string) $payload['tiers'][self::TIER_SILVER],
-                'description' => 'Ambang total belanja tier Silver',
+                'description' => 'Minimum total spending for the Silver tier',
             ],
             'loyalty_tier_gold_threshold' => [
                 'value' => (string) $payload['tiers'][self::TIER_GOLD],
-                'description' => 'Ambang total belanja tier Gold',
+                'description' => 'Minimum total spending for the Gold tier',
             ],
             'loyalty_tier_platinum_threshold' => [
                 'value' => (string) $payload['tiers'][self::TIER_PLATINUM],
-                'description' => 'Ambang total belanja tier Platinum',
+                'description' => 'Minimum total spending for the Platinum tier',
             ],
         ]);
     }
@@ -205,7 +205,7 @@ class LoyaltyService
         $manualDiscountApplied = min($manualDiscountRequested, $afterLoyalty);
         $baseGrandTotal = max(0, $afterLoyalty - $manualDiscountApplied + $shippingCost);
 
-        // Calculate tax
+        // Calculate tax.
         $taxService = app(TaxService::class);
         $items = data_get($pricingPreview, 'items', []);
         $productIds = collect($items)->pluck('product_id')->filter()->unique()->values();
@@ -231,7 +231,7 @@ class LoyaltyService
             }
         }
 
-        // Also tax shipping if needed (simple: apply effective tax rate)
+        // Also tax shipping if needed (simple: apply the effective tax rate).
         if ($shippingCost > 0 && $effectiveRate > 0) {
             $shippingTax = (int) round($shippingCost * $effectiveRate / 100);
             $taxTotal += $shippingTax;
@@ -347,12 +347,12 @@ class LoyaltyService
                 LoyaltyPointHistory::TYPE_REDEEM,
                 -$redeemedPoints,
                 (int) ($transaction->loyalty_discount_total ?? 0),
-                'Redeem poin pada transaksi '.$transaction->invoice
+                'Points redeemed in transaction '.$transaction->invoice
             );
         }
 
         if ($voucher) {
-            // ponytail: atomic single-use claim — reject when another checkout already used it concurrently
+            // ponytail: Atomic single-use claim — reject if another checkout has already used the voucher concurrently.
             $claimed = CustomerVoucher::whereKey($voucher->id)
                 ->where('is_used', false)
                 ->update([
@@ -363,7 +363,7 @@ class LoyaltyService
 
             if ($claimed !== 1) {
                 throw ValidationException::withMessages([
-                    'voucher_code' => 'Voucher sudah digunakan pada transaksi lain.',
+                    'voucher_code' => 'This voucher has already been used in another transaction.',
                 ]);
             }
 
@@ -373,7 +373,7 @@ class LoyaltyService
                 LoyaltyPointHistory::TYPE_VOUCHER,
                 0,
                 (int) ($transaction->customer_voucher_discount ?? 0),
-                'Voucher '.$voucher->code.' digunakan'
+                'Voucher '.$voucher->code.' used'
             );
         }
 
@@ -401,7 +401,7 @@ class LoyaltyService
                 LoyaltyPointHistory::TYPE_EARN,
                 $earnedPoints,
                 (int) $transaction->grand_total,
-                'Poin transaksi '.$transaction->invoice
+                'Points earned from transaction '.$transaction->invoice
             );
         }
 

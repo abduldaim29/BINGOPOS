@@ -29,7 +29,7 @@ class UnitController extends Controller
 
         Unit::create($validated);
 
-        return back()->with('success', 'Satuan berhasil ditambahkan.');
+        return back()->with('success', 'Unit added successfully.');
     }
 
     public function update(Request $request, Unit $unit)
@@ -42,17 +42,17 @@ class UnitController extends Controller
 
         $unit->update($validated);
 
-        return back()->with('success', 'Satuan berhasil diperbarui.');
+        return back()->with('success', 'Unit updated successfully.');
     }
 
     public function destroy(Unit $unit)
     {
         if ($unit->products()->exists()) {
-            return back()->with('error', 'Satuan masih dipakai produk. Lepaskan dari produk terlebih dahulu.');
+            return back()->with('error', 'This unit is currently used by products. Remove it from the products first.');
         }
 
         $unit->delete();
 
-        return back()->with('success', 'Satuan berhasil dihapus.');
+        return back()->with('success', 'Unit deleted successfully.');
     }
 }

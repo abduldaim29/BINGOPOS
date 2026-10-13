@@ -70,7 +70,7 @@ class SupplierReturnService
                 event: 'supplier_return.created',
                 module: 'purchase',
                 auditable: $return,
-                description: 'Supplier return '.$return->document_number.' dibuat.',
+                description: 'Supplier return '.$return->document_number.' created.',
                 after: [
                     'document_number' => $return->document_number,
                     'supplier_id' => $return->supplier_id,
@@ -98,7 +98,7 @@ class SupplierReturnService
                 $stockBefore = (int) $product->stock;
                 $product->decrement('stock', $item->qty_returned);
 
-                // Decrement pivot warehouse stock
+                // Decrement warehouse pivot stock.
                 if ($return->warehouse_id) {
                     ProductWarehouse::where([
                         'product_id' => $product->id,
@@ -112,7 +112,7 @@ class SupplierReturnService
                     qty: $item->qty_returned,
                     stockBefore: $stockBefore,
                     stockAfter: (int) $product->stock,
-                    notes: $item->reason ?? 'Retur barang ke supplier',
+                    notes: $item->reason ?? 'Goods returned to supplier.',
                     userId: $return->created_by,
                 );
             }
@@ -139,7 +139,7 @@ class SupplierReturnService
                 event: 'supplier_return.completed',
                 module: 'purchase',
                 auditable: $return,
-                description: 'Supplier return '.$return->document_number.' diselesaikan. Stok dikurangi dan hutang dikoreksi.',
+                description: 'Supplier return '.$return->document_number.' completed. Stock reduced and accounts payable adjusted.',
                 after: ['status' => 'completed'],
                 meta: ['supplier_return_id' => $return->id],
             );
@@ -163,7 +163,7 @@ class SupplierReturnService
                 event: 'supplier_return.cancelled',
                 module: 'purchase',
                 auditable: $return,
-                description: 'Supplier return '.$return->document_number.' dibatalkan.',
+                description: 'Supplier return '.$return->document_number.' cancelled.',
                 after: ['status' => 'cancelled'],
                 meta: ['supplier_return_id' => $return->id],
             );

@@ -41,6 +41,11 @@ return [
         'server_key' => env('MIDTRANS_SERVER_KEY'),
     ],
 
+    'safepay' => [
+        'secret_key' => env('SAFEPAY_SECRET_KEY'),
+        'webhook_secret' => env('SAFEPAY_WEBHOOK_SECRET'),
+    ],
+
     'slack' => [
         'notifications' => [
             'bot_user_oauth_token' => env('SLACK_BOT_USER_OAUTH_TOKEN'),

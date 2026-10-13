@@ -34,7 +34,7 @@ class EnforceAbsoluteSessionLifetime
             event: 'security.session_expired_absolute',
             module: 'security',
             auditable: $request->user(),
-            description: 'Sesi berakhir karena melewati batas waktu absolut.',
+            description: 'The session expired because it exceeded the absolute time limit.',
             meta: [
                 'severity' => 'warning',
                 'route' => $request->route()?->getName(),
@@ -47,6 +47,6 @@ class EnforceAbsoluteSessionLifetime
 
         return redirect()
             ->route('login')
-            ->with('error', 'Sesi Anda sudah berakhir. Silakan masuk kembali.');
+            ->with('error', 'Your session has expired. Please log in again.');
     }
 }

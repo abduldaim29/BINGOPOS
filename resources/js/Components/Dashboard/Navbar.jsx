@@ -20,8 +20,8 @@ export default function Navbar({ toggleSidebar, themeSwitcher, darkMode }) {
     const { start: startTour, isActive: tourActive } = useTour("dashboard");
     const menuNavigation = Menu();
 
-    const storeName = storeProfile?.name || "KASIR";
-    const storeInitial = storeName?.charAt(0)?.toUpperCase() || "K";
+    const storeName = storeProfile?.name || "CASHIER";
+    const storeInitial = storeName?.charAt(0)?.toUpperCase() || "C";
 
     // Get current page title
     const links = menuNavigation.flatMap((item) => item.details);

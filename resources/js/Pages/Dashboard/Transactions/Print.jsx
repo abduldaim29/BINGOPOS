@@ -214,7 +214,59 @@ export default function Print({ transaction }) {
     }, [transaction?.id, printerSettings?.autoPrint]);
 
     const handlePrint = () => {
-        window.print();
+        // For thermal receipts, use the custom print function
+        if (printMode === "thermal58" || printMode === "thermal80") {
+            const printContent = printMode === "thermal58"
+                ? document.querySelector(".thermal-receipt-58")
+                : document.querySelector(".thermal-receipt");
+
+            if (printContent) {
+                const paperSize = printMode === "thermal58" ? "58mm" : "80mm";
+                const printWindow = window.open("", "_blank");
+                if (printWindow) {
+                    printWindow.document.write(`
+                        <!DOCTYPE html>
+                        <html>
+                        <head>
+                            <title>Print Receipt</title>
+                            <style>
+                                @page {
+                                    size: ${paperSize} auto;
+                                    margin: 0;
+                                }
+                                body {
+                                    margin: 0;
+                                    padding: ${printMode === "thermal58" ? "2mm" : "3mm"};
+                                    font-family: "Courier New", Courier, monospace;
+                                }
+                                .thermal-receipt, .thermal-receipt-58 {
+                                    width: ${paperSize} !important;
+                                    margin: 0 !important;
+                                    padding: 0 !important;
+                                }
+                            </style>
+                        </head>
+                        <body>
+                            ${printContent.outerHTML}
+                        </body>
+                        </html>
+                    `);
+                    printWindow.document.close();
+                    printWindow.onload = () => {
+                        printWindow.print();
+                    };
+                }
+            }
+        } else if (printMode === "invoice") {
+            // For invoice, open the PDF route
+            window.open(route("pdf.transactions.invoice", transaction.invoice), "_blank");
+        } else if (printMode === "shipping") {
+            // For shipping label, open the PDF route
+            window.open(route("pdf.transactions.shipping", transaction.invoice), "_blank");
+        } else {
+            // Fallback to regular print
+            window.print();
+        }
     };
 
     const SimpleBarcode = ({ value }) => {
@@ -321,21 +373,11 @@ export default function Print({ transaction }) {
 
                             <button
                                 type="button"
-                                onClick={async () => {
-                                    try {
-                                        const res = await fetch(route("pdf.transactions.thermal", transaction.invoice));
-                                        const html = await res.text();
-                                        const blob = new Blob([html], { type: "text/html" });
-                                        const url = URL.createObjectURL(blob);
-                                        window.open(url, "_blank", "width=400,height=600");
-                                    } catch (e) {
-                                        alert("Gagal cetak thermal: " + e.message);
-                                    }
-                                }}
+                                onClick={handlePrint}
                                 className="inline-flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors w-full sm:w-auto"
                             >
                                 <IconPrinter size={18} />
-                                Thermal
+                                {printMode === "thermal80" ? "Print 80mm" : printMode === "thermal58" ? "Print 58mm" : "Print"}
                             </button>
 
                             {showPaymentLink && (

@@ -10,7 +10,7 @@ class TransactionDetail extends Model
     use HasFactory;
 
     /**
-     * fillable
+     * Fillable attributes
      *
      * @var array
      */

@@ -79,6 +79,30 @@ const History = ({ transactions, filters, warehouses = [] }) => {
         });
     };
 
+    const handlePrintReceipt = (invoice) => {
+        const printUrl = route("transactions.print", invoice);
+        const printWindow = window.open(printUrl, "_blank");
+        if (printWindow) {
+            printWindow.onload = () => {
+                printWindow.print();
+            };
+        } else {
+            alert("Failed to open print window. Please check popup blocker.");
+        }
+    };
+
+    const handlePrintInvoice = (invoice) => {
+        const printUrl = route("pdf.transactions.invoice", invoice);
+        const printWindow = window.open(printUrl, "_blank");
+        if (printWindow) {
+            printWindow.onload = () => {
+                printWindow.print();
+            };
+        } else {
+            alert("Failed to open print window. Please check popup blocker.");
+        }
+    };
+
     const rows = transactions?.data ?? [];
     const links = transactions?.links ?? [];
     const currentPage = transactions?.current_page ?? 1;
@@ -397,6 +421,10 @@ const History = ({ transactions, filters, warehouses = [] }) => {
                                                         )}
                                                         className="inline-flex items-center justify-center w-9 h-9 rounded-lg text-slate-500 hover:text-primary-600 hover:bg-primary-50 dark:hover:bg-primary-950/50 transition-colors"
                                                         title={t("transactionHistory.printReceipt")}
+                                                        onClick={(e) => {
+                                                            e.preventDefault();
+                                                            handlePrintReceipt(transaction.invoice);
+                                                        }}
                                                     >
                                                         <IconPrinter size={18} />
                                                     </Link>
@@ -409,6 +437,10 @@ const History = ({ transactions, filters, warehouses = [] }) => {
                                                         rel="noopener noreferrer"
                                                         className="inline-flex items-center justify-center w-9 h-9 rounded-lg text-slate-500 hover:text-primary-600 hover:bg-primary-50 dark:hover:bg-primary-950/50 transition-colors"
                                                         title={t("transactionHistory.downloadInvoice")}
+                                                        onClick={(e) => {
+                                                            e.preventDefault();
+                                                            handlePrintInvoice(transaction.invoice);
+                                                        }}
                                                     >
                                                         <IconDownload size={18} />
                                                     </a>
@@ -545,20 +577,29 @@ const History = ({ transactions, filters, warehouses = [] }) => {
                                                 transaction.invoice
                                             )}
                                             className="inline-flex items-center justify-center gap-1 px-3 py-2 text-xs font-semibold rounded-lg bg-primary-50 text-primary-700 hover:bg-primary-100 dark:bg-primary-900/30 dark:text-primary-300 dark:hover:bg-primary-900/50"
+                                            onClick={(e) => {
+                                                e.preventDefault();
+                                                handlePrintReceipt(transaction.invoice);
+                                            }}
                                         >
-                                            Detail
+                                            <IconPrinter size={16} />
+                                            Print
                                         </Link>
                                         <a
                                             href={route(
-                                                "transactions.public",
-                                                transaction.invoice,
-                                                { token: transaction.access_token }
+                                                "pdf.transactions.invoice",
+                                                transaction.invoice
                                             )}
                                             target="_blank"
                                             rel="noopener noreferrer"
                                             className="inline-flex items-center justify-center gap-1 px-3 py-2 text-xs font-semibold rounded-lg bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
+                                            onClick={(e) => {
+                                                e.preventDefault();
+                                                handlePrintInvoice(transaction.invoice);
+                                            }}
                                         >
-                                            {t("transactionHistory.invoice")}
+                                            <IconDownload size={16} />
+                                            Invoice
                                         </a>
                                         {canCreateCrmCampaign && (
                                             <Link

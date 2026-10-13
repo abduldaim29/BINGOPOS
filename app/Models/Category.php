@@ -16,7 +16,7 @@ class Category extends Model
     ];
 
     /**
-     * fillable
+     * Fillable attributes
      *
      * @var array
      */
@@ -25,7 +25,7 @@ class Category extends Model
     ];
 
     /**
-     * products
+     * Products
      *
      * @return void
      */
@@ -35,7 +35,7 @@ class Category extends Model
     }
 
     /**
-     * subCategories
+     * Subcategories
      *
      * @return void
      */
@@ -50,7 +50,7 @@ class Category extends Model
     }
 
     /**
-     * image
+     * Image
      */
     protected function image(): Attribute
     {

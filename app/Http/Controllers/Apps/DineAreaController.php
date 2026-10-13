@@ -40,7 +40,7 @@ class DineAreaController extends Controller
         $validated['outlet_id'] = $this->outletAccess->activeOutlet($request)?->id;
         DineArea::create($validated);
 
-        return back()->with('success', 'Area berhasil ditambahkan.');
+        return back()->with('success', 'Area added successfully.');
     }
 
     public function update(Request $request, DineArea $dineArea)
@@ -54,19 +54,19 @@ class DineAreaController extends Controller
 
         $dineArea->update($validated);
 
-        return back()->with('success', 'Area berhasil diperbarui.');
+        return back()->with('success', 'Area updated successfully.');
     }
 
     public function destroy(DineArea $dineArea)
     {
         abort_unless($this->ownsArea($dineArea, request()), 404);
         if ($dineArea->tables()->exists()) {
-            return back()->with('error', 'Area memiliki meja. Hapus atau pindahkan meja terlebih dahulu.');
+            return back()->with('error', 'This area contains tables. Please delete or move the tables first.');
         }
 
         $dineArea->delete();
 
-        return back()->with('success', 'Area berhasil dihapus.');
+        return back()->with('success', 'Area deleted successfully.');
     }
 
     private function ownsArea(DineArea $area, Request $request): bool

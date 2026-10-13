@@ -9,12 +9,12 @@ export default function Sidebar({ sidebarOpen }) {
     const { auth, storeProfile, appVersion } = usePage().props;
     const menuNavigation = Menu();
 
-    const storeName = storeProfile?.name || "KASIR";
+    const storeName = storeProfile?.name || "CASHIER";
     const storeLogo = storeProfile?.logo || null;
     const storeInitial =
         storeName?.charAt(0)?.toUpperCase() ||
         auth?.user?.name?.charAt(0)?.toUpperCase() ||
-        "K";
+        "C";
 
     return (
         <div
@@ -130,7 +130,11 @@ export default function Sidebar({ sidebarOpen }) {
             {sidebarOpen && (
                 <div className="p-4 border-t border-slate-100 dark:border-slate-800">
                     <p className="text-[10px] text-slate-400 dark:text-slate-600 text-center">
-                        Point of Sales {appVersion}
+                        <span className="font-bold">BINGO</span>
+                        <span className="text-slate-600 dark:text-slate-400">
+                            POS
+                        </span>{" "}
+                        {appVersion}
                     </p>
                 </div>
             )}

@@ -23,20 +23,20 @@ class CrmAutomationService
     {
         return [
             'customer_types' => [
-                ['value' => 'all', 'label' => 'Semua Customer'],
-                ['value' => 'member', 'label' => 'Loyalty Member'],
-                ['value' => 'non_member', 'label' => 'Non Member'],
+                ['value' => 'all', 'label' => 'All Customers'],
+                ['value' => 'member', 'label' => 'Loyalty Members'],
+                ['value' => 'non_member', 'label' => 'Non-Members'],
             ],
             'receivable_statuses' => [
-                ['value' => 'all', 'label' => 'Semua Status Piutang'],
-                ['value' => 'has_receivable', 'label' => 'Punya Piutang'],
-                ['value' => 'overdue', 'label' => 'Piutang Overdue'],
-                ['value' => 'due_soon', 'label' => 'Jatuh Tempo H-3'],
+                ['value' => 'all', 'label' => 'All Receivable Statuses'],
+                ['value' => 'has_receivable', 'label' => 'Has Outstanding Receivables'],
+                ['value' => 'overdue', 'label' => 'Overdue Receivables'],
+                ['value' => 'due_soon', 'label' => 'Due Within 3 Days'],
             ],
             'voucher_filters' => [
-                ['value' => 'all', 'label' => 'Semua Customer'],
-                ['value' => 'has_active_voucher', 'label' => 'Punya Voucher Aktif'],
-                ['value' => 'no_active_voucher', 'label' => 'Tidak Punya Voucher Aktif'],
+                ['value' => 'all', 'label' => 'All Customers'],
+                ['value' => 'has_active_voucher', 'label' => 'Has Active Voucher'],
+                ['value' => 'no_active_voucher', 'label' => 'No Active Voucher'],
             ],
             'segment_options' => $this->segmentationService->segmentOptions(),
         ];
@@ -243,7 +243,7 @@ class CrmAutomationService
         $campaign = CustomerCampaign::query()->firstOrCreate(
             ['context_key' => 'invoice-share-receivable-'.$receivable->id],
             [
-                'name' => 'Share Piutang '.$receivable->invoice,
+                'name' => 'Share Receivable Invoice '.$receivable->invoice,
                 'type' => CustomerCampaign::TYPE_INVOICE_SHARE,
                 'status' => CustomerCampaign::STATUS_READY,
                 'channel' => CustomerCampaign::CHANNEL_WHATSAPP_LINK,
@@ -253,14 +253,14 @@ class CrmAutomationService
                     'receivable_id' => $receivable->id,
                     'invoice' => $receivable->invoice,
                 ]],
-                'message_template' => 'Invoice {{invoice}} total {{remaining}} jatuh tempo {{due_date}}',
+                'message_template' => 'Invoice {{invoice}} total {{remaining}} due on {{due_date}}',
                 'processed_at' => now(),
                 'created_by' => $userId,
             ]
         );
 
         $shareText = sprintf(
-            'Pengingat piutang %s. Sisa tagihan Rp %s. Jatuh tempo: %s',
+            'Receivable reminder for invoice %s. Remaining balance: Rp %s. Due date: %s',
             $receivable->invoice,
             number_format($receivable->remaining, 0, ',', '.'),
             optional($receivable->due_date)?->format('d/m/Y') ?? '-'
@@ -315,12 +315,12 @@ class CrmAutomationService
         $campaign = CustomerCampaign::query()->firstOrCreate(
             ['context_key' => $contextKey],
             [
-                'name' => 'Reminder Jatuh Tempo H-3 '.$at->format('d M Y'),
+                'name' => 'Due Date Reminder - 3 Days '.$at->format('d M Y'),
                 'type' => CustomerCampaign::TYPE_DUE_DATE_REMINDER,
                 'status' => CustomerCampaign::STATUS_READY,
                 'channel' => CustomerCampaign::CHANNEL_INTERNAL,
                 'audience_filters' => ['receivable_status' => 'due_soon'],
-                'message_template' => 'Pengingat: invoice {{invoice}} jatuh tempo {{due_date}}',
+                'message_template' => 'Reminder: invoice {{invoice}} is due on {{due_date}}',
                 'processed_at' => $at,
             ]
         );
@@ -332,7 +332,7 @@ class CrmAutomationService
                 ->whereBetween('due_date', [$at->copy()->startOfDay(), $at->copy()->addDays(3)->endOfDay()])
                 ->get();
 
-            $this->fillReceivableReminderLogs($campaign, $receivables, 'jatuh tempo');
+            $this->fillReceivableReminderLogs($campaign, $receivables, 'due date');
         }
     }
 
@@ -342,12 +342,12 @@ class CrmAutomationService
         $campaign = CustomerCampaign::query()->firstOrCreate(
             ['context_key' => $contextKey],
             [
-                'name' => 'Reminder Piutang Overdue '.$at->format('d M Y'),
+                'name' => 'Overdue Receivable Reminder '.$at->format('d M Y'),
                 'type' => CustomerCampaign::TYPE_DUE_DATE_REMINDER,
                 'status' => CustomerCampaign::STATUS_READY,
                 'channel' => CustomerCampaign::CHANNEL_INTERNAL,
                 'audience_filters' => ['receivable_status' => 'overdue'],
-                'message_template' => 'Piutang {{invoice}} telah overdue sejak {{due_date}}',
+                'message_template' => 'Invoice {{invoice}} has been overdue since {{due_date}}',
                 'processed_at' => $at,
             ]
         );
@@ -374,7 +374,7 @@ class CrmAutomationService
                 'status' => CustomerCampaign::STATUS_READY,
                 'channel' => CustomerCampaign::CHANNEL_INTERNAL,
                 'audience_filters' => ['segment_slugs' => ['inactive_customer']],
-                'message_template' => 'Sudah lama tidak belanja. Ajak customer kembali bertransaksi.',
+                'message_template' => 'It has been a while since your last purchase. Invite the customer to shop again.',
                 'processed_at' => $at,
             ]
         );
@@ -390,7 +390,7 @@ class CrmAutomationService
                 ->get();
 
             foreach ($customers as $customer) {
-                $message = 'Halo '.$customer->name.', kami merindukan kunjungan Anda. Yuk belanja lagi hari ini.';
+                $message = 'Hello '.$customer->name.', we miss your visits. Come shop with us again today!';
 
                 $campaign->logs()->create([
                     'customer_id' => $customer->id,
@@ -418,7 +418,7 @@ class CrmAutomationService
     {
         foreach ($receivables as $receivable) {
             $message = sprintf(
-                'Pengingat %s untuk invoice %s. Sisa tagihan Rp %s. Jatuh tempo %s.',
+                'Reminder for %s: invoice %s. Remaining balance: Rp %s. Due date: %s.',
                 $reason,
                 $receivable->invoice,
                 number_format($receivable->remaining, 0, ',', '.'),
@@ -452,7 +452,7 @@ class CrmAutomationService
 
     private function buildCustomerPayload(CustomerCampaign $campaign, Customer $customer): array
     {
-        $template = $campaign->message_template ?: 'Halo {{name}}, ada promo spesial untuk Anda.';
+        $template = $campaign->message_template ?: 'Hello {{name}}, we have a special promotion for you.';
         $message = str_replace(
             ['{{name}}', '{{phone}}'],
             [$customer->name, $customer->no_telp],

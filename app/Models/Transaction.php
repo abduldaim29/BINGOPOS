@@ -80,7 +80,7 @@ class Transaction extends Model
     }
 
     /**
-     * customer
+     * Customer
      *
      * @return void
      */
@@ -90,7 +90,7 @@ class Transaction extends Model
     }
 
     /**
-     * cashier
+     * Cashier
      *
      * @return void
      */
@@ -110,7 +110,7 @@ class Transaction extends Model
     }
 
     /**
-     * bankAccount
+     * Bank account
      *
      * @return void
      */
@@ -120,7 +120,7 @@ class Transaction extends Model
     }
 
     /**
-     * profits
+     * Profits
      *
      * @return void
      */
@@ -172,8 +172,10 @@ class Transaction extends Model
         if ($threshold > 0 && $this->discount >= $threshold) {
             return true;
         }
+
         if ($percentThreshold > 0 && $this->grand_total > 0) {
             $percent = ($this->discount / $this->grand_total) * 100;
+
             if ($percent >= $percentThreshold) {
                 return true;
             }

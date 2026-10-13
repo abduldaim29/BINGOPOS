@@ -62,19 +62,19 @@ class RegisteredUserController extends Controller
             'password' => Hash::make($request->password),
         ]);
 
-        // Auto-verify email on localhost/development environments
+        // Automatically verify email in localhost/development environments
         if (app()->environment('local', 'testing')) {
             $user->markEmailAsVerified();
         }
 
-        // Assign selected role to new user
+        // Assign the selected role to the new user
         $user->assignRole($request->role);
 
         event(new Registered($user));
 
         Auth::login($user);
 
-        // Skip verification notice on localhost/development
+        // Skip the verification notice in localhost/development environments
         if (app()->environment('local', 'testing')) {
             return redirect()->route('dashboard');
         }

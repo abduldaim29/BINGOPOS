@@ -9,7 +9,7 @@ use App\Models\Product;
 
 class PriceListService
 {
-    // ponytail: N+1 per product; eager-load items via priceList->items when pricing whole carts
+    // Potential N+1 query per product; eager-load items via priceList->items when pricing whole carts
     public function getApplicablePriceList(?Customer $customer, ?Outlet $outlet = null): ?PriceList
     {
         $lists = PriceList::active()

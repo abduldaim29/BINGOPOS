@@ -37,10 +37,10 @@ class GoodsReceivingService
 
     public function receive(PurchaseOrder $order, array $items, ?string $notes, int $userId): GoodsReceiving
     {
-        // ponytail: retry only on document_number unique collisions (concurrent receipts pick the same next number)
+        // ponytail: Retry only on document_number unique constraint collisions (concurrent receipts may generate the same next number).
         return retry(3, function () use ($order, $items, $notes, $userId) {
             return DB::transaction(function () use ($order, $items, $notes, $userId) {
-                // ponytail: lock the order + its items so concurrent receipts cannot double-consume the same PO item
+                // ponytail: Lock the order and its items to prevent concurrent receipts from processing the same PO items twice.
                 $order = PurchaseOrder::with('items')->whereKey($order->id)->lockForUpdate()->firstOrFail();
                 $user = User::findOrFail($userId);
                 $warehouse = $order->warehouse_id ? Warehouse::findOrFail($order->warehouse_id) : null;
@@ -48,7 +48,7 @@ class GoodsReceivingService
 
                 if (! in_array($order->status, ['ordered', 'partial_received'])) {
                     throw ValidationException::withMessages([
-                        'purchase_order_id' => 'Hanya PO berstatus ordered/partial yang dapat diterima.',
+                        'purchase_order_id' => 'Only purchase orders with ordered or partial_received status can be received.',
                     ]);
                 }
 
@@ -66,7 +66,7 @@ class GoodsReceivingService
                     $poItem = $order->items->firstWhere('id', $item['purchase_order_item_id']);
                     if (! $poItem) {
                         throw ValidationException::withMessages([
-                            'items' => 'Item tidak ditemukan di PO.',
+                            'items' => 'Item not found in the purchase order.',
                         ]);
                     }
                     $qtyReceived = (int) $item['qty_received'];
@@ -74,7 +74,7 @@ class GoodsReceivingService
                     $outstanding = $poItem->qty_ordered - $poItem->qty_received;
                     if ($qtyReceived > $outstanding) {
                         throw ValidationException::withMessages([
-                            'items' => "Qty diterima melebihi sisa item {$poItem->product_id}.",
+                            'items' => "Received quantity exceeds the remaining quantity for product {$poItem->product_id}.",
                         ]);
                     }
 
@@ -90,9 +90,9 @@ class GoodsReceivingService
 
                     $product = $poItem->product;
                     $stockBefore = (int) $product->stock;
-                    // Increment legacy stock
+                    // Increment legacy stock.
                     $product->increment('stock', $qtyReceived);
-                    // Increment warehouse pivot stock
+                    // Increment warehouse pivot stock.
                     if ($order->warehouse_id) {
                         ProductWarehouse::firstOrCreate(
                             ['product_id' => $product->id, 'warehouse_id' => $order->warehouse_id],
@@ -100,7 +100,7 @@ class GoodsReceivingService
                         )->increment('stock', $qtyReceived);
                     }
 
-                    // Create batch record
+                    // Create batch record.
                     if (! empty($item['batch_number']) && $order->warehouse_id) {
                         ProductBatch::create([
                             'product_id' => $product->id,
@@ -118,7 +118,7 @@ class GoodsReceivingService
                         qty: $qtyReceived,
                         stockBefore: $stockBefore,
                         stockAfter: (int) $product->stock,
-                        notes: 'Penerimaan dari PO '.$order->document_number,
+                        notes: 'Received from PO '.$order->document_number,
                         userId: $userId,
                     );
                 }
@@ -133,7 +133,7 @@ class GoodsReceivingService
                     event: 'goods_receiving.created',
                     module: 'purchase',
                     auditable: $receiving,
-                    description: 'Barang diterima dari PO '.$order->document_number,
+                    description: 'Goods received from PO '.$order->document_number,
                     after: [
                         'document_number' => $receiving->document_number,
                         'purchase_order_id' => $order->id,
@@ -180,7 +180,7 @@ class GoodsReceivingService
                 'paid' => 0,
                 'due_date' => now()->addDays(30),
                 'status' => 'unpaid',
-                'note' => 'Otomatis dari penerimaan PO '.$order->document_number,
+                'note' => 'Automatically created from PO receipt '.$order->document_number,
             ]
         );
 
@@ -189,7 +189,7 @@ class GoodsReceivingService
                 event: 'payable.created_from_receiving',
                 module: 'payable',
                 auditable: $payable,
-                description: 'Hutang otomatis dari penerimaan PO '.$order->document_number,
+                description: 'Payable automatically created from PO receipt '.$order->document_number,
                 after: [
                     'payable_id' => $payable->id,
                     'supplier_id' => $payable->supplier_id,

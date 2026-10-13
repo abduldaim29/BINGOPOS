@@ -1,6 +1,7 @@
 import React from "react";
 import DashboardLayout from "@/Layouts/DashboardLayout";
 import { Head, Link, usePage } from "@inertiajs/react";
+import { useTranslation } from "react-i18next";
 import {
     IconAlertTriangle,
     IconChartBar,
@@ -22,14 +23,14 @@ const formatDate = (value) => {
     });
 };
 
-const agingBucketLabel = (bucket) => {
+const agingBucketLabel = (bucket, t) => {
     const map = {
-        current: "Belum Jatuh Tempo",
-        "0-30": "1-30 Hari",
-        "31-60": "31-60 Hari",
-        "61-90": "61-90 Hari",
-        "90+": "90+ Hari",
-        paid: "Lunas",
+        current: t("aging.bucket.current"),
+        "0-30": t("aging.bucket.days0to30"),
+        "31-60": t("aging.bucket.days31to60"),
+        "61-90": t("aging.bucket.days61to90"),
+        "90+": t("aging.bucket.days90plus"),
+        paid: t("aging.bucket.paid"),
     };
     return map[bucket] || bucket;
 };
@@ -47,6 +48,7 @@ const agingBucketColor = (bucket) => {
 };
 
 export default function AgingIndex() {
+    const { t } = useTranslation();
     const { payableAgingSummary, receivableAgingSummary, payableNotifications, receivableNotifications } = usePage().props;
 
     const payableTotalOutstanding = payableAgingSummary?.reduce((s, b) => s + (b.remaining || 0), 0) || 0;
@@ -57,15 +59,15 @@ export default function AgingIndex() {
 
     return (
         <>
-            <Head title="Aging & Pengingat" />
+            <Head title={t("aging.title")} />
             <div className="space-y-6">
                 <div>
                     <h1 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
                         <IconChartBar size={28} className="text-primary-500" />
-                        Aging & Pengingat
+                        {t("aging.title")}
                     </h1>
                     <p className="text-sm text-slate-500 dark:text-slate-400">
-                        Ringkasan piutang dan hutang berdasarkan aging bucket, plus pengingat jatuh tempo.
+                        {t("aging.subtitle")}
                     </p>
                 </div>
 
@@ -76,12 +78,12 @@ export default function AgingIndex() {
                             <div className="p-2 rounded-lg bg-rose-50 dark:bg-rose-950/30">
                                 <IconTruck size={20} className="text-rose-500" />
                             </div>
-                            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Total Hutang</p>
+                            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">{t("aging.totalPayables")}</p>
                         </div>
                         <p className="text-2xl font-bold text-slate-900 dark:text-white">
                             {formatCurrency(payableTotalOutstanding)}
                         </p>
-                        <p className="text-xs text-slate-500 mt-1">{payablesDueSoon} akan jatuh tempo</p>
+                        <p className="text-xs text-slate-500 mt-1">{payablesDueSoon} {t("aging.payablesDueSoon")}</p>
                     </div>
 
                     <div className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
@@ -89,12 +91,12 @@ export default function AgingIndex() {
                             <div className="p-2 rounded-lg bg-primary-50 dark:bg-primary-950/30">
                                 <IconReceipt size={20} className="text-primary-500" />
                             </div>
-                            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Total Piutang</p>
+                            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">{t("aging.totalReceivables")}</p>
                         </div>
                         <p className="text-2xl font-bold text-slate-900 dark:text-white">
                             {formatCurrency(receivableTotalOutstanding)}
                         </p>
-                        <p className="text-xs text-slate-500 mt-1">{receivablesDueSoon} akan jatuh tempo</p>
+                        <p className="text-xs text-slate-500 mt-1">{receivablesDueSoon} {t("aging.receivablesDueSoon")}</p>
                     </div>
 
                     <div className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
@@ -102,7 +104,7 @@ export default function AgingIndex() {
                             <div className="p-2 rounded-lg bg-amber-50 dark:bg-amber-950/30">
                                 <IconAlertTriangle size={20} className="text-amber-500" />
                             </div>
-                            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Hutang Overdue</p>
+                            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">{t("aging.payableOverdue")}</p>
                         </div>
                         <p className="text-2xl font-bold text-amber-600">
                             {formatCurrency(
@@ -110,7 +112,7 @@ export default function AgingIndex() {
                                 (payableAgingSummary?.find((b) => b.bucket === "61-90")?.remaining || 0)
                             )}
                         </p>
-                        <p className="text-xs text-slate-500 mt-1">61+ hari</p>
+                        <p className="text-xs text-slate-500 mt-1">{t("aging.daysOver61")}</p>
                     </div>
 
                     <div className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
@@ -118,7 +120,7 @@ export default function AgingIndex() {
                             <div className="p-2 rounded-lg bg-rose-50 dark:bg-rose-950/30">
                                 <IconReceipt size={20} className="text-rose-500" />
                             </div>
-                            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Piutang Overdue</p>
+                            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">{t("aging.receivableOverdue")}</p>
                         </div>
                         <p className="text-2xl font-bold text-rose-600">
                             {formatCurrency(
@@ -126,7 +128,7 @@ export default function AgingIndex() {
                                 (receivableAgingSummary?.find((b) => b.bucket === "61-90")?.remaining || 0)
                             )}
                         </p>
-                        <p className="text-xs text-slate-500 mt-1">61+ hari</p>
+                        <p className="text-xs text-slate-500 mt-1">{t("aging.daysOver61")}</p>
                     </div>
                 </div>
 
@@ -136,7 +138,7 @@ export default function AgingIndex() {
                         <div className="px-5 py-4 border-b border-slate-100 dark:border-slate-800">
                             <h2 className="text-lg font-semibold text-slate-900 dark:text-white flex items-center gap-2">
                                 <IconTruck size={20} className="text-rose-500" />
-                                Aging Hutang Supplier
+                                {t("aging.payableAging")}
                             </h2>
                         </div>
                         <div className="p-5">
@@ -144,13 +146,13 @@ export default function AgingIndex() {
                                 {payableAgingSummary?.map((bucket) => (
                                     <div key={bucket.bucket} className="flex items-center justify-between">
                                         <span className={`px-2.5 py-1 rounded-full text-xs font-semibold ${agingBucketColor(bucket.bucket)}`}>
-                                            {agingBucketLabel(bucket.bucket)}
+                                            {agingBucketLabel(bucket.bucket, t)}
                                         </span>
                                         <div className="text-right">
                                             <p className="text-sm font-bold text-slate-800 dark:text-white">
                                                 {formatCurrency(bucket.remaining)}
                                             </p>
-                                            <p className="text-xs text-slate-500">{bucket.count} nota</p>
+                                            <p className="text-xs text-slate-500">{bucket.count} {t("aging.notes")}</p>
                                         </div>
                                     </div>
                                 ))}
@@ -160,7 +162,7 @@ export default function AgingIndex() {
                                 <div>
                                     <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200 mb-3 flex items-center gap-1.5">
                                         <IconClock size={16} className="text-warning-500" />
-                                        Akan Jatuh Tempo
+                                        {t("aging.payableNotifications")}
                                     </h3>
                                     <div className="space-y-2">
                                         {payableNotifications.map((item) => (
@@ -189,7 +191,7 @@ export default function AgingIndex() {
                         <div className="px-5 py-4 border-b border-slate-100 dark:border-slate-800">
                             <h2 className="text-lg font-semibold text-slate-900 dark:text-white flex items-center gap-2">
                                 <IconReceipt size={20} className="text-primary-500" />
-                                Aging Piutang Pelanggan
+                                {t("aging.receivableAging")}
                             </h2>
                         </div>
                         <div className="p-5">
@@ -197,13 +199,13 @@ export default function AgingIndex() {
                                 {receivableAgingSummary?.map((bucket) => (
                                     <div key={bucket.bucket} className="flex items-center justify-between">
                                         <span className={`px-2.5 py-1 rounded-full text-xs font-semibold ${agingBucketColor(bucket.bucket)}`}>
-                                            {agingBucketLabel(bucket.bucket)}
+                                            {agingBucketLabel(bucket.bucket, t)}
                                         </span>
                                         <div className="text-right">
                                             <p className="text-sm font-bold text-slate-800 dark:text-white">
                                                 {formatCurrency(bucket.remaining)}
                                             </p>
-                                            <p className="text-xs text-slate-500">{bucket.count} nota</p>
+                                            <p className="text-xs text-slate-500">{bucket.count} {t("aging.notes")}</p>
                                         </div>
                                     </div>
                                 ))}
@@ -213,7 +215,7 @@ export default function AgingIndex() {
                                 <div>
                                     <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200 mb-3 flex items-center gap-1.5">
                                         <IconClock size={16} className="text-warning-500" />
-                                        Akan Jatuh Tempo
+                                        {t("aging.receivableNotifications")}
                                     </h3>
                                     <div className="space-y-2">
                                         {receivableNotifications.map((item) => (

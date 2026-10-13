@@ -65,7 +65,7 @@ class DineTableController extends Controller
 
         DiningTable::create($validated);
 
-        return back()->with('success', 'Meja berhasil ditambahkan.');
+        return back()->with('success', 'Table added successfully.');
     }
 
     public function update(Request $request, DiningTable $dineTable)
@@ -85,7 +85,7 @@ class DineTableController extends Controller
 
         $dineTable->update($validated);
 
-        return back()->with('success', 'Meja berhasil diperbarui.');
+        return back()->with('success', 'Table updated successfully.');
     }
 
     public function destroy(DiningTable $dineTable)
@@ -93,7 +93,7 @@ class DineTableController extends Controller
         abort_unless($this->ownsTable($dineTable, request()), 404);
         $dineTable->delete();
 
-        return back()->with('success', 'Meja berhasil dihapus.');
+        return back()->with('success', 'Table deleted successfully.');
     }
 
     public function qr(DiningTable $dineTable)

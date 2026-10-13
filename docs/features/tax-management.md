@@ -1,71 +1,76 @@
-# PPN Tax Management
+# VAT Tax Management
 
-Kembali ke indeks dokumentasi: `docs/README.md`
+Back to the documentation index: `docs/README.md`
 
-## Tujuan
+## Purpose
 
-Dukungan PPN (Pajak Pertambahan Nilai) pada transaksi, dengan mode exclusive/inclusive per produk, NPWP/NIB toko, dan tarif default yang bisa dikonfigurasi.
+Supports VAT (Value Added Tax) on transactions, with exclusive/inclusive modes per product, store NPWP/NIB details, and a configurable default tax rate.
 
-## Definisi
+## Definitions
 
-| Istilah | Arti |
+| Term | Meaning |
 |---------|------|
-| Tax Exclusive | Harga produk **belum** termasuk PPN. PPN ditambahkan ke grand total |
-| Tax Inclusive | Harga produk **sudah** termasuk PPN. PPN dipisah untuk reporting |
-| NPWP | Nomor Pokok Wajib Pajak — identitas pajak toko |
-| PPN | Pajak Pertambahan Nilai (default 11%) |
+| Tax Exclusive | The product price **does not yet include** VAT. VAT is added to the grand total. |
+| Tax Inclusive | The product price **already includes** VAT. VAT is separated for reporting. |
+| NPWP | Taxpayer Identification Number — the store's tax identification. |
+| VAT (PPN) | Value Added Tax (default 18%). |
 
-## Fitur Saat Ini
+## Current Features
 
-- PPN per produk (exclusive/inclusive), tarif bisa berbeda per produk
-- Default tarif PPN bisa diatur di Settings → Profil Toko (default 11.00%)
-- Tax calculation di checkout: otomatis menambah PPN ke grand total
-- Baris PPN tampil di: checkout preview, print invoice, PDF invoice, PDF receipt 80mm & 58mm, thermal receipt
-- Grand total sudah termasuk PPN
-- NPWP dan NIB toko di Settings → Profil Toko
-- Laporan — PPN sudah termasuk di grand total
+- VAT per product (exclusive/inclusive), with different rates allowed for different products.
+- The default VAT rate can be configured under Settings → Store Profile (default: 18.00%).
+- Checkout tax calculation automatically adds VAT to the grand total.
+- VAT line displayed in the checkout preview, printed invoices, PDF invoices, 80mm and 58mm PDF receipts, and thermal receipts.
+- The grand total includes VAT.
+- Store NPWP and NIB details are available under Settings → Store Profile.
+- Reports include VAT in the grand total.
 
 ## Database
 
 ### Products
-- `tax_type` — `exclusive` atau `inclusive`
-- `tax_rate` — persentase (decimal 5,2), default 11.00
+
+- `tax_type` — `exclusive` or `inclusive`.
+- `tax_rate` — percentage (decimal 5,2), default `18.00`.
 
 ### Transactions
-- `tax_rate` — tarif yang dipakai (nullable)
-- `tax_total` — total PPN dalam rupiah
-- `customer_npwp` — NPWP customer (opsional)
+
+- `tax_rate` — the applied tax rate (nullable).
+- `tax_total` — total VAT amount in Pakistani rupees (PKR).
+- `customer_npwp` — customer NPWP (optional).
 
 ### Settings
-- `store_npwp` — NPWP toko
-- `store_nib` — NIB toko
-- `tax_default_rate` — tarif default untuk produk baru
 
-## Halaman dan Route
+- `store_npwp` — store NPWP.
+- `store_nib` — store NIB.
+- `tax_default_rate` — default tax rate for new products.
 
-| Route | Fungsi |
+## Pages and Routes
+
+| Route | Function |
 |-------|--------|
-| `settings.store` | Atur NPWP, NIB, tarif PPN default |
+| `settings.store` | Configure NPWP, NIB, and the default VAT rate. |
 
-## Alur Perhitungan
+## Calculation Workflow
 
 ### Exclusive (default)
-```
-Harga produk: Rp 10.000
-PPN 11%:      Rp  1.100
-Total:        Rp 11.100
+
+```text
+Product price: Rs 10,000
+VAT 18%:       Rs  1,800
+Total:         Rs 11,800
 ```
 
 ### Inclusive
-```
-Harga produk: Rp 11.100 (sudah include PPN)
-PPN 11%:      Rp  1.100 (dihitung: 11100 - (11100 / 1.11))
-Total:        Rp 10.000 + Rp 1.100
+
+```text
+Product price: Rs 11,800 (VAT included)
+VAT 18%:       Rs  1,800 (calculated: 11800 - (11800 / 1.18))
+Total:         Rs 10,000 + Rs 1,800
 ```
 
-## Catatan
+## Notes
 
-- Tax hanya mempengaruhi grand_total, tidak mempengaruhi diskon/voucher/loyalty
-- Shipping cost juga dikenakan PPN dengan rate yang sama
-- Jika `tax_rate = 0`, PPN tidak dihitung
-- Setting NPWP/NIB tidak wajib — bisa dikosongkan
+- Tax affects only `grand_total`; it does not affect discounts, vouchers, or loyalty points.
+- Shipping costs are also subject to VAT at the same rate.
+- If `tax_rate = 0`, VAT is not calculated.
+- NPWP/NIB settings are optional and can be left blank.

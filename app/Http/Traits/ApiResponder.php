@@ -16,7 +16,7 @@ trait ApiResponder
         return ApiResponse::success($data, $message, $status);
     }
 
-    protected function created(mixed $data = null, string $message = 'Berhasil dibuat'): JsonResponse
+    protected function created(mixed $data = null, string $message = 'Created successfully'): JsonResponse
     {
         return ApiResponse::created($data, $message);
     }
@@ -26,7 +26,7 @@ trait ApiResponder
         return ApiResponse::noContent();
     }
 
-    protected function error(string $message = 'Terjadi kesalahan', int $status = 400, mixed $errors = null): JsonResponse
+    protected function error(string $message = 'An error occurred', int $status = 400, mixed $errors = null): JsonResponse
     {
         return ApiResponse::error($message, $status, $errors);
     }
@@ -46,12 +46,12 @@ trait ApiResponder
         return ApiResponse::forbidden($message);
     }
 
-    protected function notFound(string $message = 'Data tidak ditemukan'): JsonResponse
+    protected function notFound(string $message = 'Data not found'): JsonResponse
     {
         return ApiResponse::notFound($message);
     }
 
-    protected function validationError(mixed $errors, string $message = 'Validasi gagal'): JsonResponse
+    protected function validationError(mixed $errors, string $message = 'Validation failed'): JsonResponse
     {
         return ApiResponse::validationError($errors, $message);
     }

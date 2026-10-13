@@ -10,7 +10,7 @@ class Customer extends Model
     use HasFactory;
 
     /**
-     * fillable
+     * Fillable attributes
      *
      * @var array
      */

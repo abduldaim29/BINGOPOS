@@ -15,7 +15,7 @@ export default function OutletSwitcher({ outlet, outlets = [], locked = false })
                 disabled={locked}
                 onChange={(event) => router.post(route("outlet.switch"), { outlet_id: event.target.value }, { preserveScroll: true })}
                 className="max-w-36 border-0 bg-transparent p-0 text-sm font-medium text-slate-700 outline-none focus:ring-0 dark:text-slate-200 disabled:cursor-not-allowed disabled:opacity-60"
-                title={locked ? "Tutup shift aktif untuk mengganti outlet" : "Pilih outlet"}
+                title={locked ? "Close active shift to change outlet" : "Select outlet"}
             >
                 {outlets.map((item) => (
                     <option key={item.id} value={item.id}>

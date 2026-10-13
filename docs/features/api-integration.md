@@ -1,22 +1,15 @@
-# API & Integrasi
-
-API v1 menyediakan akses token-based untuk aplikasi mobile, perangkat kasir, dan integrasi eksternal.
-
+# API & Integration
+API v1 provides token-based access for mobile applications, point-of-sale devices, and external integrations.
 ## Authentication
-
-- Login dan register tersedia di `/api/v1/auth/*`.
-- Endpoint terlindungi memakai Sanctum Bearer token.
-- Token login membawa abilities dari permission user.
-- Endpoint master data memeriksa ability yang sesuai.
-
-## Endpoint Utama
-
+- Login and registration are available at `/api/v1/auth/*`.
+- Protected endpoints use Sanctum Bearer tokens.
+- Login tokens include the user's permission-based abilities.
+- Master data endpoints check the corresponding abilities.
+## Main Endpoints
 - Master data: products, customers, categories, warehouses, suppliers.
-- POS: shift, product scan, cart, hold/resume, checkout, transactions.
+- POS: shifts, product scanning, cart, hold/resume, checkout, transactions.
 - Offline sync: `POST /api/v1/pos/transactions/sync`.
-- Payment webhooks: `/api/webhooks/midtrans` dan `/api/webhooks/xendit`.
-
-## Dokumentasi API
-
-Pada instalasi aktif, dokumentasi Scramble tersedia di `/docs/api` dan OpenAPI JSON di `/docs/api.json`.
-Akses dokumentasi produksi dapat dilindungi dengan `SCRAMBLE_DOCS_TOKEN`.
+- Payment webhooks: `/api/webhooks/midtrans` and `/api/webhooks/xendit`.
+## API Documentation
+In an active installation, Scramble documentation is available at `/docs/api`, and the OpenAPI JSON is available at `/docs/api.json`.
+Access to production documentation can be protected using `SCRAMBLE_DOCS_TOKEN`.

@@ -22,17 +22,17 @@ class DineOrderService
             ->open()
             ->first();
 
-        // ponytail: without an open shift there is no warehouse context to take stock from — refuse instead of accepting an order whose stock is never decremented
+        // ponytail: Without an open shift, there is no warehouse context from which to deduct stock — reject the order instead of accepting it without reducing inventory.
         if (! $shift) {
             throw ValidationException::withMessages([
-                'shift' => 'Tidak ada shift kasir aktif. Buka shift terlebih dahulu sebelum menerima pesanan.',
+                'shift' => 'There is no active cashier shift. Open a shift before accepting the order.',
             ]);
         }
 
         $warehouseId = $shift->warehouse_id;
 
         DB::transaction(function () use ($order, $shift, $warehouseId) {
-            // ponytail: lock the order row so accept cannot race with a second accept/reject
+            // ponytail: Lock the order row to prevent concurrent accept/reject operations.
             $order = DineOrder::with(['items.product.components', 'table.area.outlet'])
                 ->whereKey($order->id)
                 ->lockForUpdate()
@@ -43,7 +43,7 @@ class DineOrderService
 
             if ($tableOutletId && $shiftOutletId && $tableOutletId !== $shiftOutletId) {
                 throw ValidationException::withMessages([
-                    'shift' => 'Shift kasir harus berada di outlet yang sama dengan meja.',
+                    'shift' => 'The cashier shift must belong to the same outlet as the table.',
                 ]);
             }
 
@@ -63,7 +63,7 @@ class DineOrderService
 
                         if ($available < $componentQty) {
                             throw ValidationException::withMessages([
-                                'stock' => "Stok komponen {$component->title} tidak mencukupi (tersedia: {$available}).",
+                                'stock' => "Insufficient stock for component {$component->title} (available: {$available}).",
                             ]);
                         }
 
@@ -80,7 +80,7 @@ class DineOrderService
 
                     if ($available < $item->qty) {
                         throw ValidationException::withMessages([
-                            'stock' => "Stok {$product->title} tidak mencukupi (tersedia: {$available}).",
+                            'stock' => "Insufficient stock for {$product->title} (available: {$available}).",
                         ]);
                     }
 
@@ -98,8 +98,8 @@ class DineOrderService
         $order->update([
             'status' => DineOrder::STATUS_REJECTED,
             'notes' => $order->notes
-                ? "{$order->notes}\n[Penolakan: {$reason}]"
-                : "[Penolakan: {$reason}]",
+                ? "{$order->notes}\n[Rejection: {$reason}]"
+                : "[Rejection: {$reason}]",
         ]);
     }
 }

@@ -41,7 +41,7 @@ class PasswordController extends Controller
             event: 'auth.password_changed',
             module: 'auth',
             auditable: $request->user(),
-            description: 'Password akun diganti.',
+            description: 'Account password changed.',
             meta: [
                 'severity' => 'high',
                 'route' => $request->route()?->getName(),

@@ -10,16 +10,16 @@ import {
 
 export default function ShippingLabel({ transaction, store = {} }) {
     const formatPrice = (price = 0) =>
-        Number(price || 0).toLocaleString("id-ID", {
+        Number(price || 0).toLocaleString("en-PK", {
             style: "currency",
-            currency: "IDR",
+            currency: "PKR",
             minimumFractionDigits: 0,
         });
 
     const formatDate = (value) => {
         if (!value) return "-";
         const d = new Date(value);
-        return d.toLocaleDateString("id-ID", {
+        return d.toLocaleDateString("en-PK", {
             day: "2-digit",
             month: "short",
             year: "numeric",
@@ -45,8 +45,8 @@ export default function ShippingLabel({ transaction, store = {} }) {
         );
     };
 
-    const storeName = store?.name || "TOKO";
-    const storeInitial = storeName?.[0] || "T";
+    const storeName = store?.name || "STORE";
+    const storeInitial = storeName?.[0] || "S";
     const storeLogo = store?.logo;
     const customer = transaction?.customer || {};
     const region = [
@@ -114,7 +114,7 @@ export default function ShippingLabel({ transaction, store = {} }) {
                         </div>
 
                         <div className="text-right border-l pl-4 border-slate-200">
-                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">No. Invoice</span>
+                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">Invoice No.</span>
                             <p className="text-xl font-black text-primary-600 tabular-nums">{transaction?.invoice}</p>
                             <p className="text-xs text-slate-500 font-medium">{formatDate(transaction?.created_at)}</p>
                         </div>
@@ -122,19 +122,19 @@ export default function ShippingLabel({ transaction, store = {} }) {
 
                     {/* Address Grid */}
                     <div className="grid grid-cols-2 gap-6">
-                        {/* Left Side: Penerima */}
+                        {/* Left Side: Recipient */}
                         <div className="space-y-3">
                             <div className="flex items-center gap-2 text-primary-600">
                                 <IconUser size={18} />
-                                <span className="text-xs font-bold uppercase tracking-wider">Penerima</span>
+                                <span className="text-xs font-bold uppercase tracking-wider">Recipient</span>
                             </div>
                             <div className="pl-1">
-                                <h3 className="text-lg font-bold text-slate-900">{customer.name || "Pelanggan Umum"}</h3>
+                                <h3 className="text-lg font-bold text-slate-900">{customer.name || "Walk-in Customer"}</h3>
                                 <p className="text-sm font-semibold text-slate-700 mt-1">{customer.phone || ""}</p>
                                 <div className="flex gap-2 mt-2">
                                     <IconMapPin size={16} className="text-slate-400 shrink-0 mt-0.5" />
                                     <p className="text-xs text-slate-600 leading-relaxed italic uppercase">
-                                        {customer.address || "Ambil di Toko"}
+                                        {customer.address || "Pick Up at Store"}
                                     </p>
                                 </div>
                                 {region && (
@@ -149,14 +149,14 @@ export default function ShippingLabel({ transaction, store = {} }) {
                         <div className="bg-slate-50 rounded-xl p-4 border border-slate-100">
                             <div className="flex items-center gap-2 text-slate-500 mb-3">
                                 <IconPackage size={18} />
-                                <span className="text-xs font-bold uppercase tracking-wider">Isi Paket</span>
+                                <span className="text-xs font-bold uppercase tracking-wider">Package Contents</span>
                             </div>
                             <div className="space-y-2">
                                 <div className="text-[11px] text-slate-600 line-clamp-3 font-medium leading-relaxed">
                                     {transaction?.details?.map(item => `${item.product?.title} (x${item.qty})`).join(", ")}
                                 </div>
                                 <div className="pt-2 border-t border-slate-200 flex justify-between items-center">
-                                    <span className="text-[10px] font-bold text-slate-400 uppercase">Total Bayar</span>
+                                    <span className="text-[10px] font-bold text-slate-400 uppercase">Total Amount</span>
                                     <span className="text-sm font-black text-slate-900">{formatPrice(transaction?.grand_total)}</span>
                                 </div>
                             </div>
@@ -167,7 +167,7 @@ export default function ShippingLabel({ transaction, store = {} }) {
                 {/* Footer Barcode */}
                 <div className="flex justify-between items-end mt-4 pt-4 border-t-2 border-slate-100">
                     <div className="text-[10px] text-slate-400 font-medium italic">
-                        Dicetak pada: {new Date().toLocaleString('id-ID')}
+                        Printed on: {new Date().toLocaleString("en-PK")}
                     </div>
                     <div className="flex flex-col items-end">
                         <SimpleBarcode value={transaction?.invoice} />

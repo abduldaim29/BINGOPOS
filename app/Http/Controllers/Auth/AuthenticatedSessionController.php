@@ -48,7 +48,7 @@ class AuthenticatedSessionController extends Controller
             event: 'auth.login_succeeded',
             module: 'auth',
             auditable: $user,
-            description: 'Login berhasil.',
+            description: 'Login successful.',
             meta: [
                 'severity' => 'info',
                 'route' => $request->route()?->getName(),
@@ -90,7 +90,7 @@ class AuthenticatedSessionController extends Controller
             event: 'auth.logout',
             module: 'auth',
             auditable: $request->user(),
-            description: 'Logout berhasil.',
+            description: 'Logout successful.',
             meta: [
                 'severity' => 'info',
                 'route' => $request->route()?->getName(),

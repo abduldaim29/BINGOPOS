@@ -1,23 +1,23 @@
 # Sales Returns
 
-Kembali ke indeks dokumentasi: `docs/README.md`
+Back to the documentation index: `docs/README.md`
 
-## Tujuan
+## Purpose
 
-Mengoreksi transaksi penjualan yang sudah terjadi melalui retur parsial atau penuh yang tetap menjaga stok, profit, dan piutang tetap sinkron.
+Corrects completed sales transactions through partial or full returns while keeping inventory, profit, and receivables synchronized.
 
-## Fitur Saat Ini
+## Current Features
 
-- create draft sales return dari histori transaksi
-- update draft retur
-- complete retur
-- refund tunai
-- store credit
-- restock ke inventory
-- koreksi receivable untuk transaksi `pay_later`
-- histori retur penjualan
+- Create draft sales returns from transaction history.
+- Update draft returns.
+- Complete returns.
+- Cash refunds.
+- Store credit.
+- Restock returned items into inventory.
+- Adjust receivables for `pay_later` transactions.
+- Sales return history.
 
-## Halaman dan Route
+## Pages and Routes
 
 - `dashboard/transactions/history`
 - `dashboard/sales-returns`
@@ -27,23 +27,23 @@ Mengoreksi transaksi penjualan yang sudah terjadi melalui retur parsial atau pen
 - `sales-returns.update`
 - `sales-returns.complete`
 
-## Permission
+## Permissions
 
 - `sales-returns-access`
 - `sales-returns-create`
 - `sales-returns-complete`
 
-## Alur User
+## User Workflow
 
-1. user membuka histori transaksi
-2. jika transaksi masih punya qty yang returnable, tombol retur tampil
-3. user membuat draft retur dari transaksi asal
-4. user memilih qty retur, alasan, dan opsi restock
-5. user menyimpan draft
-6. user menyelesaikan retur
-7. sistem memperbarui stok, profit, dan receivable bila relevan
+1. The user opens transaction history.
+2. If a transaction has a returnable quantity remaining, the return button is displayed.
+3. The user creates a draft return from the original transaction.
+4. The user selects the return quantities, reasons, and restocking options.
+5. The user saves the draft.
+6. The user completes the return.
+7. The system updates inventory, profit, and receivables where applicable.
 
-## Integrasi Data
+## Data Integration
 
 - `sales_returns`
 - `sales_return_items`
@@ -54,19 +54,19 @@ Mengoreksi transaksi penjualan yang sudah terjadi melalui retur parsial atau pen
 - `receivables`
 - `stock_mutations`
 
-## Efek Bisnis Penting
+## Important Business Effects
 
-- retur completed bisa menambah stok kembali
-- retur pada transaksi piutang bisa mengurangi total receivable
-- overpayment dari piutang dapat berubah menjadi refund atau customer credit
+- Completed returns can add returned items back into stock.
+- Returns associated with receivable transactions can reduce the total receivable balance.
+- Receivable overpayments can be converted into refunds or customer credit.
 
-## Batasan Saat Ini
+## Current Limitations
 
-- fitur ini bergantung pada migration tabel retur
-- flow tukar barang tidak termasuk
-- shipping cost tidak menjadi bagian nominal retur
+- This feature depends on the return-table migrations.
+- Item exchange workflows are not included.
+- Shipping costs are excluded from the return amount.
 
-## File Sentral
+## Central Files
 
 - `app/Http/Controllers/Apps/SalesReturnController.php`
 - `resources/js/Pages/Dashboard/SalesReturns`

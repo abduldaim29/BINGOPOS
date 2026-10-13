@@ -1,28 +1,28 @@
 # RBAC, Users, Roles
 
-Kembali ke indeks dokumentasi: `docs/README.md`
+Back to the documentation index: `docs/README.md`
 
-## Tujuan
+## Purpose
 
-Mengatur kontrol akses berbasis role dan permission untuk semua modul dashboard.
+Managing access control based on roles and permissions for all dashboard modules.
 
-## Fitur Saat Ini
+## Current Features
 
-- user management
-- role management
-- permission list
-- route protection dengan middleware permission
-- permission map dibagikan ke frontend via Inertia
+- User management
+- Role management
+- Permission list
+- Route protection with permission middleware
+- permission map shared to frontend via Inertia
 
-## Halaman dan Route
+## Pages and Routes
 
 - `dashboard/users`
 - `dashboard/roles`
 - `dashboard/permissions`
 
-## Permission Umum
+## Common Permissions
 
-Setiap modul memakai permission sendiri, contohnya:
+Each module uses its own permissions, for example:
 
 - `transactions-access`
 - `sales-returns-*`
@@ -30,42 +30,42 @@ Setiap modul memakai permission sendiri, contohnya:
 - `cashier-shifts-*`
 - `audit-logs-access`
 
-## Alur Otorisasi
+## Authorization Workflow
 
-1. permission diseed di `PermissionSeeder`
-2. role disusun di `RoleSeeder`
-3. user admin dibuat melalui first-install setup wizard di `/setup`
-4. route memakai middleware `permission:*`
-5. frontend membaca map permission dari `HandleInertiaRequests`
+1. Permissions are seeded in `PermissionSeeder`
+2. Roles are defined in `RoleSeeder`
+3. The admin user is created through the first-install setup wizard at `/setup`
+4. Routes use the `permission:*` middleware
+5. frontend reads the permission map from `HandleInertiaRequests`
 
-## Catatan Super Admin
+## Super Admin Notes
 
-- user `super-admin` mendapat role `super-admin`
-- backend memperlakukan role `super-admin` sebagai bypass permission yang konsisten untuk `can`, `canAny`, dan middleware Spatie
-- `UserSeeder` hanya digunakan untuk data demo/test, bukan oleh `DatabaseSeeder`
-- cache permission Spatie harus di-reset saat seeding agar permission baru terbaca konsisten
-- role lama `permission-access` dinormalisasi ke `permissions-access` saat seeding agar naming RBAC tidak ambigu
+- The user `super-admin` receives the role `super-admin`
+- The backend treats the role `super-admin` as a consistent permission bypass for `can`, `canAny`, and the Spatie middleware
+- `UserSeeder` is only used for demo/test data, not by `DatabaseSeeder`
+- The Spatie permission cache must be reset during seeding to ensure new permissions are consistently recognized
+- The old role `permission-access` is normalized to `permissions-access` during seeding to avoid ambiguous RBAC naming
 
-## Integrasi Frontend
+## Frontend Integration
 
-Frontend membaca:
+Frontend reads:
 
 - `auth.permissions`
 - `auth.super`
 
-Ini dipakai untuk menampilkan atau menyembunyikan menu dan action tertentu.
+This is used to display or hide specific menus and actions.
 
-Helper frontend utama:
+Main frontend helpers:
 
 - `resources/js/Utils/authorization.js`
 - `resources/js/Utils/Permission.jsx`
 
-## Batasan Saat Ini
+## Current Limitations
 
-- backend tetap menjadi sumber kebenaran utama
-- frontend hanya untuk gating UI, bukan keamanan final
+- The backend remains the primary source of truth
+- The frontend is only for UI gating, not final security
 
-## File Sentral
+## Central Files
 
 - `database/seeders/PermissionSeeder.php`
 - `database/seeders/RoleSeeder.php`

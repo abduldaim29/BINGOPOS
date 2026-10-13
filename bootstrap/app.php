@@ -67,7 +67,7 @@ return Application::configure(basePath: dirname(__DIR__))
                 ], Response::HTTP_FORBIDDEN);
             }
 
-            // Session expired / not logged in → redirect to login (bukan 500)
+            // Session expired / not logged in → redirect to login (not 500).
             // But for JSON/API requests, return 401 JSON instead.
             if ($exception instanceof AuthenticationException) {
                 if ($request->expectsJson() || $request->is('api/*')) {
@@ -87,7 +87,7 @@ return Application::configure(basePath: dirname(__DIR__))
 
             if ($request->expectsJson()) {
                 $message = $exception instanceof UnauthorizedException
-                    ? __('Anda tidak memiliki izin untuk mengakses halaman tersebut.')
+                    ? __('You do not have permission to access this page.')
                     : ($exception->getMessage() ?: Response::$statusTexts[$status] ?? 'Server Error');
 
                 return response()->json([
@@ -116,7 +116,7 @@ return Application::configure(basePath: dirname(__DIR__))
             return Inertia::render('Error', [
                 'status' => $status,
                 'homeUrl' => $request->user() ? route('dashboard') : url('/'),
-                'homeLabel' => $request->user() ? __('Kembali ke Dashboard') : __('Kembali ke Beranda'),
+                'homeLabel' => $request->user() ? __('Back to Dashboard') : __('Back to Home'),
             ])->toResponse($request)->setStatusCode($status);
         });
     })->create();

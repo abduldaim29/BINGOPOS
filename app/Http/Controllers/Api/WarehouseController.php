@@ -25,14 +25,21 @@ class WarehouseController extends Controller
     public function index(Request $request): JsonResponse
     {
         $allowed = $this->outletAccessService->warehousesFor($request->user());
+
         $warehouses = Warehouse::query()
             ->whereIn('id', $allowed->pluck('id'))
-            ->when($request->string('search')->toString(), fn ($q, $s) => $q->where('name', 'like', "%{$s}%"))
+            ->when(
+                $request->string('search')->toString(),
+                fn ($q, $s) => $q->where('name', 'like', "%{$s}%")
+            )
             ->orderBy('sort_order')
             ->orderBy('code')
             ->paginate($this->perPage());
 
-        return $this->paginated($warehouses, WarehouseResource::collection($warehouses));
+        return $this->paginated(
+            $warehouses,
+            WarehouseResource::collection($warehouses)
+        );
     }
 
     /**
@@ -41,7 +48,12 @@ class WarehouseController extends Controller
     public function store(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'code' => ['required', 'string', 'max:50', Rule::unique('warehouses', 'code')],
+            'code' => [
+                'required',
+                'string',
+                'max:50',
+                Rule::unique('warehouses', 'code'),
+            ],
             'name' => ['required', 'string', 'max:255'],
             'type' => ['nullable', Rule::in(['main', 'branch', 'warehouse'])],
             'address' => ['nullable', 'string'],
@@ -50,8 +62,15 @@ class WarehouseController extends Controller
             'outlet_id' => ['nullable', 'integer', 'exists:outlets,id'],
         ]);
 
-        $outlet = $validated['outlet_id'] ?? $request->user()->outlets()->first()?->id;
-        abort_unless($request->user()->isSuperAdmin() || $outlet === null || $request->user()->outlets()->whereKey($outlet)->exists(), 403);
+        $outlet = $validated['outlet_id']
+            ?? $request->user()->outlets()->first()?->id;
+
+        abort_unless(
+            $request->user()->isSuperAdmin()
+                || $outlet === null
+                || $request->user()->outlets()->whereKey($outlet)->exists(),
+            403
+        );
 
         $warehouse = Warehouse::create([
             ...$validated,
@@ -60,7 +79,10 @@ class WarehouseController extends Controller
             'sort_order' => 0,
         ]);
 
-        return $this->created(new WarehouseResource($warehouse), 'Gudang berhasil dibuat');
+        return $this->created(
+            new WarehouseResource($warehouse),
+            'Warehouse created successfully.'
+        );
     }
 
     /**
@@ -68,7 +90,13 @@ class WarehouseController extends Controller
      */
     public function show(Request $request, Warehouse $warehouse): JsonResponse
     {
-        abort_unless($this->outletAccessService->canUseWarehouse($request->user(), $warehouse), 404);
+        abort_unless(
+            $this->outletAccessService->canUseWarehouse(
+                $request->user(),
+                $warehouse
+            ),
+            404
+        );
 
         return $this->ok(new WarehouseResource($warehouse));
     }
@@ -78,10 +106,21 @@ class WarehouseController extends Controller
      */
     public function update(Request $request, Warehouse $warehouse): JsonResponse
     {
-        abort_unless($this->outletAccessService->canUseWarehouse($request->user(), $warehouse), 404);
+        abort_unless(
+            $this->outletAccessService->canUseWarehouse(
+                $request->user(),
+                $warehouse
+            ),
+            404
+        );
 
         $validated = $request->validate([
-            'code' => ['sometimes', 'string', 'max:50', Rule::unique('warehouses', 'code')->ignore($warehouse->id)],
+            'code' => [
+                'sometimes',
+                'string',
+                'max:50',
+                Rule::unique('warehouses', 'code')->ignore($warehouse->id),
+            ],
             'name' => ['sometimes', 'string', 'max:255'],
             'type' => ['nullable', Rule::in(['main', 'branch', 'warehouse'])],
             'address' => ['nullable', 'string'],
@@ -89,15 +128,23 @@ class WarehouseController extends Controller
             'is_active' => ['nullable', 'boolean'],
         ]);
 
-        if (array_key_exists('is_active', $validated)
+        if (
+            array_key_exists('is_active', $validated)
             && ! $validated['is_active']
-            && $this->outletAccessService->hasOpenShift($warehouse)) {
-            return $this->error('Tutup shift aktif sebelum menonaktifkan gudang.', 422);
+            && $this->outletAccessService->hasOpenShift($warehouse)
+        ) {
+            return $this->error(
+                'Please close the active shift before deactivating the warehouse.',
+                422
+            );
         }
 
         $warehouse->update($validated);
 
-        return $this->ok(new WarehouseResource($warehouse), 'Gudang berhasil diperbarui');
+        return $this->ok(
+            new WarehouseResource($warehouse),
+            'Warehouse updated successfully.'
+        );
     }
 
     /**
@@ -105,10 +152,19 @@ class WarehouseController extends Controller
      */
     public function destroy(Request $request, Warehouse $warehouse): JsonResponse
     {
-        abort_unless($this->outletAccessService->canUseWarehouse($request->user(), $warehouse), 404);
+        abort_unless(
+            $this->outletAccessService->canUseWarehouse(
+                $request->user(),
+                $warehouse
+            ),
+            404
+        );
 
         if ($this->outletAccessService->hasWarehouseHistory($warehouse)) {
-            return $this->error('Gudang yang memiliki histori operasional tidak bisa dihapus.', 422);
+            return $this->error(
+                'Warehouses with operational history cannot be deleted.',
+                422
+            );
         }
 
         $warehouse->delete();

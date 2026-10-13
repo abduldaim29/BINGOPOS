@@ -51,7 +51,7 @@ class UserRequest extends FormRequest
             $defaultOutletId = (int) $this->input('default_outlet_id');
 
             if ($defaultOutletId && ! $outletIds->contains($defaultOutletId)) {
-                $validator->errors()->add('default_outlet_id', 'Outlet default harus termasuk outlet yang dipilih.');
+                $validator->errors()->add('default_outlet_id', 'The default outlet must be included among the selected outlets.');
             }
 
             if ($outletIds->isNotEmpty()) {
@@ -61,7 +61,7 @@ class UserRequest extends FormRequest
                     ->count();
 
                 if ($activeCount !== $outletIds->count()) {
-                    $validator->errors()->add('outlet_ids', 'Semua outlet yang dipilih harus aktif.');
+                    $validator->errors()->add('outlet_ids', 'All selected outlets must be active.');
                 }
             }
         });

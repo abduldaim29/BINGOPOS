@@ -8,7 +8,7 @@ import { formatCurrency, formatNumber } from "@/Utils/currency";
  * @param {boolean} isOpen - Controls modal visibility
  * @param {function} onClose - Called when modal should close
  * @param {function} onConfirm - Called with the final value when confirmed
- * @param {string} title - Modal title (e.g., "Jumlah Bayar", "Quantity")
+ * @param {string} title - Modal title (e.g., "Payment Amount", "Quantity")
  * @param {number} initialValue - Starting value
  * @param {number} minValue - Minimum allowed value
  * @param {number} maxValue - Maximum allowed value
@@ -18,7 +18,7 @@ export default function NumpadModal({
     isOpen,
     onClose,
     onConfirm,
-    title = "Masukkan Angka",
+    title = "Enter Number",
     initialValue = 0,
     minValue = 0,
     maxValue = 999999999,
@@ -148,7 +148,7 @@ export default function NumpadModal({
                                 onClick={() => handleQuickAmount(amount)}
                                 className="py-2 px-2 text-xs font-medium rounded-xl bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-400 hover:bg-primary-100 dark:hover:bg-primary-900/50 transition-colors"
                             >
-                                +{amount / 1000}rb
+                                +{amount / 1000}k
                             </button>
                         ))}
                     </div>
@@ -204,7 +204,7 @@ export default function NumpadModal({
                         }`}
                     >
                         <IconCheck size={22} />
-                        Konfirmasi
+                        Confirm
                     </button>
                 </div>
             </div>

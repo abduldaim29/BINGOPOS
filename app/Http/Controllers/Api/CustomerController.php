@@ -72,7 +72,7 @@ class CustomerController extends Controller
             $this->loyaltyService->ensureMembership($customer);
         }
 
-        return $this->created(new CustomerResource($customer), 'Pelanggan berhasil dibuat');
+        return $this->created(new CustomerResource($customer), 'Customer created successfully');
     }
 
     /**
@@ -106,7 +106,7 @@ class CustomerController extends Controller
             $this->loyaltyService->ensureMembership($customer);
         }
 
-        return $this->ok(new CustomerResource($customer->fresh()), 'Pelanggan berhasil diperbarui');
+        return $this->ok(new CustomerResource($customer->fresh()), 'Customer updated successfully');
     }
 
     /**

@@ -54,12 +54,12 @@ class SalesInvoice extends Model
 
     public function items(): HasMany
     {
-        return $this->hasMany(\App\Models\SalesInvoiceItem::class);
+        return $this->hasMany(SalesInvoiceItem::class);
     }
 
     public function receipts(): HasMany
     {
-        return $this->hasMany(\App\Models\SalesInvoiceReceipt::class);
+        return $this->hasMany(SalesInvoiceReceipt::class);
     }
 
     public function getBalanceAttribute(): float

@@ -82,7 +82,7 @@ class SalesReturnController extends Controller
         $transaction = $this->resolveAccessibleTransaction($request, $transaction->id);
 
         if (! $this->transactionHasReturnableItems($transaction)) {
-            return to_route('transactions.history')->with('error', 'Seluruh item transaksi ini sudah habis diretur.');
+            return to_route('transactions.history')->with('error', 'All items in this transaction have already been returned.');
         }
 
         return Inertia::render('Dashboard/SalesReturns/Create', [
@@ -121,11 +121,11 @@ class SalesReturnController extends Controller
             event: 'sales_return.created',
             module: 'sales_returns',
             auditable: $salesReturn,
-            description: 'Draft retur penjualan dibuat.',
+            description: 'Sales return draft created.',
             after: $this->salesReturnAuditPayload($salesReturn),
         );
 
-        return to_route('sales-returns.show', $salesReturn)->with('success', 'Draft retur penjualan berhasil dibuat.');
+        return to_route('sales-returns.show', $salesReturn)->with('success', 'Sales return draft created successfully.');
     }
 
     public function show(Request $request, SalesReturn $salesReturn): Response
@@ -169,12 +169,12 @@ class SalesReturnController extends Controller
             event: 'sales_return.updated',
             module: 'sales_returns',
             auditable: $salesReturn,
-            description: 'Draft retur penjualan diperbarui.',
+            description: 'Sales return draft updated.',
             before: $before,
             after: $this->salesReturnAuditPayload($salesReturn),
         );
 
-        return back()->with('success', 'Draft retur penjualan berhasil diperbarui.');
+        return back()->with('success', 'Sales return draft updated successfully.');
     }
 
     public function complete(Request $request, SalesReturn $salesReturn): RedirectResponse
@@ -199,7 +199,7 @@ class SalesReturnController extends Controller
 
             if ($salesReturn->items->isEmpty()) {
                 throw ValidationException::withMessages([
-                    'sales_return' => 'Draft retur belum memiliki item.',
+                    'sales_return' => 'The return draft does not contain any items.',
                 ]);
             }
 
@@ -213,7 +213,7 @@ class SalesReturnController extends Controller
 
                 if (! $detail || $item->qty_return < 1) {
                     throw ValidationException::withMessages([
-                        'sales_return' => 'Seluruh item retur harus memiliki kuantitas minimal 1.',
+                        'sales_return' => 'Each return item must have a quantity of at least 1.',
                     ]);
                 }
 
@@ -222,7 +222,7 @@ class SalesReturnController extends Controller
 
                 if ($item->qty_return > $remainingQty) {
                     throw ValidationException::withMessages([
-                        'sales_return' => 'Ada item retur yang melebihi sisa qty yang bisa diretur.',
+                        'sales_return' => 'A return item exceeds the remaining quantity available for return.',
                     ]);
                 }
             }
@@ -311,7 +311,7 @@ class SalesReturnController extends Controller
                     'sales_return_id' => $salesReturn->id,
                     'amount' => $salesReturn->credited_amount,
                     'balance' => $salesReturn->credited_amount,
-                    'notes' => 'Saldo toko dari retur penjualan '.$salesReturn->code,
+                    'notes' => 'Store credit from sales return '.$salesReturn->code,
                 ]);
             }
         });
@@ -322,12 +322,12 @@ class SalesReturnController extends Controller
             event: 'sales_return.completed',
             module: 'sales_returns',
             auditable: $salesReturn,
-            description: 'Retur penjualan diselesaikan.',
+            description: 'Sales return completed.',
             before: $before,
             after: $this->salesReturnAuditPayload($salesReturn),
         );
 
-        return back()->with('success', 'Retur penjualan berhasil diselesaikan.');
+        return back()->with('success', 'Sales return completed successfully.');
     }
 
     private function salesReturnAuditPayload(SalesReturn $salesReturn): array
@@ -534,7 +534,7 @@ class SalesReturnController extends Controller
 
                 if (! $detail) {
                     throw ValidationException::withMessages([
-                        'items' => 'Ada item retur yang tidak cocok dengan transaksi asal.',
+                        'items' => 'A return item does not match the original transaction.',
                     ]);
                 }
 
@@ -549,13 +549,13 @@ class SalesReturnController extends Controller
 
                 if ($qtyReturn > $remainingQty) {
                     throw ValidationException::withMessages([
-                        'items' => 'Qty retur melebihi sisa qty yang bisa diretur.',
+                        'items' => 'The return quantity exceeds the remaining quantity available for return.',
                     ]);
                 }
 
                 if (blank($item['return_reason'] ?? null)) {
                     throw ValidationException::withMessages([
-                        'items' => 'Alasan retur wajib diisi untuk setiap item yang diretur.',
+                        'items' => 'A return reason is required for every returned item.',
                     ]);
                 }
 
@@ -576,7 +576,7 @@ class SalesReturnController extends Controller
 
         if ($items->isEmpty()) {
             throw ValidationException::withMessages([
-                'items' => 'Pilih minimal satu item retur dengan qty lebih dari 0.',
+                'items' => 'Select at least one return item with a quantity greater than 0.',
             ]);
         }
 
@@ -667,7 +667,7 @@ class SalesReturnController extends Controller
     {
         if (! $salesReturn->isDraft()) {
             throw ValidationException::withMessages([
-                'sales_return' => 'Retur penjualan yang sudah selesai tidak dapat diubah lagi.',
+                'sales_return' => 'A completed sales return can no longer be modified.',
             ]);
         }
     }
@@ -675,7 +675,7 @@ class SalesReturnController extends Controller
     private function ensureSalesReturnTablesExist(): void
     {
         if (! Schema::hasTable('sales_returns') || ! Schema::hasTable('sales_return_items')) {
-            abort(503, 'Fitur retur penjualan belum siap. Jalankan migrasi database terlebih dahulu.');
+            abort(503, 'The sales return feature is not ready. Run the database migrations first.');
         }
     }
 

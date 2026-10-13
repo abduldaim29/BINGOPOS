@@ -1,67 +1,67 @@
 # CRM & Customer Segments
 
-Kembali ke indeks dokumentasi: `docs/README.md`
+Back to the documentation index: `docs/README.md`
 
-## Tujuan
+## Purpose
 
-Segmentasi pelanggan, campaign automation, dan reminder untuk meningkatkan engagement dan collection.
+Customer segmentation, campaign automation, and reminders to improve engagement and collection.
 
-## Fitur Saat Ini
+## Current Features
 
 ### Customer Segments
-- Manual: admin menambahkan customer ke segment
-- Auto: segment berdasarkan aturan (High Spender, Frequent Buyer, Inactive, Credit Customer, Overdue)
+- Manual: admin adds customer to segment
+- Auto: segment based on rules (High Spender, Frequent Buyer, Inactive, Credit Customer, Overdue)
 - Rule config: spending threshold, frequency, last purchase, receivables status
 - Segment membership track: source (manual/auto), matched_at
 
 ### Campaigns
-- Buat campaign dengan filter audiens (segmen)
+- Create campaign with audience filter (segment)
 - Process campaign: generate log per customer
 - Campaign types: reminder, promo, follow-up
 - Share invoice via WhatsApp link
-- Direct WhatsApp delivery jika WhatsApp Gateway aktif dan device terhubung
-- Cancel campaign jika diperlukan
+- Direct WhatsApp delivery if WhatsApp Gateway is active and device is connected
+- Cancel campaign if needed
 
 ### Reminders
-- Due-soon receivable reminder (3 hari sebelum jatuh tempo)
+- Due-soon receivable reminder (3 days before due date)
 - Overdue receivable reminder
-- Repeat order reminder untuk customer yang sudah lama tidak belanja
+- Repeat order reminder for customers who haven't purchased in a long time
 
 ## Database
 
-- `customer_segments` — master segment
-- `customer_segment_memberships` — pivot customer ↔ segment
-- `customer_campaigns` — campaign definition
-- `customer_campaign_logs` — per-customer campaign tracking
-- `crm_reminders` — reminder definitions
+- `customer_segments`               — master segment
+- `customer_segment_memberships`    — pivot customer ↔ segment
+- `customer_campaigns`              — campaign definition
+- `customer_campaign_logs`          — per-customer campaign tracking
+- `crm_reminders`                   — reminder definitions
 
-## Halaman dan Route
+## Pages and Routes
 
-| Route | Fungsi |
-|-------|--------|
+| Route | Function |
+|-------|----------|
 | `customer-segments.*` | CRUD segments |
 | `crm-campaigns.*` | CRUD campaigns + process/cancel |
-| `crm-reminders.index` | Daftar reminders |
+| `crm-reminders.index` | List reminders |
 
 ## Permission
 
-| Permission | Untuk apa |
+| Permission | For what |
 |-----------|-----------|
-| `customer-segments-access` | Lihat segments |
-| `customer-segments-create` | Buat segment |
+| `customer-segments-access` | View segments |
+| `customer-segments-create` | Create segment |
 | `customer-segments-update` | Edit segment |
-| `customer-segments-delete` | Hapus segment |
-| `crm-campaigns-access` | Lihat campaigns |
-| `crm-campaigns-create` | Buat campaign |
+| `customer-segments-delete` | Delete segment |
+| `crm-campaigns-access` | View campaigns |
+| `crm-campaigns-create` | Create campaign |
 | `crm-campaigns-update` | Edit, process, cancel campaign |
-| `crm-campaigns-delete` | Hapus campaign |
-| `crm-reminders-access` | Lihat reminders |
+| `crm-campaigns-delete` | Delete campaign |
+| `crm-reminders-access` | View reminders |
 
-## Alur Campaign
+## Campaign Flow
 
-1. Buat segment (manual/auto)
-2. Buat campaign → pilih audiens filter
+1. Create segment (manual/auto)
+2. Create campaign → select audience filter
 3. Process campaign → system generate log per customer
-4. Pilih delivery: direct WhatsApp, link `wa.me`, atau manual follow-up
-5. Process campaign mengirim langsung jika service tersedia; jika tidak, log dapat ditangani manual
-6. Mark sent/skip per log sesuai hasil delivery
+4. Choose delivery: direct WhatsApp, link `wa.me`, or manual follow-up
+5. Process campaign sends directly if service is available; if not, logs can be handled manually
+6. Mark sent/skip per log according to delivery results

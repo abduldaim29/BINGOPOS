@@ -1,56 +1,56 @@
 # Settings & Payments
 
-Kembali ke indeks dokumentasi: `docs/README.md`
+Back to the documentation index: `docs/README.md`
 
-## Tujuan
+## Purpose
 
-Mengelola konfigurasi bisnis dan pembayaran yang dipakai aplikasi secara operasional.
+Manages business configuration and payments used by the application operationally.
 
-## Fitur Saat Ini
+## Current Features
 
-- payment gateway settings
-- bank account management
-- store profile settings
-- target penjualan
+- Payment gateway settings.
+- Bank account management.
+- Store profile settings.
+- Sales target.
 
-## Halaman dan Route
+## Pages and Routes
 
 - `dashboard/settings/payments`
 - `dashboard/settings/bank-accounts`
 - `dashboard/settings/store`
 - `dashboard/settings/target`
 
-## Permission
+## Permissions
 
 - `payment-settings-access`
-- `dashboard-access` untuk profil toko dan target
+- `dashboard-access` for store profile and targets
 
-## Alur User
+## User Workflow
 
-1. admin mengatur gateway pembayaran
-2. admin menambah rekening bank aktif
-3. admin mengatur profil toko
-4. admin mengisi target penjualan
+1. The admin configures the payment gateway.
+2. The admin adds active bank accounts.
+3. The admin sets the store profile.
+4. The admin sets the sales target.
 
-## Integrasi Data
+## Data Integration
 
 - `payment_settings`
 - `bank_accounts`
 - `settings`
-- transaksi dan receivable/payable payment yang memakai bank account
+- transactions and receivable/payable payments that use bank accounts
 
-## Efek Bisnis Penting
+## Important Business Effects
 
-- payment gateway settings memengaruhi checkout
-- bank account aktif memengaruhi transfer manual dan pembayaran finansial lain
-- `APP_URL` yang salah dapat membuat webhook tidak usable
+- Payment gateway settings affect checkout.
+- Active bank accounts affect manual transfers and other financial payments.
+- An incorrect `APP_URL` can make webhooks unusable.
 
-## Batasan Saat Ini
+## Current Limitations
 
-- payment gateway tetap memerlukan konfigurasi provider di luar aplikasi
-- warning webhook ditampilkan, tetapi deployment publik tetap tanggung jawab environment
+- Payment gateway still requires provider configuration outside the application.
+- Webhook warnings are displayed, but public deployment remains the environment's responsibility.
 
-## File Sentral
+## Central Files
 
 - `app/Http/Controllers/Apps/PaymentSettingController.php`
 - `app/Http/Controllers/Apps/BankAccountController.php`

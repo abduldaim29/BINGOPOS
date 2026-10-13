@@ -45,7 +45,7 @@ class CategoryController extends Controller
             'image' => $validated['image'] ?? '',
         ]);
 
-        return $this->created(new CategoryResource($category), 'Kategori berhasil dibuat');
+        return $this->created(new CategoryResource($category), 'Category created successfully');
     }
 
     /**
@@ -69,7 +69,7 @@ class CategoryController extends Controller
 
         $category->update($validated);
 
-        return $this->ok(new CategoryResource($category), 'Kategori berhasil diperbarui');
+        return $this->ok(new CategoryResource($category), 'Category updated successfully');
     }
 
     /**

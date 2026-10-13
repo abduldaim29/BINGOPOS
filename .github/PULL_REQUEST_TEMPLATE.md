@@ -1,9 +1,7 @@
-## Deskripsi
-
-Jelaskan perubahan yang Anda buat dan kenapa perubahan ini diperlukan.
+## Description
+Describe the changes you made and explain why they were necessary.
 
 ## Type of Change
-
 - [ ] Bug fix
 - [ ] New feature
 - [ ] Documentation update
@@ -11,15 +9,13 @@ Jelaskan perubahan yang Anda buat dan kenapa perubahan ini diperlukan.
 - [ ] Chore (dependency, CI, etc.)
 
 ## Checklist
+- [ ] I have run `vendor/bin/pint`.
+- [ ] All tests pass (`php artisan test`).
+- [ ] The production build succeeds (`npm run build`).
+- [ ] No new errors or warnings appear in the logs.
+- [ ] Documentation has been updated, if necessary.
 
-- [ ] Saya sudah menjalankan `vendor/bin/pint`
-- [ ] Semua test lulus (`php artisan test`)
-- [ ] Production build OK (`npm run build`)
-- [ ] Tidak ada error/warning baru di log
-- [ ] Dokumentasi sudah diupdate (jika perlu)
-
-## Screenshots (jika ada)
+## Screenshots (if applicable)
 
 ## Related Issue
-
-Closes #(nomor issue)
+Closes #(issue number)

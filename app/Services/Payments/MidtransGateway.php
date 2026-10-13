@@ -30,7 +30,7 @@ class MidtransGateway
     private function createTransaction(Transaction $transaction, array $config, ?array $enabledPayments = null, ?int $amount = null, ?string $orderId = null): array
     {
         if (! ($config['enabled'] ?? false)) {
-            throw new PaymentGatewayException('Midtrans tidak aktif atau belum dikonfigurasi.');
+            throw new PaymentGatewayException('Midtrans is inactive or has not been configured.');
         }
 
         $endpoint = $config['is_production'] ?? false

@@ -61,7 +61,7 @@ class OutletController extends Controller
             }
         });
 
-        return to_route('settings.outlets.index')->with('success', 'Outlet berhasil dibuat.');
+        return to_route('settings.outlets.index')->with('success', 'Outlet created successfully.');
     }
 
     public function update(UpdateOutletRequest $request, Outlet $outlet): RedirectResponse
@@ -75,7 +75,7 @@ class OutletController extends Controller
             : (bool) ($data['is_sales_enabled'] ?? $outlet->is_sales_enabled);
 
         if ((! $isActive || ! $isSalesEnabled) && $this->hasOpenShift($outlet)) {
-            return back()->with('error', 'Tutup semua shift aktif sebelum menonaktifkan outlet atau penjualan.');
+            return back()->with('error', 'Close all active shifts before deactivating the outlet or disabling sales.');
         }
 
         $outlet->update([
@@ -88,7 +88,7 @@ class OutletController extends Controller
             'is_sales_enabled' => $isSalesEnabled,
         ]);
 
-        return back()->with('success', 'Outlet berhasil diperbarui.');
+        return back()->with('success', 'Outlet updated successfully.');
     }
 
     public function destroy(Outlet $outlet): RedirectResponse
@@ -96,12 +96,12 @@ class OutletController extends Controller
         $this->ensureAccess(request()->user(), $outlet);
 
         if ($outlet->code === 'PUSAT' || $this->hasOperationalHistory($outlet)) {
-            return back()->with('error', 'Outlet yang sudah digunakan tidak dapat dihapus. Nonaktifkan outlet sebagai gantinya.');
+            return back()->with('error', 'An outlet that has already been used cannot be deleted. Deactivate the outlet instead.');
         }
 
         $outlet->delete();
 
-        return back()->with('success', 'Outlet berhasil dihapus.');
+        return back()->with('success', 'Outlet deleted successfully.');
     }
 
     private function ensureAccess(User $user, Outlet $outlet): void

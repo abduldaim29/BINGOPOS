@@ -59,7 +59,7 @@ class SetupController extends Controller
                 'exists:warehouses,id',
                 function ($attribute, $value, $fail) {
                     if ($value && ! Warehouse::whereKey($value)->where('code', 'PUSAT')->exists()) {
-                        $fail('Wizard setup hanya dapat memakai gudang PUSAT.');
+                        $fail('The setup wizard can only use the PUSAT warehouse.');
                     }
                 },
             ],
@@ -74,7 +74,7 @@ class SetupController extends Controller
                         ->when($warehouseId, fn ($q) => $q->where('id', '!=', $warehouseId))
                         ->exists();
                     if ($exists) {
-                        $fail('Kode gudang sudah digunakan.');
+                        $fail('The warehouse code is already in use.');
                     }
                 },
             ],
@@ -111,7 +111,7 @@ class SetupController extends Controller
             $pusat = Outlet::firstOrCreate(
                 ['code' => 'PUSAT'],
                 [
-                    'name' => 'Gudang Pusat',
+                    'name' => 'Central Warehouse',
                     'is_active' => true,
                     'is_sales_enabled' => false,
                 ],
@@ -180,12 +180,12 @@ class SetupController extends Controller
             ] as $key => $value) {
                 Setting::set($key, $value);
             }
-            Setting::set('app_setup_completed', true, 'Penanda wizard setup awal sudah diselesaikan');
+            Setting::set('app_setup_completed', true, 'Indicates that the initial setup wizard has been completed');
         });
 
         if ($request->file('store_logo')) {
             $path = $request->file('store_logo')->store('store', 'public');
-            Setting::set('store_logo', $path, 'Logo toko');
+            Setting::set('store_logo', $path, 'Store logo');
         }
 
         return redirect()->route('login')->with('success', __('setup.completed'));

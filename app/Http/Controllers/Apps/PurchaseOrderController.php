@@ -80,7 +80,7 @@ class PurchaseOrderController extends Controller
 
         return redirect()
             ->route('purchase-orders.show', $order)
-            ->with('success', 'Purchase order berhasil dibuat.');
+            ->with('success', 'Purchase order created successfully.');
     }
 
     public function show(Request $request, PurchaseOrder $purchaseOrder)
@@ -106,28 +106,28 @@ class PurchaseOrderController extends Controller
     {
         $this->ensureOrderAccess($request, $purchaseOrder);
         if ($purchaseOrder->status !== 'draft') {
-            return back()->with('error', 'Hanya PO dengan status draft yang bisa dipesan.');
+            return back()->with('error', 'Only purchase orders with draft status can be placed.');
         }
 
         $this->purchaseOrderService->placeOrder($purchaseOrder);
 
         return redirect()
             ->route('purchase-orders.show', $purchaseOrder)
-            ->with('success', 'Purchase order berhasil dipesan.');
+            ->with('success', 'Purchase order placed successfully.');
     }
 
     public function cancel(Request $request, PurchaseOrder $purchaseOrder)
     {
         $this->ensureOrderAccess($request, $purchaseOrder);
         if (! in_array($purchaseOrder->status, ['draft', 'ordered', 'partial_received'])) {
-            return back()->with('error', 'PO tidak dapat dibatalkan.');
+            return back()->with('error', 'This purchase order cannot be canceled.');
         }
 
         $this->purchaseOrderService->cancelOrder($purchaseOrder);
 
         return redirect()
             ->route('purchase-orders.index')
-            ->with('success', 'Purchase order dibatalkan.');
+            ->with('success', 'Purchase order canceled successfully.');
     }
 
     private function ensureOrderAccess(Request $request, PurchaseOrder $order): void

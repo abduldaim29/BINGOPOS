@@ -129,7 +129,7 @@ class CategoryController extends Controller
         // redirect
         return Inertia::render('Dashboard/Categories/Edit', [
             'category' => $category->fresh(),
-        ])->with('success', 'Kategori berhasil diperbarui');
+        ])->with('success', 'Category updated successfully');
     }
 
     /**

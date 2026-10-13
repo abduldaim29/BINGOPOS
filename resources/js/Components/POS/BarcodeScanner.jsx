@@ -34,7 +34,10 @@ export default function BarcodeScanner({ onScan, onClose }) {
                 );
             } catch (err) {
                 if (mounted) {
-                    setError(err?.message || "Kamera tidak tersedia atau ditolak.");
+                    setError(
+                        err?.message ||
+                            "Camera is unavailable or permission was denied."
+                    );
                     setScanning(false);
                 }
             }
@@ -54,7 +57,7 @@ export default function BarcodeScanner({ onScan, onClose }) {
         <div className="fixed inset-0 z-50 bg-black/90 flex flex-col">
             <div className="flex items-center justify-between p-4 text-white">
                 <span className="text-sm font-medium">
-                    {scanning ? "Arahkan ke barcode" : "Memulai kamera..."}
+                    {scanning ? "Point at the barcode" : "Starting camera..."}
                 </span>
                 <button
                     type="button"
@@ -80,13 +83,13 @@ export default function BarcodeScanner({ onScan, onClose }) {
                         onClick={onClose}
                         className="px-6 py-2.5 rounded-xl bg-white/10 text-white text-sm font-medium hover:bg-white/20"
                     >
-                        Tutup
+                        Close
                     </button>
                 </div>
             )}
 
             <div className="p-4 text-center text-xs text-white/50">
-                Atau tutup untuk input manual
+                Or close to enter the barcode manually
             </div>
         </div>
     );

@@ -11,7 +11,7 @@ export default function SearchBar({
     onSelect,
     suggestions = [],
     isSearching = false,
-    placeholder = "Cari produk atau scan barcode...",
+    placeholder = "Search products or scan barcode...",
     autoFocus = false,
 }) {
     const [isFocused, setIsFocused] = useState(false);
@@ -195,7 +195,7 @@ export default function SearchBar({
                                             {product.title}
                                         </p>
                                         <p className="text-xs text-slate-500 dark:text-slate-400">
-                                            {product.barcode} • Stok:{" "}
+                                            {product.barcode} • Stock:{" "}
                                             {product.stock}
                                         </p>
                                     </div>
@@ -207,7 +207,7 @@ export default function SearchBar({
                                         </p>
                                         {product.stock <= 0 && (
                                             <span className="text-xs text-danger-500 font-medium">
-                                                Habis
+                                                Out of Stock
                                             </span>
                                         )}
                                     </div>

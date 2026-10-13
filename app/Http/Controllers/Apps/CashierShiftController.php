@@ -97,7 +97,7 @@ class CashierShiftController extends Controller
             event: 'cashier_shift.opened',
             module: 'cashier_shifts',
             auditable: $shift,
-            description: 'Shift kasir dibuka.',
+            description: 'Cashier shift opened.',
             after: $this->shiftAuditPayload($shift),
             meta: [
                 'cashier_id' => $shift->user_id,
@@ -109,7 +109,7 @@ class CashierShiftController extends Controller
             ? route('transactions.index')
             : route('cashier-shifts.show', $shift);
 
-        return redirect($target)->with('success', 'Shift kasir berhasil dibuka.');
+        return redirect($target)->with('success', 'Cashier shift opened successfully.');
     }
 
     public function close(CloseCashierShiftRequest $request, CashierShift $cashierShift, ConfirmPasswordForForceCloseRequest $confirmPasswordRequest): RedirectResponse
@@ -135,7 +135,7 @@ class CashierShiftController extends Controller
                 event: 'security.privileged_action_challenged',
                 module: 'security',
                 auditable: $cashierShift,
-                description: 'Force close shift memerlukan konfirmasi password ulang.',
+                description: 'Force-closing a shift requires password re-confirmation.',
                 meta: [
                     'severity' => 'high',
                     'route' => $request->route()?->getName(),
@@ -157,7 +157,7 @@ class CashierShiftController extends Controller
             event: $forceClose ? 'cashier_shift.force_closed' : 'cashier_shift.closed',
             module: 'cashier_shifts',
             auditable: $closedShift,
-            description: $forceClose ? 'Shift kasir ditutup paksa.' : 'Shift kasir ditutup.',
+            description: $forceClose ? 'Cashier shift force-closed.' : 'Cashier shift closed.',
             before: $before,
             after: $this->shiftAuditPayload($closedShift),
             meta: [
@@ -166,7 +166,7 @@ class CashierShiftController extends Controller
             ],
         );
 
-        return to_route('cashier-shifts.show', $closedShift)->with('success', 'Shift kasir berhasil ditutup.');
+        return to_route('cashier-shifts.show', $closedShift)->with('success', 'Cashier shift closed successfully.');
     }
 
     public function storeCashMovement(Request $request, CashierShift $cashierShift): RedirectResponse
@@ -191,7 +191,7 @@ class CashierShiftController extends Controller
             note: $validated['note'] ?? null,
         );
 
-        return back()->with('success', 'Pergerakan kas berhasil dicatat.');
+        return back()->with('success', 'Cash movement recorded successfully.');
     }
 
     public function printReport(Request $request, CashierShift $cashierShift, string $type = 'X')

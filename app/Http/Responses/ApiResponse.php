@@ -22,7 +22,7 @@ class ApiResponse
     /**
      * Error response.
      */
-    public static function error(string $message = 'Terjadi kesalahan', int $status = 400, mixed $errors = null): JsonResponse
+    public static function error(string $message = 'An error occurred', int $status = 400, mixed $errors = null): JsonResponse
     {
         return response()->json([
             'success' => false,
@@ -54,7 +54,7 @@ class ApiResponse
     /**
      * 201 Created.
      */
-    public static function created(mixed $data = null, string $message = 'Berhasil dibuat'): JsonResponse
+    public static function created(mixed $data = null, string $message = 'Created successfully'): JsonResponse
     {
         return self::success($data, $message, 201);
     }
@@ -86,7 +86,7 @@ class ApiResponse
     /**
      * 404 Not Found.
      */
-    public static function notFound(string $message = 'Data tidak ditemukan'): JsonResponse
+    public static function notFound(string $message = 'Data not found'): JsonResponse
     {
         return self::error($message, 404);
     }
@@ -94,7 +94,7 @@ class ApiResponse
     /**
      * 422 Unprocessable Entity (validation).
      */
-    public static function validationError(mixed $errors, string $message = 'Validasi gagal'): JsonResponse
+    public static function validationError(mixed $errors, string $message = 'Validation failed'): JsonResponse
     {
         return self::error($message, 422, $errors);
     }

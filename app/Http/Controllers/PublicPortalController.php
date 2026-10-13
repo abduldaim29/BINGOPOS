@@ -30,7 +30,7 @@ class PublicPortalController extends Controller
                 'tax_total' => (int) $transaction->tax_total,
                 'cash' => (int) $transaction->cash,
                 'change' => (int) $transaction->change,
-                'customer_name' => $transaction->customer?->name ?? 'Umum',
+                'customer_name' => $transaction->customer?->name ?? 'General Customer',
                 'cashier_name' => $transaction->cashier?->name ?? '-',
                 'details' => $transaction->details->map(fn ($d) => [
                     'product_title' => $d->product?->title ?? '-',
@@ -60,7 +60,7 @@ class PublicPortalController extends Controller
         $gateway = $paymentSetting?->default_gateway ?? 'midtrans';
 
         if (! $paymentSetting || ! $paymentSetting->isGatewayReady($gateway)) {
-            return back()->with('error', 'Gateway pembayaran belum dikonfigurasi.');
+            return back()->with('error', 'The payment gateway has not been configured.');
         }
 
         $response = $paymentGateway->createPayment($transaction, $gateway, $paymentSetting);
@@ -76,6 +76,6 @@ class PublicPortalController extends Controller
             return redirect($response['payment_url']);
         }
 
-        return back()->with('error', 'Gagal memproses pembayaran.');
+        return back()->with('error', 'Failed to process payment.');
     }
 }

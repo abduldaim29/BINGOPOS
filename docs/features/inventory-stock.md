@@ -1,46 +1,46 @@
 # Inventory & Stock
 
-Kembali ke indeks dokumentasi: `docs/README.md`
+Back to the documentation index: `docs/README.md`
 
-## Tujuan
+## Purpose
 
-Menjaga akurasi stok melalui master produk, stock opname, dan histori mutasi stok.
+Maintain stock accuracy through product master data, stock opname, and stock movement history.
 
-## Fitur Saat Ini
+## Current Features
 
-- CRUD produk
-- initial stock saat create product
-- stock tidak bisa diubah langsung dari edit product
-- stock opname draft → finalized
-- stock mutation list
-- low stock notification
-- multi-warehouse stock melalui `product_warehouse`
-- batch/expiry tracking dan alokasi FEFO
-- composite products / kits
-- reorder point dan rekomendasi purchase order
+- Product CRUD operations
+- Initial stock when creating a product
+- Stock cannot be changed directly when editing a product
+- Stock opname workflow: draft → finalized
+- Stock mutation list
+- Low-stock notifications
+- Multi-warehouse stock management through `product_warehouse`
+- Batch/expiry tracking and FEFO allocation
+- Composite products/kits
+- Reorder points and purchase order recommendations
 
-## Halaman dan Route
+## Pages and Routes
 
 - `dashboard/products`
 - `dashboard/stock-opnames`
 - `dashboard/stock-mutations`
 
-## Permission
+## Permissions
 
 - `products-access`, `products-create`, `products-edit`, `products-delete`
 - `stock-opnames-access`, `stock-opnames-create`, `stock-opnames-finalize`
 - `stock-mutations-access`
 
-## Alur User
+## User Workflow
 
-1. produk dibuat dengan initial stock
-2. initial stock menghasilkan stock mutation awal
-3. stock opname dibuat sebagai draft
-4. produk ditambahkan ke sesi opname
-5. stok fisik diisi per item
-6. finalize mengubah stok produk dan membuat stock mutation adjustment
+1. A product is created with initial stock.
+2. Initial stock generates an initial stock mutation.
+3. A stock opname is created as a draft.
+4. Products are added to the stock opname session.
+5. Physical stock quantities are entered for each item.
+6. Finalization updates product stock and creates a stock adjustment mutation.
 
-## Integrasi Data
+## Data Integration
 
 - `products`
 - `stock_opnames`
@@ -48,19 +48,19 @@ Menjaga akurasi stok melalui master produk, stock opname, dan histori mutasi sto
 - `stock_mutations`
 - `product_notification_reads`
 
-## Efek Bisnis Penting
+## Important Business Implications
 
-- edit product tidak lagi menjadi jalur mutasi stok
-- sales return dan stock opname dapat menambah stok kembali
-- histori mutasi adalah audit trail inventory utama
+- Editing a product is no longer a method for changing stock.
+- Sales returns and stock opname can add stock back.
+- Mutation history serves as the primary inventory audit trail.
 
-## Batasan Saat Ini
+## Current Limitations
 
-- `products.stock` tetap dipelihara sebagai aggregate compatibility; stok operasional per gudang berada di `product_warehouse`
-- data historis tertentu dapat memiliki `warehouse_id` nullable
-- tidak semua sumber mutasi lama direpresentasikan dengan struktur pivot yang sama
+- `products.stock` is still maintained as an aggregate for compatibility; operational stock per warehouse is stored in `product_warehouse`.
+- Certain historical records may have a nullable `warehouse_id`.
+- Not all legacy mutation sources are represented using the same pivot structure.
 
-## File Sentral
+## Central Files
 
 - `app/Http/Controllers/Apps/ProductController.php`
 - `app/Http/Controllers/Apps/StockOpnameController.php`

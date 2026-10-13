@@ -1,20 +1,20 @@
 # Discount Approval
 
-Discount approval mengontrol diskon yang melewati batas kebijakan sebelum checkout diselesaikan.
+Discount approval controls discounts that exceed policy limits before checkout is completed.
 
-## Alur
+## Workflow
 
-1. Kasir membuat permintaan diskon pada transaksi.
-2. Sistem menyimpan status `pending` dan detail nilai diskon.
-3. User dengan permission approval meninjau permintaan.
-4. Permintaan dapat `approved` atau `rejected` dengan catatan.
-5. Checkout hanya memakai diskon yang sudah disetujui.
+1. Cashier creates a discount request on the transaction.
+2. System saves status `pending` and discount details.
+3. User with approval permission reviews the request.
+4. Request can be `approved` or `rejected` with notes.
+5. Checkout only uses discounts that have been approved.
 
-## Audit dan Permission
+## Audit and Permission
 
-Approval menyimpan perubahan status dan aktor pada audit log. Akses kasir dan approver dipisahkan melalui permission discount approval.
+Approval saves status changes and actor on audit log. Cashier and approver access is separated through discount approval permission.
 
-## File Sentral
+## Central Files
 
 - `app/Http/Controllers/Apps/DiscountApprovalController.php`
 - `app/Models/DiscountApprovalLog.php`

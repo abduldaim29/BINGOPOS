@@ -1,21 +1,21 @@
-# Audit Logs
+## Audit Logs
 
-Kembali ke indeks dokumentasi: `docs/README.md`
+Return to the documentation index: `docs/README.md`
 
-## Tujuan
+## Purpose
 
-Menyediakan jejak aktivitas untuk perubahan penting di modul sensitif agar developer dan admin bisa melakukan penelusuran perubahan.
+Provide audit trail for important changes in sensitive modules so developers and admins can trace changes.
 
-## Fitur Saat Ini
+## Current Features
 
 - list audit log
-- filter berdasarkan user, module, event, tanggal, dan keyword
+- filter by user, module, event, date, and keyword
 - detail audit log
 - before / after payload
-- meta tambahan
-- ip address dan user agent
+- meta data
+- ip address and user agent
 
-## Halaman dan Route
+## Pages and Routes
 
 - `dashboard/audit-logs`
 - `audit-logs.show`
@@ -24,33 +24,33 @@ Menyediakan jejak aktivitas untuk perubahan penting di modul sensitif agar devel
 
 - `audit-logs-access`
 
-## Modul yang Sudah Terintegrasi
+## Integrated Modules
 
-Saat ini audit log digunakan pada beberapa aksi penting seperti:
+Currently audit log is used on several important actions such as:
 
 - payment settings update
 - cashier shift open / close / force close
 - sales return create / update / complete
-- konfirmasi pembayaran transaksi
-- dan modul admin lain yang memanggil `AuditLogService`
+- transaction payment confirmation
+- and other admin modules that call `AuditLogService`
 
-## Integrasi Data
+## Data Integration
 
 - `audit_logs`
-- relasi ke `users`
-- relasi polymorphic ke model yang diaudit bila tersedia
+- relation to `users`
+- polymorphic relation to the audited model when available
 
-## Efek Bisnis Penting
+## Important Business Implications
 
-- audit log bukan pengganti authorization
-- audit log membantu analisis perubahan, terutama pada konfigurasi, transaksi, dan inventory-adjacent flow
+- audit log is not a replacement for authorization
+- audit log helps analyze changes, especially on configuration, transactions, and inventory-adjacent flow
 
-## Batasan Saat Ini
+## Current Limitations
 
-- cakupan event bergantung pada controller/service yang secara eksplisit memanggil `AuditLogService`
-- tidak semua CRUD otomatis tercatat
+- event coverage depends on controller/service that explicitly calls `AuditLogService`
+- not all CRUD operations are automatically logged
 
-## File Sentral
+## Central Files
 
 - `app/Http/Controllers/Apps/AuditLogController.php`
 - `app/Services/AuditLogService.php`

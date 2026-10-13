@@ -1,59 +1,64 @@
 # Import / Export CSV & Excel
 
-Kembali ke indeks dokumentasi: `docs/README.md`
+Back to the documentation index: `docs/README.md`
 
-## Tujuan
+## Purpose
 
-Import master data (produk, customer) dari spreadsheet. Export data ke Excel untuk backup atau analisis lanjutan.
+Import master data (products and customers) from spreadsheets. Export data to Excel for backup or further analysis.
 
-## Fitur Saat Ini
+## Current Features
 
 ### Export
-- **Produk** — barcode, SKU, nama, kategori, harga beli, harga jual, stok, min stok, max stok, tipe pajak, tarif pajak
-- **Customer** — nama, telepon, alamat, provinsi, kota, kecamatan, desa, status member, tier, poin
-- **Transaksi** — invoice, tanggal, kasir, pelanggan, metode, status, subtotal, diskon, ongkir, PPN, grand total (dapat difilter berdasarkan tanggal & warehouse)
+
+- **Products** — barcode, SKU, name, category, purchase price, selling price, stock, minimum stock, maximum stock, tax type, and tax rate.
+- **Customers** — name, phone, address, province, city, district, village, membership status, tier, and points.
+- **Transactions** — invoice, date, cashier, customer, payment method, status, subtotal, discount, shipping cost, VAT, and grand total. Data can be filtered by date and warehouse.
 
 ### Import
-- **Produk** — upload file Excel/CSV, auto-create kategori jika belum ada, update if barcode exists (updateOrCreate)
-- **Customer** — upload file Excel/CSV, validasi kolom wajib
 
-### Template
-- Download template Excel kosong dengan header yang sesuai untuk persiapan data
+- **Products** — upload Excel/CSV files, automatically create categories if they do not exist, and update existing records when a barcode matches (`updateOrCreate`).
+- **Customers** — upload Excel/CSV files and validate required columns.
 
-## Route
+### Templates
 
-| Route | Method | Fungsi |
-|-------|--------|--------|
-| `export.products` | GET | Download Excel produk |
-| `export.customers` | GET | Download Excel customer |
-| `export.transactions` | GET | Download Excel transaksi (dengan filter) |
-| `import.products` | POST | Upload file import produk |
-| `import.customers` | POST | Upload file import customer |
+- Download blank Excel templates with the appropriate headers for data preparation.
+
+## Routes
+
+| Route | Method | Function |
+|-------|--------|----------|
+| `export.products` | GET | Download product Excel file |
+| `export.customers` | GET | Download customer Excel file |
+| `export.transactions` | GET | Download transaction Excel file with filters |
+| `import.products` | POST | Upload product import file |
+| `import.customers` | POST | Upload customer import file |
 | `import.template/{type}` | GET | Download template (products/customers) |
 
-## Permission
+## Permissions
 
-| Permission | Untuk apa |
+| Permission | Purpose |
 |-----------|-----------|
-| `products-export` | Download Excel produk |
-| `products-import` | Upload import produk |
-| `customers-export` | Download Excel customer |
-| `customers-import` | Upload import customer |
+| `products-export` | Download product Excel file |
+| `products-import` | Upload product import file |
+| `customers-export` | Download customer Excel file |
+| `customers-import` | Upload customer import file |
 
-## Format Template
+## Template Formats
 
-### Template Produk
-| barcode | sku | nama | deskripsi | kategori | harga_beli | harga_jual | stok | min_stok | max_stok | tipe_pajak | tarif_pajak |
-|---------|-----|------|-----------|----------|-----------|-----------|------|----------|----------|-----------|------------|
+### Product Template
 
-### Template Customer
-| nama | telepon | alamat |
-|------|---------|--------|
+| barcode | sku | name | description | category | purchase_price | selling_price | stock | min_stock | max_stock | tax_type | tax_rate |
+|---------|-----|------|-------------|----------|----------------|---------------|-------|-----------|-----------|----------|----------|
 
-## Catatan
+### Customer Template
 
-- Import produk menggunakan `updateOrCreate` berdasarkan barcode — aman untuk re-import
-- Kategori otomatis dibuat jika belum ada
-- Format file: `.xlsx`, `.xls`, `.csv` (max 5MB)
-- Import diproses dalam batch (100 per batch) untuk performa
-- Tombol export/import ada di halaman Produk dan Customer
+| name | phone | address |
+|------|-------|---------|
+
+## Notes
+
+- Product imports use `updateOrCreate` based on the barcode, making re-imports safe.
+- Categories are created automatically if they do not already exist.
+- Supported file formats: `.xlsx`, `.xls`, `.csv` (maximum 5 MB).
+- Imports are processed in batches of 100 records for better performance.
+- Export/import buttons are available on the Products and Customers pages.

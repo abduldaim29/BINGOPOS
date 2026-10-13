@@ -1,88 +1,88 @@
 # Screenshots Gallery
 
-Berikut adalah seluruh screenshot fitur Point of Sales.
+The following are all screenshots of the Point of Sale features.
 
 ---
 
-## POS & Transaksi
+## POS & Transactions
 
-| Screenshot | Deskripsi |
+| Screenshot | Description |
 |------------|-----------|
-| ![POS Checkout](screenshots/02-pos-checkout.png) | Halaman utama POS — product grid, cart, dan panel pembayaran |
-| ![Riwayat Transaksi](screenshots/03-transaction-history.png) | Histori transaksi dengan filter dan status |
+| ![POS Checkout](screenshots/02-pos-checkout.png) | Main POS page — product grid, cart, and payment panel |
+| ![Transaction History](screenshots/03-transaction-history.png) | Transaction history with filters and statuses |
 
 ## Dashboard
 
-| Screenshot | Deskripsi |
+| Screenshot | Description |
 |------------|-----------|
-| ![Dashboard](screenshots/01-dashboard.png) | Dashboard utama dengan widget ringkasan |
+| ![Dashboard](screenshots/01-dashboard.png) | Main dashboard with summary widgets |
 
 ## Inventory
 
-| Screenshot | Deskripsi |
+| Screenshot | Description |
 |------------|-----------|
-| ![Produk](screenshots/04-products.png) | Manajemen produk — grid view dengan kategori |
-| ![Mutasi Stok](screenshots/05-stock-mutations.png) | Histori mutasi stok per produk |
-| ![Stock Opname](screenshots/06-stock-opnames.png) | Sesi stock opname — bandingkan stok sistem vs fisik |
-| ![Warehouse](screenshots/07-warehouses.png) | Multi-warehouse — kelola gudang dan cabang |
-| ![Transfer Stok](screenshots/08-stock-transfers.png) | Transfer stok antar warehouse |
+| ![Products](screenshots/04-products.png) | Product management — grid view with categories |
+| ![Stock Mutations](screenshots/05-stock-mutations.png) | Stock mutation history by product |
+| ![Stock Opname](screenshots/06-stock-opnames.png) | Stock opname sessions — compare system stock with physical stock |
+| ![Warehouse](screenshots/07-warehouses.png) | Multi-warehouse — manage warehouses and branches |
+| ![Stock Transfer](screenshots/08-stock-transfers.png) | Stock transfers between warehouses |
 
 ## Purchasing
 
-| Screenshot | Deskripsi |
+| Screenshot | Description |
 |------------|-----------|
-| ![Purchase Order](screenshots/09-purchase-orders.png) | Daftar purchase order dengan status |
-| ![Goods Receiving](screenshots/10-goods-receivings.png) | Penerimaan barang dari PO |
-| ![Supplier Return](screenshots/11-supplier-returns.png) | Retur barang ke supplier |
+| ![Purchase Order](screenshots/09-purchase-orders.png) | Purchase order list with statuses |
+| ![Goods Receiving](screenshots/10-goods-receivings.png) | Receiving goods against purchase orders |
+| ![Supplier Return](screenshots/11-supplier-returns.png) | Returning goods to suppliers |
 
 ## Finance
 
-| Screenshot | Deskripsi |
+| Screenshot | Description |
 |------------|-----------|
-| ![Receivables](screenshots/12-receivables.png) | Piutang pelanggan dengan aging |
-| ![Payables](screenshots/13-payables.png) | Hutang supplier |
-| ![Aging](screenshots/14-aging.png) | Aging analysis receivables & payables |
+| ![Receivables](screenshots/12-receivables.png) | Customer receivables with aging information |
+| ![Payables](screenshots/13-payables.png) | Supplier payables |
+| ![Aging](screenshots/14-aging.png) | Receivables and payables aging analysis |
 
 ## Reports
 
-| Screenshot | Deskripsi |
+| Screenshot | Description |
 |------------|-----------|
-| ![Sales Report](screenshots/15-sales-report.png) | Laporan penjualan dengan summary cards |
-| ![Profit Report](screenshots/16-profit-report.png) | Laporan profit dengan margin analysis |
-| ![Insights](screenshots/17-insights.png) | Advanced sales insights — hourly, cashier performance |
+| ![Sales Report](screenshots/15-sales-report.png) | Sales report with summary cards |
+| ![Profit Report](screenshots/16-profit-report.png) | Profit report with margin analysis |
+| ![Insights](screenshots/17-insights.png) | Advanced sales insights — hourly breakdown and cashier performance |
 
 ## CRM
 
-| Screenshot | Deskripsi |
+| Screenshot | Description |
 |------------|-----------|
-| ![Customers](screenshots/18-customers.png) | Manajemen pelanggan |
-| ![Members](screenshots/19-members.png) | Member loyalty management |
-| ![Customer Segments](screenshots/20-customer-segments.png) | Segmentasi pelanggan |
+| ![Customers](screenshots/18-customers.png) | Customer management |
+| ![Members](screenshots/19-members.png) | Loyalty member management |
+| ![Customer Segments](screenshots/20-customer-segments.png) | Customer segmentation |
 
-## Pricing & Promo
+## Pricing & Promotions
 
-| Screenshot | Deskripsi |
+| Screenshot | Description |
 |------------|-----------|
-| ![Pricing Rules](screenshots/21-pricing-rules.png) | Promo engine — qty break, bundle, buy-x-get-y |
-| ![Price Lists](screenshots/22-price-lists.png) | Multi-price list — harga khusus per kelompok |
+| ![Pricing Rules](screenshots/21-pricing-rules.png) | Promotion engine — quantity breaks, bundles, and buy-X-get-Y offers |
+| ![Price Lists](screenshots/22-price-lists.png) | Multiple price lists — special pricing by group |
 
 ## Settings
 
-| Screenshot | Deskripsi |
+| Screenshot | Description |
 |------------|-----------|
-| ![Store Profile](screenshots/23-store-profile.png) | Profil toko — NPWP, NIB, tarif PPN |
-| ![Payment Settings](screenshots/24-payment-settings.png) | Konfigurasi payment gateway |
-| ![Bank Accounts](screenshots/25-bank-accounts.png) | Rekening bank untuk transfer |
-| ![Loyalty Settings](screenshots/26-loyalty-settings.png) | Pengaturan loyalty — tiers, points |
-| ![Printer Settings](screenshots/27-printer-settings.png) | Pengaturan printer thermal |
+| ![Store Profile](screenshots/23-store-profile.png) | Store profile — NPWP, NIB, and VAT rate |
+| ![Payment Settings](screenshots/24-payment-settings.png) | Payment gateway configuration |
+| ![Bank Accounts](screenshots/25-bank-accounts.png) | Bank accounts for transfers |
+| ![Loyalty Settings](screenshots/26-loyalty-settings.png) | Loyalty settings — tiers and points |
+| ![Printer Settings](screenshots/27-printer-settings.png) | Thermal printer settings |
 
-## Admin
+## Administration
 
-| Screenshot | Deskripsi |
+| Screenshot | Description |
 |------------|-----------|
-| ![Users](screenshots/28-users.png) | Manajemen pengguna |
-| ![Roles](screenshots/29-roles.png) | Manajemen role dengan permission matrix |
-| ![Permissions](screenshots/30-permissions.png) | Daftar permission |
-| ![Audit Logs](screenshots/31-audit-logs.png) | Audit trail aktivitas user |
-| ![Cashier Shifts](screenshots/32-cashier-shifts.png) | Buka/tutup shift kasir |
-| ![Discount Approvals](screenshots/33-discount-approvals.png) | Approval diskon melebihi threshold |
+| ![Users](screenshots/28-users.png) | User management |
+| ![Roles](screenshots/29-roles.png) | Role management with permission matrix |
+| ![Permissions](screenshots/30-permissions.png) | Permission list |
+| ![Audit Logs](screenshots/31-audit-logs.png) | User activity audit trail |
+| ![Cashier Shifts](screenshots/32-cashier-shifts.png) | Opening and closing cashier shifts |
+| ![Discount Approvals](screenshots/33-discount-approvals.png) | Approval of discounts exceeding the threshold |

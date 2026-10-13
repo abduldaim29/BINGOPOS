@@ -3,7 +3,13 @@ import { useEffect, useRef, useState, useCallback } from "react";
 import axios from "axios";
 import { driver } from "driver.js";
 import "driver.js/dist/driver.css";
-import { dashboardTour, posTour, productsTour, cashierShiftsTour, reportsTour } from "@/Utils/tours";
+import {
+  dashboardTour,
+  posTour,
+  productsTour,
+  cashierShiftsTour,
+  reportsTour,
+} from "@/Utils/tours";
 
 const TOURS = {
   dashboard: dashboardTour,
@@ -20,9 +26,11 @@ export function useTour(tourName) {
 
   const markCompleted = useCallback(() => {
     // ponytail: plain axios — Inertia router rejects the JSON-only response
-    axios.post(route("tours.complete", { tour: tourName }), {}, {
-      headers: { Accept: "application/json" },
-    }).catch(() => {});
+    axios
+      .post(route("tours.complete", { tour: tourName }), {}, {
+        headers: { Accept: "application/json" },
+      })
+      .catch(() => {});
   }, [tourName]);
 
   const start = useCallback(() => {
@@ -33,6 +41,7 @@ export function useTour(tourName) {
     const steps = (base.steps ?? []).filter(
       (s) => !s.element || document.querySelector(s.element)
     );
+
     if (steps.length === 0) return;
 
     driverObj.current = driver({
@@ -44,12 +53,14 @@ export function useTour(tourName) {
         markCompleted();
       },
     });
+
     setIsActive(true);
     driverObj.current.drive();
   }, [tourName, markCompleted]);
 
   useEffect(() => {
     const completed = auth?.completedTours ?? [];
+
     if (!completed.includes(tourName)) {
       const t = setTimeout(start, 600);
       return () => clearTimeout(t);

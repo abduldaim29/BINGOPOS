@@ -30,7 +30,7 @@ class EnsureRecentPasswordConfirmation
             event: 'security.privileged_action_challenged',
             module: 'security',
             auditable: ['target_label' => $request->route()?->getName() ?? $request->path()],
-            description: 'Aksi sensitif memerlukan konfirmasi password ulang.',
+            description: 'A sensitive action requires password reconfirmation.',
             meta: [
                 'severity' => 'high',
                 'route' => $request->route()?->getName(),

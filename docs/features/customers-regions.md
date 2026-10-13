@@ -1,20 +1,20 @@
 # Customers & Regions
 
-Kembali ke indeks dokumentasi: `docs/README.md`
+Back to the documentation index: `docs/README.md`
 
-## Tujuan
+## Purpose
 
-Menyediakan master data customer yang lebih kaya daripada POS basic, termasuk alamat wilayah Indonesia dan histori transaksi.
+Provide richer customer master data than basic POS functionality, including Indonesian regional addresses and transaction history.
 
-## Fitur Saat Ini
+## Current Features
 
-- CRUD customer
-- create customer dari dashboard
-- create customer via AJAX dari POS
-- data alamat lengkap dengan wilayah Indonesia
-- histori transaksi customer
+- Customer CRUD operations
+- Create customers from the dashboard
+- Create customers via AJAX from the POS
+- Complete address data with Indonesian administrative regions
+- Customer transaction history
 
-## Halaman dan Route
+## Pages and Routes
 
 - `dashboard/customers`
 - `customers.storeAjax`
@@ -23,33 +23,33 @@ Menyediakan master data customer yang lebih kaya daripada POS basic, termasuk al
 - `regions.districts`
 - `regions.villages`
 
-## Permission
+## Permissions
 
 - `customers-access`
 - `customers-create`
 - `customers-edit`
 - `customers-delete`
-- histori customer memakai `transactions-access`
+- Customer history uses `transactions-access`
 
-## Alur User
+## User Workflow
 
-1. user membuat atau mengedit customer
-2. pilihan wilayah dimuat bertingkat dari province ke village
-3. customer dapat dipakai saat checkout
-4. histori transaksi customer dapat dibuka dari dashboard
+1. The user creates or edits a customer.
+2. Region options are loaded hierarchically, from province to village.
+3. The customer can be selected during checkout.
+4. The customer's transaction history can be accessed from the dashboard.
 
-## Integrasi Data
+## Data Integration
 
 - `customers`
-- transaksi terkait customer
-- data wilayah dari `laravolt/indonesia`
+- Transactions associated with customers
+- Regional data from `laravolt/indonesia`
 
-## Batasan Saat Ini
+## Current Limitations
 
-- customer tanpa data lengkap tetap bisa dipakai transaksi
-- history customer berfokus pada histori transaksi, bukan loyalty
+- Customers without complete information can still be used in transactions.
+- Customer history focuses on transaction history rather than loyalty.
 
-## File Sentral
+## Central Files
 
 - `app/Http/Controllers/Apps/CustomerController.php`
 - `app/Http/Controllers/RegionController.php`

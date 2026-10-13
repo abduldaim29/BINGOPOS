@@ -1,83 +1,86 @@
 # Purchasing Chain
 
-Kembali ke indeks dokumentasi: `docs/README.md`
+Back to the documentation index: `docs/README.md`
 
-## Tujuan
+## Purpose
 
-Modul pembelian formal dari supplier: Purchase Order, Goods Receiving, dan Supplier Return. Melengkapi siklus inventory dari pembelian sampai stok masuk.
+A formal supplier purchasing module covering Purchase Orders, Goods Receiving, and Supplier Returns. It completes the inventory cycle from purchasing through stock receipt.
 
-## Fitur Saat Ini
+## Current Features
 
 ### Purchase Order (PO)
-- Buat PO dengan pilih supplier + item produk
-- Qty dan harga beli per item
-- Auto-generate nomor dokumen (`PO-YYYYmmdd-XXXX`)
-- Status lifecycle: `draft` → `ordered` → `partial_received` / `completed` → `cancelled`
-- Filter by status, supplier, nomor dokumen
+
+- Create purchase orders by selecting a supplier and adding product items.
+- Specify quantity and purchase price for each item.
+- Automatically generate document numbers (`PO-YYYYmmdd-XXXX`).
+- Status lifecycle: `draft` → `ordered` → `partial_received` / `completed` → `cancelled`.
+- Filter by status, supplier, and document number.
 
 ### Goods Receiving (GR)
-- Terima barang dari PO (full atau partial)
-- Qty diterima per item, catatan selisih
-- Auto-update status PO (partial/completed)
-- Input **batch number** + **expired date** per item (untuk batch tracking)
-- Increment stok di warehouse tujuan (dari PO)
-- Auto-create payable (30 days due date)
+
+- Receive goods against a purchase order, either in full or partially.
+- Record the received quantity for each item and add discrepancy notes.
+- Automatically update the PO status (`partial_received` or `completed`).
+- Enter a **batch number** and **expiration date** for each item to support batch tracking.
+- Increase stock in the destination warehouse specified by the PO.
+- Automatically create a payable with a 30-day due date.
 
 ### Supplier Return
-- Retur barang ke supplier dari GR
-- Status lifecycle: `draft` → `completed` / `cancelled`
-- Koreksi stok (decrement di warehouse asal)
-- Koreksi payable jika ada
-- Alasan retur per item
 
-## Halaman dan Route
+- Return goods to the supplier from a Goods Receiving record.
+- Status lifecycle: `draft` → `completed` / `cancelled`.
+- Adjust stock by decreasing inventory in the originating warehouse.
+- Adjust the payable balance when applicable.
+- Record a return reason for each item.
 
-| Halaman | Route | Method |
+## Pages and Routes
+
+| Page | Route | Method |
 |---------|-------|--------|
-| Daftar PO | `purchase-orders.index` | GET |
-| Buat PO | `purchase-orders.create` | GET |
-| Simpan PO | `purchase-orders.store` | POST |
-| Detail PO | `purchase-orders.show` | GET |
+| PO List | `purchase-orders.index` | GET |
+| Create PO | `purchase-orders.create` | GET |
+| Save PO | `purchase-orders.store` | POST |
+| PO Details | `purchase-orders.show` | GET |
 | Place PO | `purchase-orders.place` | POST |
 | Cancel PO | `purchase-orders.cancel` | POST |
-| Daftar GR | `goods-receivings.index` | GET |
-| Buat GR | `goods-receivings.create` | GET |
-| Simpan GR | `goods-receivings.store` | POST |
-| Detail GR | `goods-receivings.show` | GET |
-| Daftar SR | `supplier-returns.index` | GET |
-| Buat SR | `supplier-returns.create` | GET |
-| Simpan SR | `supplier-returns.store` | POST |
-| Detail SR | `supplier-returns.show` | GET |
+| GR List | `goods-receivings.index` | GET |
+| Create GR | `goods-receivings.create` | GET |
+| Save GR | `goods-receivings.store` | POST |
+| GR Details | `goods-receivings.show` | GET |
+| SR List | `supplier-returns.index` | GET |
+| Create SR | `supplier-returns.create` | GET |
+| Save SR | `supplier-returns.store` | POST |
+| SR Details | `supplier-returns.show` | GET |
 | Complete SR | `supplier-returns.complete` | POST |
 | Cancel SR | `supplier-returns.cancel` | POST |
 
-## Permission
+## Permissions
 
-| Permission | Untuk apa |
+| Permission | Purpose |
 |-----------|-----------|
-| `purchase-orders-access` | Lihat daftar & detail PO |
-| `purchase-orders-create` | Buat PO |
-| `purchase-orders-update` | Place/cancel PO |
-| `goods-receivings-access` | Lihat daftar & detail GR |
-| `goods-receivings-create` | Buat GR |
-| `supplier-returns-access` | Lihat daftar & detail SR |
-| `supplier-returns-create` | Buat SR |
-| `supplier-returns-update` | Complete/cancel SR |
+| `purchase-orders-access` | View PO lists and details |
+| `purchase-orders-create` | Create POs |
+| `purchase-orders-update` | Place or cancel POs |
+| `goods-receivings-access` | View GR lists and details |
+| `goods-receivings-create` | Create GRs |
+| `supplier-returns-access` | View SR lists and details |
+| `supplier-returns-create` | Create SRs |
+| `supplier-returns-update` | Complete or cancel SRs |
 
-## Alur User
+## User Workflow
 
-1. **Buat PO** → pilih supplier, tambah item, simpan draft
-2. **Place PO** → ubah status draft jadi ordered
-3. **Goods Receiving** → pilih PO yang ordered, input qty diterima + batch, simpan
-4. **Supplier Return** (jika perlu) → pilih GR, pilih item retur, complete
-5. **Payable** otomatis terbentuk saat GR — selesaikan di modul Payables
+1. **Create PO** → Select a supplier, add items, and save as a draft.
+2. **Place PO** → Change the status from `draft` to `ordered`.
+3. **Goods Receiving** → Select an ordered PO, enter the received quantities and batch details, then save.
+4. **Supplier Return** (if needed) → Select a GR, choose the items to return, and complete the return.
+5. **Payable** → A payable is automatically created when goods are received. Manage and settle it through the Payables module.
 
-## Integrasi Data
+## Data Integration
 
-- `purchase_orders` → `purchase_order_items` → di-GR, qty_received increment
-- `goods_receivings` → `goods_receiving_items` → increment stok + stock mutation
-- `supplier_returns` → `supplier_return_items` → decrement stok + stock mutation
-- `payables` auto-created dari GR dengan due_date = 30 hari
-- `product_batches` auto-created dari GR jika batch_number diisi
-- `warehouse_id` di PO → diturunkan ke GR
-- Audit log untuk setiap transisi status
+- `purchase_orders` → `purchase_order_items` → Goods Receiving updates `qty_received` by incrementing the received quantity.
+- `goods_receivings` → `goods_receiving_items` → Increases stock and creates stock mutation records.
+- `supplier_returns` → `supplier_return_items` → Decreases stock and creates stock mutation records.
+- `payables` → Automatically created from GR with `due_date` set to 30 days later.
+- `product_batches` → Automatically created from GR when `batch_number` is provided.
+- `warehouse_id` in the PO → Propagated to the GR.
+- Audit logs → Record every status transition.

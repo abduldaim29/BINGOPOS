@@ -10,10 +10,10 @@ const GITHUB_URL = "https://github.com/aryadwiputra/point-of-sales";
 const DOCS_URL = `${GITHUB_URL}/blob/main/docs/getting-started.md`;
 
 export const NAV_LINKS = [
-    { label: "Fitur", href: "/fitur" },
-    { label: "Dokumentasi", href: "/dokumentasi" },
+    { label: "Features", href: "/fitur" },
+    { label: "Documentation", href: "/dokumentasi" },
     { label: "Roadmap", href: "/roadmap" },
-    { label: "Kontribusi", href: "/kontribusi" },
+    { label: "Contribute", href: "/kontribusi" },
 ];
 
 export default function PublicLayout({ children, active = "" }) {
@@ -26,6 +26,7 @@ export default function PublicLayout({ children, active = "" }) {
                         <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-primary-500 to-primary-600 flex items-center justify-center">
                             <IconShoppingCart size={20} className="text-white" />
                         </div>
+
                         <span className="text-lg font-bold text-slate-900 dark:text-white">
                             Dikasir
                         </span>
@@ -57,12 +58,14 @@ export default function PublicLayout({ children, active = "" }) {
                             <IconStar size={15} className="text-amber-400" />
                             Star
                         </a>
+
                         <Link
                             href="/login"
                             className="px-5 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 hover:text-primary-500 transition-colors"
                         >
-                            Masuk
+                            Log In
                         </Link>
+
                         <a
                             href={GITHUB_URL}
                             target="_blank"
@@ -85,39 +88,68 @@ export default function PublicLayout({ children, active = "" }) {
                         <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary-500 to-primary-600 flex items-center justify-center">
                             <IconShoppingCart size={16} className="text-white" />
                         </div>
+
                         <div>
                             <div className="font-semibold text-slate-700 dark:text-slate-300">
                                 Dikasir
                             </div>
+
                             <div className="text-xs text-slate-500">
-                                Sistem kasir open source untuk UMKM
+                                Open-source POS system for small and medium-sized businesses
                             </div>
                         </div>
                     </div>
 
                     <div className="flex flex-wrap items-center gap-6 text-sm text-slate-500 dark:text-slate-400">
-                        <Link href="/fitur" className="hover:text-primary-500 transition-colors">
-                            Fitur
+                        <Link
+                            href="/fitur"
+                            className="hover:text-primary-500 transition-colors"
+                        >
+                            Features
                         </Link>
-                        <Link href="/dokumentasi" className="hover:text-primary-500 transition-colors">
-                            Dokumentasi
+
+                        <Link
+                            href="/dokumentasi"
+                            className="hover:text-primary-500 transition-colors"
+                        >
+                            Documentation
                         </Link>
-                        <Link href="/roadmap" className="hover:text-primary-500 transition-colors">
+
+                        <Link
+                            href="/roadmap"
+                            className="hover:text-primary-500 transition-colors"
+                        >
                             Roadmap
                         </Link>
-                        <Link href="/kontribusi" className="hover:text-primary-500 transition-colors">
-                            Kontribusi
+
+                        <Link
+                            href="/kontribusi"
+                            className="hover:text-primary-500 transition-colors"
+                        >
+                            Contribute
                         </Link>
-                        <a href={GITHUB_URL} target="_blank" rel="noopener noreferrer" className="hover:text-primary-500 transition-colors">
+
+                        <a
+                            href={GITHUB_URL}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="hover:text-primary-500 transition-colors"
+                        >
                             GitHub
                         </a>
-                        <a href={`${GITHUB_URL}/blob/main/LICENSE`} target="_blank" rel="noopener noreferrer" className="hover:text-primary-500 transition-colors">
-                            Lisensi MIT
+
+                        <a
+                            href={`${GITHUB_URL}/blob/main/LICENSE`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="hover:text-primary-500 transition-colors"
+                        >
+                            MIT License
                         </a>
                     </div>
 
                     <p className="text-sm text-slate-500">
-                        © {new Date().getFullYear()} Dibuat oleh Arya Dwi Putra
+                        © {new Date().getFullYear()} Created by Arya Dwi Putra
                     </p>
                 </div>
             </footer>

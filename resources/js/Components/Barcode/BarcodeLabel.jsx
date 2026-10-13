@@ -95,13 +95,13 @@ export default function BarcodeLabel({
                 </p>
             )}
 
-            {/* Ongkir */}
+            {/* Shipping Cost */}
             {showOngkir && ongkirAmount > 0 && (
                 <p
                     className="text-slate-500 mt-0.5"
                     style={{ fontSize: size === "50x30" ? "8px" : "10px" }}
                 >
-                    + Ongkir {formatPrice(ongkirAmount)}
+                    + Shipping Cost {formatPrice(ongkirAmount)}
                 </p>
             )}
         </div>

@@ -56,7 +56,7 @@ class DineOrderController extends Controller
             $available = $this->availableStock($product, $outlet);
 
             if ($available < $item['qty']) {
-                return back()->with('error', "Stok {$product->title} tidak mencukupi (tersedia: {$available}).");
+                return back()->with('error', "Insufficient stock for {$product->title} (available: {$available}).");
             }
 
             $preview = $previews->get($product->id);
@@ -89,7 +89,7 @@ class DineOrderController extends Controller
 
         return redirect()
             ->route('dine-order.status', $order->access_token)
-            ->with('success', 'Pesanan berhasil dikirim.');
+            ->with('success', 'Order submitted successfully.');
     }
 
     private function availableStock(Product $product, $outlet): int
@@ -129,7 +129,7 @@ class DineOrderController extends Controller
             ->where('is_active', true)
             ->firstOrFail();
 
-        $storeName = Setting::getForOutlet('store_name', $order->table?->area?->outlet, 'Restoran');
+        $storeName = Setting::getForOutlet('store_name', $order->table?->area?->outlet, 'Restaurant');
 
         return Inertia::render('Public/DineOrderStatus', [
             'order' => $order,
@@ -148,12 +148,12 @@ class DineOrderController extends Controller
             ->first(['id', 'status', 'payment_option', 'payment_status', 'subtotal', 'item_count', 'updated_at']);
 
         if (! $order) {
-            return response()->json(['message' => 'Pesanan tidak ditemukan.'], 404);
+            return response()->json(['message' => 'Order not found.'], 404);
         }
 
         // ponytail: the URL token is the only auth factor — poll access is bounded by a 24h window and a rate limit on the route
         if ($order->updated_at->lt(now()->subHours(24))) {
-            return response()->json(['message' => 'Pesanan sudah kedaluwarsa.'], 410);
+            return response()->json(['message' => 'Order has expired.'], 410);
         }
 
         return response()->json(['order' => $order]);

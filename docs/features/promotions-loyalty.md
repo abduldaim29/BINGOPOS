@@ -1,67 +1,71 @@
 # Promotions & Loyalty
 
-Kembali ke indeks dokumentasi: `docs/README.md`
+Back to the documentation index: `docs/README.md`
 
-## Tujuan
+## Purpose
 
-Engine promo dan loyalty untuk meningkatkan penjualan dan retensi pelanggan.
+A promotion and loyalty engine designed to increase sales and customer retention.
 
-## Fitur Saat Ini
+## Current Features
 
-### Pricing Rules (Promo Engine)
-- **Standard Discount** — diskon persentase/nominal per produk atau kategori
-- **Qty Break** — harga khusus untuk pembelian dalam jumlah tertentu (tiered pricing)
-- **Bundle Price** — harga spesial untuk paket produk
-- **Buy X Get Y** — beli produk tertentu, dapat produk lain dengan harga khusus
-- **Customer Scope** — promo bisa dibatasi untuk: semua, walk-in, registered, member, atau tier tertentu
-- **Schedule** — promo bisa dijadwalkan dengan start/end date
-- **Preview** — lihat dampak promo sebelum checkout
+### Pricing Rules (Promotion Engine)
+
+- **Standard Discount** — percentage or fixed-amount discounts per product or category.
+- **Quantity Break** — special pricing for purchases of specified quantities (tiered pricing).
+- **Bundle Price** — special pricing for product bundles.
+- **Buy X Get Y** — purchase a specific product to receive another product at a special price.
+- **Customer Scope** — promotions can be restricted to all customers, walk-in customers, registered customers, members, or specific tiers.
+- **Schedule** — promotions can be scheduled with start and end dates.
+- **Preview** — view the impact of a promotion before checkout.
 
 ### Customer Vouchers
-- Voucher per customer dengan kode unik
-- Minimum order, periode berlaku
-- Voucher bisa di-redeem di checkout
+
+- Customer-specific vouchers with unique codes.
+- Minimum order requirements and validity periods.
+- Vouchers can be redeemed at checkout.
 
 ### Loyalty Program
-- **Tiers**: Regular → Silver → Gold → Platinum
-- **Poin**: earn point per transaksi, redeem untuk diskon
-- **Auto tier sync**: tier otomatis naik berdasarkan total belanja
-- **Settings**: enable/disable earn & redeem, rate amount, point value
 
-### Multi-Price List
-- Harga khusus per kelompok pelanggan (all, walk-in, registered, member)
-- Prioritas: price list dengan prioritas tertinggi yang cocok akan dipakai
-- Harga per produk dalam price list
+- **Tiers:** Regular → Silver → Gold → Platinum.
+- **Points:** Earn points per transaction and redeem them for discounts.
+- **Automatic Tier Sync:** Tiers are automatically upgraded based on total spending.
+- **Settings:** Enable/disable earning and redemption, configure earning rates, and set point values.
+
+### Multi-Price Lists
+
+- Special pricing for customer groups (all, walk-in, registered, and member).
+- Priority: the matching price list with the highest priority is applied.
+- Product-specific prices within each price list.
 
 ## Database
 
 - `pricing_rules` + `pricing_rule_qty_breaks` + `pricing_rule_bundle_items` + `pricing_rule_buy_get_items`
 - `customer_vouchers` (per customer)
-- `loyalty_point_histories` (earn/redeem trail)
+- `loyalty_point_histories` (earning and redemption history)
 - `price_lists` + `price_list_items`
 
-## Halaman dan Route
+## Pages and Routes
 
-| Route | Modul |
-|-------|-------|
+| Route | Module |
+|-------|--------|
 | `pricing-rules.index` | Pricing Rules (CRUD) |
-| `pricing-rules.preview` | Preview promo |
-| `customer-vouchers.*` | Voucher customer |
-| `price-lists.index` | Price List (settings) |
-| `price-lists.show` | Detail price list + edit harga |
+| `pricing-rules.preview` | Promotion preview |
+| `customer-vouchers.*` | Customer vouchers |
+| `price-lists.index` | Price lists (settings) |
+| `price-lists.show` | Price list details and price editing |
 | `settings.loyalty` | Loyalty settings |
 
-## Alur Pricing di Checkout
+## Pricing Workflow at Checkout
 
-1. Cart items → PricingService mengevaluasi semua active rules
-2. Rules diurutkan by priority → dicocokkan dengan customer scope
-3. Diskon dialokasikan per item → subtotal after promo
-4. Voucher dicek → loyalitas poin redeem dihitung
-5. PPN ditambahkan → grand total final
+1. Cart items are evaluated by `PricingService` against all active rules.
+2. Rules are sorted by priority and matched against the customer scope.
+3. Discounts are allocated per item, producing the subtotal after promotions.
+4. Vouchers are validated and loyalty point redemption is calculated.
+5. VAT is added to determine the final grand total.
 
-## Catatan
+## Notes
 
-- Pricing rules bisa tumpang tindih — rule dengan priority lebih tinggi diutamakan
-- Qty break: tier price berdasarkan quantity pembelian produk tertentu
-- Bundle: harga spesial untuk set produk yang sudah ditentukan
-- Buy X Get Y: buy item A → dapat diskon untuk item B
+- Pricing rules can overlap; rules with higher priority take precedence.
+- Quantity breaks apply tiered prices based on the quantity purchased for a specific product.
+- Bundles offer special prices for predefined product sets.
+- Buy X Get Y allows customers to purchase item A and receive a discount on item B.

@@ -35,6 +35,12 @@ export default function Payment({
         xendit_public_key: setting?.xendit_public_key ?? "",
         xendit_callback_token: "",
         xendit_production: setting?.xendit_production ?? false,
+        safepay_enabled: setting?.safepay_enabled ?? false,
+        safepay_aggregator_id: setting?.safepay_aggregator_id ?? "",
+        safepay_secret_key: "",
+        safepay_webhook_secret: "",
+        safepay_aggregator_merchant_identifier: setting?.safepay_aggregator_merchant_identifier ?? "",
+        safepay_production: setting?.safepay_production ?? false,
     });
 
     useEffect(() => {
@@ -51,6 +57,7 @@ export default function Payment({
         if (gateway === "cash") return true;
         if (gateway === "midtrans") return data.midtrans_enabled;
         if (gateway === "xendit") return data.xendit_enabled;
+        if (gateway === "safepay") return data.safepay_enabled;
         return false;
     };
 
@@ -380,6 +387,125 @@ export default function Payment({
                     </div>
                 </div>
 
+                {/* Safepay Raast */}
+                <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6">
+                    <div className="flex items-center justify-between mb-4">
+                        <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-2">
+                            <IconCreditCard size={18} />
+                            Safepay Raast
+                        </h3>
+                        <label
+                            className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium cursor-pointer transition-all ${
+                                data.safepay_enabled
+                                    ? "bg-success-100 dark:bg-success-900/50 text-success-700 dark:text-success-400"
+                                    : "bg-slate-100 dark:bg-slate-800 dark:text-slate-500"
+                            }`}
+                        >
+                            <Checkbox
+                                checked={data.safepay_enabled}
+                                onChange={(e) =>
+                                    setData("safepay_enabled", e.target.checked)
+                                }
+                                disabled={!canUpdatePaymentSettings}
+                            />
+                            {data.safepay_enabled ? "Active" : "Inactive"}
+                        </label>
+                    </div>
+                    <div
+                        className={`space-y-4 ${
+                            !data.safepay_enabled
+                                ? "opacity-50 pointer-events-none"
+                                : ""
+                        }`}
+                    >
+                        <div className="grid gap-4 md:grid-cols-2">
+                            <Input
+                                label="Aggregator ID"
+                                type="text"
+                                value={data.safepay_aggregator_id}
+                                onChange={(e) =>
+                                    setData("safepay_aggregator_id", e.target.value)
+                                }
+                                errors={errors?.safepay_aggregator_id}
+                                placeholder="agg_xxx"
+                                disabled={!canUpdatePaymentSettings}
+                            />
+                            <Input
+                                label="Merchant Identifier"
+                                type="text"
+                                value={data.safepay_aggregator_merchant_identifier}
+                                onChange={(e) =>
+                                    setData(
+                                        "safepay_aggregator_merchant_identifier",
+                                        e.target.value
+                                    )
+                                }
+                                errors={errors?.safepay_aggregator_merchant_identifier}
+                                placeholder="am_xxx"
+                                disabled={!canUpdatePaymentSettings}
+                            />
+                        </div>
+                        <div className="grid gap-4 md:grid-cols-2">
+                            <Input
+                                label="Secret Key"
+                                type="password"
+                                value={data.safepay_secret_key}
+                                onChange={(e) =>
+                                    setData("safepay_secret_key", e.target.value)
+                                }
+                                errors={errors?.safepay_secret_key}
+                                placeholder={
+                                    paymentSettingSources?.safepay_secret_key?.configured
+                                        ? "Leave blank to keep current value"
+                                        : "Your Safepay secret key"
+                                }
+                                disabled={
+                                    !canUpdatePaymentSettings ||
+                                    paymentSettingSources?.safepay_secret_key?.managed_by_environment
+                                }
+                            />
+                            <Input
+                                label="Webhook Secret"
+                                type="password"
+                                value={data.safepay_webhook_secret}
+                                onChange={(e) =>
+                                    setData("safepay_webhook_secret", e.target.value)
+                                }
+                                errors={errors?.safepay_webhook_secret}
+                                placeholder={
+                                    paymentSettingSources?.safepay_webhook_secret?.configured
+                                        ? "Leave blank to keep current value"
+                                        : "Base64-encoded webhook secret"
+                                }
+                                disabled={
+                                    !canUpdatePaymentSettings ||
+                                    paymentSettingSources?.safepay_webhook_secret?.managed_by_environment
+                                }
+                            />
+                        </div>
+                        {renderSecretHint(
+                            "safepay_secret_key",
+                            "Fill again only if you want to change secret."
+                        )}
+                        {renderSecretHint(
+                            "safepay_webhook_secret",
+                            "Fill again only if you want to change secret."
+                        )}
+                        <label className="flex items-center gap-2 cursor-pointer">
+                            <Checkbox
+                                checked={data.safepay_production}
+                                onChange={(e) =>
+                                    setData("safepay_production", e.target.checked)
+                                }
+                                disabled={!canUpdatePaymentSettings}
+                            />
+                            <span className="text-sm text-slate-600 dark:text-slate-400">
+                                Mode Produksi
+                            </span>
+                        </label>
+                    </div>
+                </div>
+
                 {/* Webhook URLs Info */}
                 <div className="bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-200 dark:border-slate-700 p-6">
                     <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-4 flex items-center gap-2">
@@ -443,6 +569,31 @@ export default function Payment({
                                     onClick={() => {
                                         navigator.clipboard.writeText(
                                             webhookUrls.xendit || ""
+                                        );
+                                        toast.success("URL copied!");
+                                    }}
+                                    className="px-3 h-10 rounded-lg border border-slate-200 dark:border-slate-700 text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
+                                >
+                                    Copy
+                                </button>
+                            </div>
+                        </div>
+                        <div>
+                            <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">
+                                Safepay Webhook URL
+                            </label>
+                            <div className="flex items-center gap-2">
+                                <input
+                                    type="text"
+                                    readOnly
+                                    value={webhookUrls.safepay || ""}
+                                    className="flex-1 h-10 px-3 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400"
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        navigator.clipboard.writeText(
+                                            webhookUrls.safepay || ""
                                         );
                                         toast.success("URL copied!");
                                     }}

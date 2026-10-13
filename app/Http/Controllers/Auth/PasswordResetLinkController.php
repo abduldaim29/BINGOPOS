@@ -51,7 +51,7 @@ class PasswordResetLinkController extends Controller
             event: 'auth.password_reset_requested',
             module: 'auth',
             auditable: ['target_label' => $request->email],
-            description: 'Permintaan reset password dikirim.',
+            description: 'Password reset request submitted.',
             meta: [
                 'severity' => 'info',
                 'route' => $request->route()?->getName(),

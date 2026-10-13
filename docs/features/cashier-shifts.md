@@ -1,21 +1,21 @@
 # Cashier Shifts
 
-Kembali ke indeks dokumentasi: `docs/README.md`
+Back to documentation index: `docs/README.md`
 
-## Tujuan
+## Purpose
 
-Mengontrol sesi kerja kasir agar transaksi kasir memiliki konteks shift yang jelas, termasuk cash opening, cash closing, dan summary operasional.
+Control cashier work sessions so that cashier transactions have a clear shift context, including opening cash, closing cash, and operational summaries.
 
-## Fitur Saat Ini
+## Current Features
 
-- open shift
-- list shift
-- detail shift
-- close shift
-- force close untuk user berwenang
-- ringkasan expected cash, actual cash, selisih, transaksi, dan sales return
+- Open shift
+- List shifts
+- Shift details
+- Close shift
+- Force close for authorized users
+- Summary of expected cash, actual cash, discrepancies, transactions, and sales returns
 
-## Halaman dan Route
+## Pages and Routes
 
 - `dashboard/cashier-shifts`
 - `cashier-shifts.store`
@@ -29,32 +29,32 @@ Mengontrol sesi kerja kasir agar transaksi kasir memiliki konteks shift yang jel
 - `cashier-shifts-close`
 - `cashier-shifts-force-close`
 
-## Alur User
+## User Flow
 
-1. kasir membuka shift dengan opening cash
-2. route transaksi tertentu mewajibkan shift aktif
-3. selama shift aktif, transaksi dan sales return tercatat dalam konteks shift
-4. saat penutupan, kasir mengisi actual cash
-5. sistem menghitung selisih dan summary shift
+1. The cashier opens a shift with opening cash
+2. Certain transaction routes require an active shift
+3. During the active shift, transactions and sales returns are recorded within the shift context
+4. When closing, the cashier fills in the actual cash
+5. The system calculates the difference and generates a shift summary
 
-## Integrasi Data
+## Data Integration
 
 - `cashier_shifts`
-- transaksi cash / non-cash
+- cash / non-cash transactions
 - sales returns
 - middleware `active_shift`
 
-## Efek Bisnis Penting
+## Important Business Implications
 
-- tanpa shift aktif, operasi inti transaksi diblokir
-- close shift dipakai untuk rekonsiliasi cash operasional
+- Without an active shift, core transaction operations are blocked
+- Close shift is used for operational cash reconciliation
 
-## Batasan Saat Ini
+## Current Limitations
 
-- shift tidak dimaksudkan sebagai workflow approval
-- force close dibatasi untuk user tertentu
+- Shift is not intended as an approval workflow
+- Force close is limited to specific users
 
-## File Sentral
+## Central Files
 
 - `app/Http/Controllers/Apps/CashierShiftController.php`
 - `app/Services/CashierShiftService.php`

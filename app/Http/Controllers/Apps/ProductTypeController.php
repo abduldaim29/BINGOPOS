@@ -4,8 +4,10 @@ namespace App\Http\Controllers\Apps;
 
 use App\Http\Controllers\Controller;
 use App\Models\ProductType;
-use Illuminate\Http\Request;
+use App\Models\Category;
+use App\Models\Product;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Redirect;
 use Inertia\Inertia;
 
@@ -30,9 +32,14 @@ class ProductTypeController extends Controller
      */
     public function create()
     {
-        return Inertia::render('Dashboard/ProductTypes/Create');
-    }
+        $categories = Category::select('id', 'name')->get();
+        $products = Product::select('id', 'title')->get();
 
+        return Inertia::render('Dashboard/ProductTypes/Create', [
+            'categories' => $categories,
+            'products' => $products,
+        ]);
+    }
     /**
      * Store a newly created resource in storage.
      */
@@ -43,6 +50,8 @@ class ProductTypeController extends Controller
             'code' => 'required|string|max:50|unique:product_types',
             'description' => 'nullable|string',
             'is_active' => 'nullable|boolean',
+            'category_id' => 'nullable|exists:categories,id',
+            'product_id' => 'nullable|exists:products,id',
         ]);
 
         ProductType::create([
@@ -50,6 +59,8 @@ class ProductTypeController extends Controller
             'code' => $request->code,
             'description' => $request->description,
             'is_active' => $request->boolean('is_active', true),
+            'category_id' => $request->category_id,
+            'product_id' => $request->product_id,
         ]);
 
         return Redirect::route('product-types.index')->with('success', 'Item created successfully.');
@@ -60,8 +71,13 @@ class ProductTypeController extends Controller
      */
     public function edit(ProductType $productType)
     {
+        $categories = Category::select('id', 'name')->get();
+        $products = Product::select('id', 'title')->get();
+
         return Inertia::render('Dashboard/ProductTypes/Edit', [
             'productType' => $productType,
+            'categories' => $categories,
+            'products' => $products,
         ]);
     }
 
@@ -75,6 +91,8 @@ class ProductTypeController extends Controller
             'code' => 'required|string|max:50|unique:product_types,code,'.$productType->id,
             'description' => 'nullable|string',
             'is_active' => 'nullable|boolean',
+            'category_id' => 'nullable|exists:categories,id',
+            'product_id' => 'nullable|exists:products,id',
         ]);
 
         $productType->update([
@@ -82,6 +100,8 @@ class ProductTypeController extends Controller
             'code' => $request->code,
             'description' => $request->description,
             'is_active' => $request->boolean('is_active', true),
+            'category_id' => $request->category_id,
+            'product_id' => $request->product_id,
         ]);
 
         return Redirect::route('product-types.index')->with('success', 'Item updated successfully.');

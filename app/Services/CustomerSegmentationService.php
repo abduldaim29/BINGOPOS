@@ -16,7 +16,7 @@ class CustomerSegmentationService
                 'name' => 'High Spender',
                 'slug' => 'high_spender',
                 'type' => CustomerSegment::TYPE_AUTO,
-                'description' => 'Pelanggan dengan total belanja tinggi.',
+                'description' => 'Customers with high total spending.',
                 'auto_rule_type' => CustomerSegment::RULE_SPENDING,
                 'rule_config' => [
                     'min_total_spent' => 1500000,
@@ -26,7 +26,7 @@ class CustomerSegmentationService
                 'name' => 'Frequent Buyer',
                 'slug' => 'frequent_buyer',
                 'type' => CustomerSegment::TYPE_AUTO,
-                'description' => 'Pelanggan yang aktif berbelanja dengan frekuensi tinggi.',
+                'description' => 'Customers who shop actively and frequently.',
                 'auto_rule_type' => CustomerSegment::RULE_PURCHASE_FREQUENCY,
                 'rule_config' => [
                     'min_transaction_count' => 5,
@@ -37,7 +37,7 @@ class CustomerSegmentationService
                 'name' => 'Inactive Customer',
                 'slug' => 'inactive_customer',
                 'type' => CustomerSegment::TYPE_AUTO,
-                'description' => 'Pelanggan yang sudah lama tidak melakukan pembelian ulang.',
+                'description' => 'Customers who have not made a repeat purchase for a long time.',
                 'auto_rule_type' => CustomerSegment::RULE_PURCHASE_FREQUENCY,
                 'rule_config' => [
                     'inactivity_days_min' => 30,
@@ -48,7 +48,7 @@ class CustomerSegmentationService
                 'name' => 'Credit Customer',
                 'slug' => 'credit_customer',
                 'type' => CustomerSegment::TYPE_AUTO,
-                'description' => 'Pelanggan yang masih memiliki piutang aktif.',
+                'description' => 'Customers who have outstanding receivables.',
                 'auto_rule_type' => CustomerSegment::RULE_RECEIVABLE_BEHAVIOR,
                 'rule_config' => [
                     'require_outstanding_receivable' => true,
@@ -58,7 +58,7 @@ class CustomerSegmentationService
                 'name' => 'Overdue Customer',
                 'slug' => 'overdue_customer',
                 'type' => CustomerSegment::TYPE_AUTO,
-                'description' => 'Pelanggan dengan piutang jatuh tempo atau overdue.',
+                'description' => 'Customers with overdue receivables.',
                 'auto_rule_type' => CustomerSegment::RULE_RECEIVABLE_BEHAVIOR,
                 'rule_config' => [
                     'overdue_only' => true,

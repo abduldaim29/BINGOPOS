@@ -87,7 +87,7 @@ class PayableController extends Controller
 
         return redirect()
             ->route('payables.index')
-            ->with('success', 'Hutang supplier berhasil dibuat.');
+            ->with('success', 'Supplier payable created successfully.');
     }
 
     public function show(Payable $payable)
@@ -175,13 +175,13 @@ class PayableController extends Controller
         ]);
 
         DB::transaction(function () use ($validated, $payable, $request) {
-            // ponytail: lock the payable row so concurrent payments cannot double-apply past the remaining balance
+            // Note: lock the payable row so concurrent payments cannot double-apply past the remaining balance.
             $payable = Payable::whereKey($payable->id)->lockForUpdate()->firstOrFail();
 
             $remaining = $payable->remaining;
             if ($validated['amount'] > $remaining) {
                 throw ValidationException::withMessages([
-                    'amount' => 'Nominal melebihi sisa hutang.',
+                    'amount' => 'The payment amount exceeds the outstanding balance.',
                 ]);
             }
 
@@ -190,7 +190,7 @@ class PayableController extends Controller
                     BankAccount::active()->forOutlet($this->outletAccessService->activeOutlet($request))
                         ->whereKey($validated['bank_account_id'])->exists(),
                     422,
-                    'Rekening bank tidak tersedia untuk outlet aktif.'
+                    'The bank account is not available for the active outlet.'
                 );
             }
 
@@ -215,7 +215,7 @@ class PayableController extends Controller
 
         return redirect()
             ->route('payables.show', $payable)
-            ->with('success', 'Pembayaran hutang berhasil dicatat.');
+            ->with('success', 'Payable payment recorded successfully.');
     }
 
     private function scopeQuery($query, Collection $warehouseIds)

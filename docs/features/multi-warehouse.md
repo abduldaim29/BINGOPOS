@@ -1,96 +1,102 @@
 # Multi-Warehouse
 
-Kembali ke indeks dokumentasi: `docs/README.md`
+Back to the documentation index: `docs/README.md`
 
-## Tujuan
+## Purpose
 
-Memisahkan stok produk per lokasi fisik (gudang pusat, cabang toko, gudang penyangga). Memungkinkan bisnis dengan >1 lokasi operasional.
+Separate product stock by physical location (main warehouse, branch store, backup warehouse). Supports businesses with more than one operational location.
 
-## Definisi
+## Definitions
 
-| Istilah | Arti |
+| Term | Meaning |
 |---------|------|
-| Main Warehouse | Gudang utama, dibuat otomatis saat seeding |
-| Branch Warehouse | Cabang toko yang juga menjual langsung |
-| Stock Warehouse | Gudang penyangga (tidak menjual langsung) |
+| Main Warehouse | The main warehouse, created automatically during seeding |
+| Branch Warehouse | A branch store that also sells directly to customers |
+| Stock Warehouse | A backup warehouse that does not sell directly to customers |
 
-## Fitur Saat Ini
+## Current Features
 
 ### Warehouse CRUD
-- Tambah, edit, hapus warehouse
-- Tipe: main, branch, warehouse
-- Status aktif/nonaktif
-- Urutan tampilan
-- Guard: tidak bisa hapus warehouse yang masih punya stok
-- Guard: tidak bisa hapus warehouse utama
+
+- Add, edit, and delete warehouses.
+- Types: main, branch, warehouse.
+- Active/inactive status.
+- Display order.
+- Guard: warehouses with existing stock cannot be deleted.
+- Guard: the main warehouse cannot be deleted.
 
 ### Product-Warehouse Pivot
-- Stok disimpan per produk per warehouse di `product_warehouse`
-- Saat warehouse baru dibuat, semua produk otomatis ter-sync dengan stok 0
-- Saat seeder, semua stok produk existing dipindah ke warehouse PUSAT
 
-### Warehouse di Shift
-- Kasir memilih warehouse saat buka shift
-- Warehouse tidak bisa diubah setelah shift dibuka
-- Admin bisa lihat warehouse asal di detail shift
+- Stock is stored per product per warehouse in `product_warehouse`.
+- When a new warehouse is created, all products are automatically synchronized with a stock quantity of 0.
+- During seeding, all existing product stock is moved to the PUSAT warehouse.
 
-### Warehouse di Transaksi
-- Produk yang tampil di POS hanya yang punya stok > 0 di warehouse shift aktif
-- Cart menyimpan `warehouse_id`
-- Checkout decrement stok di pivot warehouse
-- Transaksi tercatat dengan `warehouse_id`
-- Search product by barcode — hanya produk yang ada di warehouse shift aktif
+### Warehouse in Shifts
 
-### Warehouse di Purchasing
-- PO punya `warehouse_id` (tujuan gudang)
-- GR auto-inherit warehouse dari PO
-- Supplier Return: stok decrement dari warehouse asal
-- Stock Opname: pilih warehouse, baca stok dari pivot warehouse
+- Cashiers select a warehouse when opening a shift.
+- The warehouse cannot be changed after the shift is opened.
+- Administrators can view the originating warehouse in shift details.
 
-### Stock Transfer Antar Warehouse
-- Transfer antar warehouse (source → destination)
-- Status: draft → in_transit → completed / cancelled
-- Send: kurangi stok source + catat stock mutation
-- Receive: tambah stok destination + catat stock mutation
-- Cancel: jika in_transit, stok dikembalikan ke source
-- Validasi stok cukup sebelum send
+### Warehouse in Transactions
 
-## Halaman dan Route
+- The POS displays only products with stock greater than 0 in the active shift's warehouse.
+- The cart stores `warehouse_id`.
+- Checkout decrements stock in the warehouse pivot.
+- Transactions are recorded with `warehouse_id`.
+- Product searches by barcode return only products available in the active shift's warehouse.
 
-| Route | Fungsi |
-|-------|--------|
-| `settings.warehouses.index` | Daftar warehouse (CRUD inline) |
-| `stock-transfers.index` | Daftar transfer stok |
-| `stock-transfers.create` | Buat transfer baru |
-| `stock-transfers.show` | Detail transfer + action (send/receive/cancel) |
+### Warehouse in Purchasing
 
-## Permission
+- Purchase orders have a `warehouse_id` for the destination warehouse.
+- Goods receipts automatically inherit the warehouse from the purchase order.
+- Supplier returns decrement stock from the originating warehouse.
+- Stock opname allows warehouse selection and reads stock from the warehouse pivot.
 
-| Permission | Untuk apa |
+### Inter-Warehouse Stock Transfers
+
+- Transfer stock between warehouses (source → destination).
+- Statuses: draft → in_transit → completed / cancelled.
+- Send: decrease source stock and record a stock mutation.
+- Receive: increase destination stock and record a stock mutation.
+- Cancel: if the transfer is in transit, return stock to the source.
+- Validate stock availability before sending.
+
+## Pages and Routes
+
+| Route | Function |
+|-------|----------|
+| `settings.warehouses.index` | List of warehouses (inline CRUD) |
+| `stock-transfers.index` | List of stock transfers |
+| `stock-transfers.create` | Create a new transfer |
+| `stock-transfers.show` | Transfer details and actions (send/receive/cancel) |
+
+## Permissions
+
+| Permission | Purpose |
 |-----------|-----------|
-| `warehouses-access` | Lihat daftar warehouse |
-| `warehouses-create` | Tambah warehouse baru |
-| `warehouses-update` | Edit warehouse |
-| `warehouses-delete` | Hapus warehouse |
-| `stock-transfers-access` | Lihat daftar transfer |
-| `stock-transfers-create` | Buat transfer |
-| `stock-transfers-send` | Kirim transfer (decrement source) |
-| `stock-transfers-receive` | Terima transfer (increment dest) |
-| `stock-transfers-cancel` | Batalkan transfer |
+| `warehouses-access` | View the list of warehouses |
+| `warehouses-create` | Add a new warehouse |
+| `warehouses-update` | Edit a warehouse |
+| `warehouses-delete` | Delete a warehouse |
+| `stock-transfers-access` | View the list of transfers |
+| `stock-transfers-create` | Create a transfer |
+| `stock-transfers-send` | Send a transfer (decrement source stock) |
+| `stock-transfers-receive` | Receive a transfer (increment destination stock) |
+| `stock-transfers-cancel` | Cancel a transfer |
 
-## Alur User
+## User Workflow
 
-1. Admin: setup warehouse di Settings → Gudang
-2. Cashier: buka shift → pilih warehouse
-3. POS: hanya produk dengan stok di warehouse shift yang tampil
-4. Checkout: stok decrement dari warehouse shift
-5. PO: tentukan warehouse tujuan
-6. GR: barang masuk ke warehouse PO
-7. Stock Opname: pilih warehouse, hitung stok fisik
-8. Stock Transfer: kirim barang antar warehouse
+1. **Admin:** Configure warehouses in Settings → Warehouses.
+2. **Cashier:** Open a shift and select a warehouse.
+3. **POS:** Display only products with stock in the shift's warehouse.
+4. **Checkout:** Decrement stock from the shift's warehouse.
+5. **Purchase Order (PO):** Specify the destination warehouse.
+6. **Goods Receipt (GR):** Receive items into the purchase order's warehouse.
+7. **Stock Opname:** Select a warehouse and count physical stock.
+8. **Stock Transfer:** Send items between warehouses.
 
-## Catatan Teknis
+## Technical Notes
 
-- Semua tabel stok & transaksi punya `warehouse_id` nullable (backward compat)
-- Jika `warehouse_id` null, fallback ke `products.stock` (legacy single-warehouse)
-- Seed data: warehouse PUSAT (main) dibuat otomatis, stok existing dipindah ke pivot
+- All stock and transaction tables have a nullable `warehouse_id` for backward compatibility.
+- If `warehouse_id` is null, the system falls back to `products.stock` for legacy single-warehouse support.
+- Seed data: the PUSAT warehouse (main) is created automatically, and existing stock is moved to the pivot table.

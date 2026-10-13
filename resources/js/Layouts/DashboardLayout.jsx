@@ -26,7 +26,7 @@ export default function AppLayout({ children }) {
         localStorage.setItem("sidebarOpen", sidebarOpen);
     }, [sidebarOpen]);
 
-    // Auto-close sidebar on mobile after navigation
+    // Automatically close the sidebar on mobile after navigation
     useEffect(() => {
         if (isMobile) {
             setSidebarOpen(false);
@@ -54,19 +54,24 @@ export default function AppLayout({ children }) {
     return (
         <div className="flex h-screen overflow-hidden bg-slate-100 dark:bg-slate-950 transition-colors duration-200">
             <Sidebar sidebarOpen={sidebarOpen} />
+
             {/* Mobile overlay */}
             <div
                 className={`fixed inset-0 bg-slate-900/40 md:hidden transition-opacity duration-300 ${
-                    sidebarOpen ? "opacity-100 pointer-events-auto z-30" : "opacity-0 pointer-events-none"
+                    sidebarOpen
+                        ? "opacity-100 pointer-events-auto z-30"
+                        : "opacity-0 pointer-events-none"
                 }`}
                 onClick={() => setSidebarOpen(false)}
             />
+
             <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
                 <Navbar
                     toggleSidebar={toggleSidebar}
                     themeSwitcher={themeSwitcher}
                     darkMode={darkMode}
                 />
+
                 <main className="dashboard-scrollbar flex-1 overflow-y-auto">
                     <div className="w-full py-6 px-4 md:px-6 lg:px-8 pb-20 md:pb-6">
                         {showSecurityWarnings && (
@@ -74,6 +79,7 @@ export default function AppLayout({ children }) {
                                 <p className="text-sm font-semibold">
                                     Production security baseline warning
                                 </p>
+
                                 <ul className="mt-2 space-y-1 text-sm">
                                     {securityWarnings.map((warning) => (
                                         <li key={warning.key}>
@@ -83,6 +89,7 @@ export default function AppLayout({ children }) {
                                 </ul>
                             </div>
                         )}
+
                         <Toaster
                             position="top-right"
                             toastOptions={{
@@ -98,6 +105,7 @@ export default function AppLayout({ children }) {
                                 },
                             }}
                         />
+
                         {children}
                     </div>
                 </main>

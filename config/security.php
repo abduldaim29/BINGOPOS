@@ -12,7 +12,7 @@ return [
         'token_field' => env('SECURITY_BOT_GUARD_TOKEN_FIELD', 'bot_guard_token'),
         'min_submit_seconds' => (int) env('SECURITY_BOT_GUARD_MIN_SUBMIT_SECONDS', 2),
         'token_ttl_seconds' => (int) env('SECURITY_BOT_GUARD_TOKEN_TTL_SECONDS', 1800),
-        'message' => env('SECURITY_BOT_GUARD_MESSAGE', 'Permintaan tidak valid. Silakan coba lagi.'),
+        'message' => env('SECURITY_BOT_GUARD_MESSAGE', 'Invalid request. Please try again.'),
     ],
     'session' => [
         'absolute_lifetime_seconds' => (int) env('SECURITY_SESSION_ABSOLUTE_LIFETIME_SECONDS', 43200),

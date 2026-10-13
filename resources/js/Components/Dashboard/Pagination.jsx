@@ -8,7 +8,7 @@ import {
 
 /**
  * Pagination — robust & responsive.
- * Handles Laravel paginator links: prev/next (locale-proof), ellipsis,
+ * Handles Laravel paginator links: previous/next, ellipsis,
  * disabled states, and wraps gracefully on mobile.
  */
 export default function Pagination({ links }) {
@@ -44,15 +44,16 @@ export default function Pagination({ links }) {
     const disabledBtn = "opacity-40 pointer-events-none";
 
     const isPrev = (item, i) =>
-        i === 0 ||
-        item.label.includes("Previous") ||
-        item.label.includes("Sebelumnya");
+        i === 0 || item.label.includes("Previous");
+
     const isNext = (item, i) =>
-        i === links.length - 1 ||
-        item.label.includes("Next") ||
-        item.label.includes("Berikutnya");
+        i === links.length - 1 || item.label.includes("Next");
+
     const isEllipsis = (item) =>
-        !item.url && !/^\d+$/.test(item.label) && !isPrev(item, 0) && !isNext(item, links.length - 1);
+        !item.url &&
+        !/^\d+$/.test(item.label) &&
+        !isPrev(item, 0) &&
+        !isNext(item, links.length - 1);
 
     return (
         <nav
@@ -61,23 +62,29 @@ export default function Pagination({ links }) {
         >
             <div className="order-2 sm:order-1 flex items-center gap-3 flex-wrap">
                 <p className="text-sm text-slate-500 dark:text-slate-400">
-                    Halaman <span className="font-medium text-slate-700 dark:text-slate-200">{current}</span> dari{" "}
-                    <span className="font-medium text-slate-700 dark:text-slate-200">{total}</span>
+                    Page{" "}
+                    <span className="font-medium text-slate-700 dark:text-slate-200">
+                        {current}
+                    </span>{" "}
+                    of{" "}
+                    <span className="font-medium text-slate-700 dark:text-slate-200">
+                        {total}
+                    </span>
                 </p>
 
                 <label className="flex items-center gap-1.5 text-sm text-slate-500 dark:text-slate-400">
-                    <span className="hidden sm:inline">Tampilkan</span>
+                    <span className="hidden sm:inline">Show</span>
                     <select
                         value={perPage}
                         onChange={(e) => changePerPage(e.target.value)}
                         className="py-1 px-2 rounded-lg text-sm border bg-white text-slate-700 dark:bg-slate-950 dark:text-slate-300 dark:border-slate-800 border-slate-200 focus:outline-none focus:ring-0"
-                        aria-label="Jumlah data per halaman"
+                        aria-label="Items per page"
                     >
                         <option value="10">10</option>
                         <option value="25">25</option>
                         <option value="50">50</option>
                     </select>
-                    <span className="hidden sm:inline">per halaman</span>
+                    <span className="hidden sm:inline">per page</span>
                 </label>
             </div>
 
@@ -89,7 +96,7 @@ export default function Pagination({ links }) {
                                 key={i}
                                 href={item.url}
                                 className={baseBtn}
-                                aria-label="Halaman sebelumnya"
+                                aria-label="Previous page"
                             >
                                 <IconChevronLeft size={18} strokeWidth={1.5} />
                             </Link>
@@ -98,7 +105,7 @@ export default function Pagination({ links }) {
                                 key={i}
                                 className={`${baseBtn} ${disabledBtn}`}
                                 aria-disabled="true"
-                                aria-label="Halaman sebelumnya"
+                                aria-label="Previous page"
                             >
                                 <IconChevronLeft size={18} strokeWidth={1.5} />
                             </span>
@@ -111,7 +118,7 @@ export default function Pagination({ links }) {
                                 key={i}
                                 href={item.url}
                                 className={baseBtn}
-                                aria-label="Halaman berikutnya"
+                                aria-label="Next page"
                             >
                                 <IconChevronRight size={18} strokeWidth={1.5} />
                             </Link>
@@ -120,7 +127,7 @@ export default function Pagination({ links }) {
                                 key={i}
                                 className={`${baseBtn} ${disabledBtn}`}
                                 aria-disabled="true"
-                                aria-label="Halaman berikutnya"
+                                aria-label="Next page"
                             >
                                 <IconChevronRight size={18} strokeWidth={1.5} />
                             </span>

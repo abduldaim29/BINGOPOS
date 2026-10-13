@@ -53,7 +53,7 @@ class WarehouseController extends Controller
             ['stock' => 0]
         );
 
-        return back()->with('success', 'Gudang berhasil ditambahkan.');
+        return back()->with('success', 'Warehouse added successfully.');
     }
 
     public function update(Request $request, Warehouse $warehouse)
@@ -72,32 +72,32 @@ class WarehouseController extends Controller
         if (array_key_exists('is_active', $validated)
             && ! $validated['is_active']
             && $this->outletAccessService->hasOpenShift($warehouse)) {
-            return back()->with('error', 'Tutup shift aktif sebelum menonaktifkan gudang.');
+            return back()->with('error', 'Close the active shift before deactivating the warehouse.');
         }
 
         $warehouse->update($validated);
 
-        return back()->with('success', 'Gudang berhasil diperbarui.');
+        return back()->with('success', 'Warehouse updated successfully.');
     }
 
     public function destroy(Warehouse $warehouse)
     {
         abort_unless($this->outletAccessService->canUseWarehouse(request()->user(), $warehouse), 404);
         if ($warehouse->type === 'main') {
-            return back()->with('error', 'Gudang utama tidak bisa dihapus.');
+            return back()->with('error', 'The main warehouse cannot be deleted.');
         }
 
         $totalStock = $warehouse->products()->sum('product_warehouse.stock');
         if ($totalStock > 0) {
-            return back()->with('error', 'Gudang masih memiliki stok. Pindahkan stok terlebih dahulu.');
+            return back()->with('error', 'The warehouse still has stock. Transfer the stock before deleting it.');
         }
 
         if ($this->outletAccessService->hasWarehouseHistory($warehouse)) {
-            return back()->with('error', 'Gudang yang memiliki histori operasional tidak bisa dihapus. Nonaktifkan gudang sebagai gantinya.');
+            return back()->with('error', 'A warehouse with operational history cannot be deleted. Deactivate the warehouse instead.');
         }
 
         $warehouse->delete();
 
-        return back()->with('success', 'Gudang berhasil dihapus.');
+        return back()->with('success', 'Warehouse deleted successfully.');
     }
 }

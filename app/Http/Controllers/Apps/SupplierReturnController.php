@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Http\Controllers\Apps;
 
 use App\Http\Controllers\Controller;
@@ -98,7 +97,7 @@ class SupplierReturnController extends Controller
 
         return redirect()
             ->route('supplier-returns.show', $return)
-            ->with('success', 'Retur supplier berhasil dibuat.');
+            ->with('success', 'Supplier return created successfully.');
     }
 
     public function show(SupplierReturn $supplierReturn)
@@ -124,14 +123,14 @@ class SupplierReturnController extends Controller
         $this->ensureAccess($request, $supplierReturn);
 
         if ($supplierReturn->status !== 'draft') {
-            return back()->with('error', 'Hanya retur dengan status draft yang bisa diselesaikan.');
+            return back()->with('error', 'Only draft returns can be completed.');
         }
 
         $this->supplierReturnService->complete($supplierReturn, $request->user()->id);
 
         return redirect()
             ->route('supplier-returns.show', $supplierReturn)
-            ->with('success', 'Retur supplier berhasil diselesaikan.');
+            ->with('success', 'Supplier return completed successfully.');
     }
 
     public function cancel(Request $request, SupplierReturn $supplierReturn)
@@ -139,14 +138,14 @@ class SupplierReturnController extends Controller
         $this->ensureAccess($request, $supplierReturn);
 
         if (! in_array($supplierReturn->status, ['draft'])) {
-            return back()->with('error', 'Retur tidak dapat dibatalkan.');
+            return back()->with('error', 'This return cannot be cancelled.');
         }
 
         $this->supplierReturnService->cancel($supplierReturn);
 
         return redirect()
             ->route('supplier-returns.index')
-            ->with('success', 'Retur supplier dibatalkan.');
+            ->with('success', 'Supplier return cancelled.');
     }
 
     private function ensureAccess(Request $request, SupplierReturn $supplierReturn): void

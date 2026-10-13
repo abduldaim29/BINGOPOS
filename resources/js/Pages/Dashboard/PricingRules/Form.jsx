@@ -774,7 +774,7 @@ export default function Form({
                                             Base subtotal
                                         </p>
                                         <p className="mt-1 text-lg font-semibold text-slate-900 dark:text-white">
-                                            Rp {Number(previewState.data.summary.base_subtotal || 0).toLocaleString("id-ID")}
+                                            Rs {Number(previewState.data.summary.base_subtotal || 0).toLocaleString("id-ID")}
                                         </p>
                                     </div>
                                     <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800">
@@ -782,7 +782,7 @@ export default function Form({
                                             Promo discount
                                         </p>
                                         <p className="mt-1 text-lg font-semibold text-rose-600 dark:text-rose-300">
-                                            Rp {Number(previewState.data.summary.promo_discount_total || 0).toLocaleString("id-ID")}
+                                            Rs {Number(previewState.data.summary.promo_discount_total || 0).toLocaleString("id-ID")}
                                         </p>
                                     </div>
                                     <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800">
@@ -790,7 +790,7 @@ export default function Form({
                                             After promo
                                         </p>
                                         <p className="mt-1 text-lg font-semibold text-slate-900 dark:text-white">
-                                            Rp {Number(previewState.data.summary.subtotal_after_promo || 0).toLocaleString("id-ID")}
+                                            Rs {Number(previewState.data.summary.subtotal_after_promo || 0).toLocaleString("id-ID")}
                                         </p>
                                     </div>
                                 </div>
@@ -810,7 +810,7 @@ export default function Form({
                                                         {group.label}
                                                     </span>
                                                     <span className="text-rose-600 dark:text-rose-300">
-                                                        -Rp {Number(group.discount_total || 0).toLocaleString("id-ID")}
+                                                        -Rs {Number(group.discount_total || 0).toLocaleString("id-ID")}
                                                     </span>
                                                 </div>
                                             ))}

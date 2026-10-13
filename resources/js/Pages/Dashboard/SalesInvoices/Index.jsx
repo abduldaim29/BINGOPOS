@@ -20,6 +20,19 @@ export default function Index({ invoices, filters }) {
         });
     };
 
+    const handlePrint = (invoiceNumber) => {
+        const printUrl = route("pdf.sales-invoices.show", invoiceNumber);
+        // Open in new window and trigger print
+        const printWindow = window.open(printUrl, "_blank");
+        if (printWindow) {
+            printWindow.onload = () => {
+                printWindow.print();
+            };
+        } else {
+            toast.error("Failed to open print window. Please check popup blocker.");
+        }
+    };
+
     const handleDelete = (id) => {
         if (confirm(t("salesInvoices.deleteConfirm"))) {
             router.delete(route("sales-invoices.destroy", id), {
@@ -186,9 +199,17 @@ export default function Index({ invoices, filters }) {
                                                         >
                                                             <IconEdit size={18} />
                                                         </Link>
+                                                        <button
+                                                            onClick={() => handlePrint(invoice.invoice_number)}
+                                                            className="text-indigo-600 hover:text-indigo-900"
+                                                            title="Print Invoice"
+                                                        >
+                                                            <IconPrinter size={18} />
+                                                        </button>
                                                         <a
                                                             href={route("pdf.sales-invoices.show", invoice.invoice_number)}
                                                             target="_blank"
+                                                            rel="noopener noreferrer"
                                                             className="text-indigo-600 hover:text-indigo-900"
                                                             title="Download PDF"
                                                         >

@@ -1,21 +1,21 @@
 # App Versioning
 
-Versi aplikasi mengikuti SemVer dengan prefix `v`, misalnya `v2.10.5`.
+App version follows SemVer with a `v` prefix, for example `v2.10.5`.
 
-## Sumber Versi
+## Version Source
 
-- Git tag adalah identitas rilis repository.
-- `APP_VERSION` adalah nilai runtime yang dibagikan ke frontend.
-- `config/app.php` menyediakan fallback saat environment belum mengatur nilai.
-- Versi tampil di sidebar dashboard dan navbar POS.
+- Git tag is the release identity of the repository.
+- `APP_VERSION` is the runtime value shared to the frontend.
+- `config/app.php` provides a fallback when the environment has not set the value.
+- Version is displayed in the dashboard sidebar and POS navbar.
 
 ## Release Checklist
 
-1. Tentukan versi SemVer berikutnya.
-2. Update `APP_VERSION` di `.env.example` dan environment deployment.
-3. Update `CHANGELOG.md` dan halaman roadmap publik.
-4. Jalankan test dan production build.
-5. Buat annotated Git tag dengan nilai yang sama.
-6. Pastikan `APP_VERSION` sama dengan latest Git tag.
+1. Determine the next SemVer version.
+2. Update `APP_VERSION` in `.env.example` and deployment environment.
+3. Update `CHANGELOG.md` and public roadmap page.
+4. Run tests and production build.
+5. Create an annotated Git tag with the same value.
+6. Ensure `APP_VERSION` matches the latest Git tag.
 
-Rilis saat ini: `v2.10.5`.
+Current release: `v2.10.5`.

@@ -14,24 +14,24 @@ class CustomersImport implements ToModel, WithBatchInserts, WithChunkReading, Wi
     public function model(array $row)
     {
         return new Customer([
-            'name' => $row['nama'],
-            'no_telp' => $row['telepon'] ?? null,
-            'address' => $row['alamat'] ?? null,
+            'name' => $row['name'],
+            'no_telp' => $row['phone'] ?? null,
+            'address' => $row['address'] ?? null,
         ]);
     }
 
     public function rules(): array
     {
         return [
-            'nama' => ['required', 'string', 'max:255'],
-            'telepon' => ['nullable', 'string', 'max:20'],
+            'name' => ['required', 'string', 'max:255'],
+            'phone' => ['nullable', 'string', 'max:20'],
         ];
     }
 
     public function customValidationMessages()
     {
         return [
-            'nama.required' => 'Nama customer wajib diisi.',
+            'name.required' => 'The customer name is required.',
         ];
     }
 

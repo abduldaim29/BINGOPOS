@@ -1,112 +1,111 @@
 # Configuration
 
-Kembali ke indeks dokumentasi: `docs/README.md`
+Return to the documentation index: `docs/README.md`
 
-## Environment Penting
+## Important Environment Variables
 
-| Variable | Untuk apa |
-|----------|-----------|
+| Variable | Purpose |
+|----------|---------|
 | `APP_URL` | Webhook URL, public invoice, customer portal link, payment callback |
-| `APP_VERSION` | Versi aplikasi (tampil di sidebar + POS navbar) |
-| `DB_DATABASE` | Nama database (default: `point_of_sales`) |
-| `MIDTRANS_SERVER_KEY` | Server key Midtrans |
-| `MIDTRANS_CLIENT_KEY` | Client key Midtrans (frontend) |
-| `XENDIT_SECRET_KEY` | Secret key Xendit |
-| `XENDIT_PUBLIC_KEY` | Public key Xendit |
-| `XENDIT_CALLBACK_TOKEN` | Callback token verifikasi webhook Xendit |
-| `AUTH_PUBLIC_REGISTRATION` | Aktifkan registrasi publik (`true`/`false`, default: `false`) |
- | `WA_SERVICE_URL` | Alamat Node.js WhatsApp service (default: `http://localhost:3001`) |
+| `APP_VERSION` | Application version (displayed in the sidebar and POS navbar) |
+| `DB_DATABASE` | Database name (default: `point_of_sales`) |
+| `MIDTRANS_SERVER_KEY` | Midtrans server key |
+| `MIDTRANS_CLIENT_KEY` | Midtrans client key (frontend) |
+| `XENDIT_SECRET_KEY` | Xendit secret key |
+| `XENDIT_PUBLIC_KEY` | Xendit public key |
+| `XENDIT_CALLBACK_TOKEN` | Xendit webhook verification callback token |
+| `AUTH_PUBLIC_REGISTRATION` | Enable public registration (`true`/`false`, default: `false`) |
+| `WA_SERVICE_URL` | Node.js WhatsApp service address (default: `http://localhost:3001`) |
 
- Versi runtime yang ditampilkan aplikasi berasal dari `APP_VERSION`. Nilainya harus disamakan
- dengan Git tag rilis, misalnya `v2.10.4`.
+The runtime version displayed by the application comes from `APP_VERSION`. Its value must match the Git release tag, for example, `v2.10.4`.
 
 ## APP_URL
 
-`APP_URL` harus public (bukan `localhost`) jika menggunakan:
+`APP_URL` must be public (not `localhost`) when using:
 
-- Webhook Midtrans/Xendit
+- Midtrans/Xendit webhooks
 - Public invoice sharing
-- Customer portal link
-- Payment gateway callback
+- Customer portal links
+- Payment gateway callbacks
 
 ## Payment Gateway
 
-Konfigurasi di `dashboard/settings/payments`:
+Configuration at `dashboard/settings/payments`:
 
-- **Cash** — tanpa konfigurasi
-- **Bank Transfer** — memerlukan rekening bank aktif
-- **Midtrans** — memerlukan server key + client key + mode production
-- **Xendit** — memerlukan secret key + public key + callback token + mode production
+- **Cash** — no configuration required
+- **Bank Transfer** — requires an active bank account
+- **Midtrans** — requires a server key, client key, and production mode
+- **Xendit** — requires a secret key, public key, callback token, and production mode
 
-Detail setup: `docs/features/settings-payments.md`
+Setup details: `docs/features/settings-payments.md`
 
 ## Bank Accounts
 
-Konfigurasi di `dashboard/settings/bank-accounts`:
+Configuration at `dashboard/settings/bank-accounts`:
 
-- Digunakan untuk pembayaran transfer manual
-- Bisa diatur urutan tampilan
-- Bisa dinonaktifkan tanpa dihapus
+- Used for manual bank transfer payments
+- Display order can be configured
+- Can be deactivated without being deleted
 
 ## Tax Settings
 
-Konfigurasi di `dashboard/settings/store` — bagian "Informasi Pajak & Legal":
+Configuration at `dashboard/settings/store` — under the "Tax & Legal Information" section:
 
-- **NPWP Toko** — Nomor Pokok Wajib Pajak (format: `XX.XXX.XXX.X-XXX.XXX`)
-- **NIB** — Nomor Induk Berusaha
-- **Tarif PPN Default** — Persentase PPN untuk produk baru (default: 11.00%)
-- Tarif PPN bisa diubah per produk di halaman edit produk
+- **Store NPWP** — Taxpayer Identification Number (format: `XX.XXX.XXX.X-XXX.XXX`)
+- **NIB** — Business Identification Number
+- **Default VAT Rate** — VAT percentage for new products (default: 11.00%)
+- The VAT rate can be changed for individual products on the product edit page
 
 ## Printer Settings
 
-Konfigurasi di `dashboard/settings/printer`:
+Configuration at `dashboard/settings/printer`:
 
-- **Ukuran Kertas** — 80mm atau 58mm
-- **Auto-print** — cetak receipt otomatis setelah transaksi (via WebUSB)
-- Thermal printer terhubung via WebUSB (browser Chrome/Edge)
+- **Paper Size** — 80mm or 58mm
+- **Auto-print** — automatically print receipts after transactions (via WebUSB)
+- Thermal printers connect via WebUSB (Chrome/Edge browser)
 
 ## Store Profile
 
-Konfigurasi di `dashboard/settings/store`:
+Configuration at `dashboard/settings/store`:
 
-- Nama, alamat, telepon, email, website, kota
-- Logo toko
-- NPWP dan NIB (untuk keperluan pajak)
+- Name, address, phone, email, website, and city
+- Store logo
+- NPWP and NIB (for tax purposes)
 
 ## Sales Target
 
-Konfigurasi di `dashboard/settings/target`:
+Configuration at `dashboard/settings/target`:
 
-- Target penjualan bulanan
-- Muncul di dashboard sebagai progress bar
+- Monthly sales target
+- Displayed on the dashboard as a progress bar
 
 ## WhatsApp Gateway
 
-Konfigurasi di `dashboard/settings/whatsapp`:
+Configuration at `dashboard/settings/whatsapp`:
 
-- **URL Service** — alamat Node.js service (default `http://localhost:3001`)
-- **Aktifkan Gateway** — enable/disable WhatsApp integration
-- **Kirim Otomatis** — reminder piutang + invoice otomatis via campaign
-- **Koneksi** — scan QR untuk menghubungkan (session tersimpan otomatis)
+- **Service URL** — Node.js service address (default: `http://localhost:3001`)
+- **Enable Gateway** — enable/disable WhatsApp integration
+- **Automatic Sending** — receivables reminders and invoices sent automatically via campaigns
+- **Connection** — scan the QR code to connect (the session is saved automatically)
 
-Detail setup: `docs/features/whatsapp-gateway.md`
+Setup details: `docs/features/whatsapp-gateway.md`
 
- Campaign dan reminder terjadwal membutuhkan Laravel scheduler dan queue worker aktif.
+Campaigns and scheduled reminders require the Laravel scheduler and queue worker to be running.
 
 ## Multi-Warehouse
 
-Konfigurasi di `dashboard/settings/warehouses`:
+Configuration at `dashboard/settings/warehouses`:
 
-- **Main Warehouse** — gudang pusat, dibuat otomatis saat seeding
-- **Branch Warehouse** — cabang toko yang juga menjual langsung
-- **Stock Warehouse** — gudang penyangga (tidak menjual langsung)
-- Stok produk dipisah per warehouse di tabel `product_warehouse`
+- **Main Warehouse** — central warehouse, created automatically during seeding
+- **Branch Warehouse** — store branch that also sells directly
+- **Stock Warehouse** — buffer warehouse that does not sell directly
+- Product stock is separated by warehouse in the `product_warehouse` table
 
-## Catatan Dependency Eksternal
+## External Dependency Notes
 
-- `laravolt/indonesia` — data provinsi/kota/kecamatan/desa Indonesia
-- `barryvdh/laravel-dompdf` — generate PDF invoice/receipt/shipping label
-- `picqer/php-barcode-generator` — barcode di dokumen PDF
-- `maatwebsite/excel` — import/export CSV + Excel
-- Midtrans & Xendit — payment gateway
-- `whatsapp-web.js` — WhatsApp gateway (Node.js, terpisah dari Laravel)
+- `laravolt/indonesia` — Indonesian province/city/district/village data
+- `barryvdh/laravel-dompdf` — generate PDF invoices, receipts, and shipping labels
+- `picqer/php-barcode-generator` — barcodes in PDF documents
+- `maatwebsite/excel` — CSV and Excel import/export
+- Midtrans & Xendit — payment gateways
+- `whatsapp-web.js` — WhatsApp gateway (Node.js, separate from Laravel)

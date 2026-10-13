@@ -1,45 +1,45 @@
 # Customer Portal (Self-Service)
 
-Kembali ke indeks dokumentasi: `docs/README.md`
+Back to the documentation index: `docs/README.md`
 
-## Tujuan
+## Purpose
 
-Pelanggan bisa melihat invoice, status pembayaran, dan membayar piutang secara online tanpa perlu login — cukup melalui link yang dibagikan.
+Customers can view invoices, check payment statuses, and pay outstanding receivables online without logging in — simply by using a shared link.
 
-## Fitur Saat Ini
+## Current Features
 
-- **Invoice detail** — lihat item, harga, diskon, PPN, total
-- **Status pembayaran** — Lunas, Menunggu, Belum Lunas
-- **Riwayat transaksi** — untuk customer yang sama (via token akses)
-- **Bayar piutang online** — jika status `pay_later` dan belum Lunas, ada tombol "Bayar Sekarang" yang mengarah ke payment gateway
-- **Token-based access** — URL unik per transaksi, tidak bisa ditebak (UUID v4)
-- **Guest layout** — halaman publik, tidak perlu login
-- **Share button** — di halaman print transaksi, copy link portal ke clipboard
+- **Invoice details** — view items, prices, discounts, VAT, and total.
+- **Payment status** — Paid, Pending, Unpaid.
+- **Transaction history** — for the same customer (via access token).
+- **Online receivables payment** — if the status is `pay_later` and the invoice is unpaid, a "Pay Now" button redirects to the payment gateway.
+- **Token-based access** — a unique, unpredictable URL for each transaction (UUID v4).
+- **Guest layout** — public pages that do not require login.
+- **Share button** — on the transaction print page, copies the portal link to the clipboard.
 
-## Keamanan
+## Security
 
-- Token akses: UUID v4 — tidak bisa ditebak
-- Token hanya untuk 1 invoice (tidak bisa akses invoice lain)
-- Tidak ada data sensitif yang ditampilkan
-- Rate limit per IP
+- Access token: UUID v4 — unpredictable.
+- Each token is restricted to a single invoice and cannot access other invoices.
+- No sensitive data is displayed.
+- Rate limiting per IP address.
 
 ## Database
 
-- `transactions.access_token` — UUID, unique
-- `receivables.access_token` — UUID, unique
-- Token auto-generated saat transaksi dibuat
+- `transactions.access_token` — unique UUID.
+- `receivables.access_token` — unique UUID.
+- Tokens are automatically generated when a transaction is created.
 
-## Halaman dan Route
+## Pages and Routes
 
-| Route | Fungsi | Auth |
-|-------|--------|------|
-| `portal.transaction` | Lihat detail transaksi | Token-based |
-| `portal.receivable.pay` | Bayar piutang via payment gateway | Token-based |
+| Route | Function | Authentication |
+|-------|----------|----------------|
+| `portal.transaction` | View transaction details | Token-based |
+| `portal.receivable.pay` | Pay receivables via payment gateway | Token-based |
 
-## Sharing Flow
+## Sharing Workflow
 
-1. Kasir selesai checkout
-2. Di halaman print, klik tombol "Share"
-3. Link portal otomatis tercopy ke clipboard
-4. Kasir kirim link ke customer via WhatsApp
-5. Customer buka link → lihat invoice → bayar jika perlu
+1. The cashier completes checkout.
+2. On the print page, click the "Share" button.
+3. The portal link is automatically copied to the clipboard.
+4. The cashier sends the link to the customer via WhatsApp.
+5. The customer opens the link, views the invoice, and pays if necessary.

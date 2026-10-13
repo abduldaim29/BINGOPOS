@@ -28,7 +28,10 @@ class SupplierController extends Controller
             ->orderBy('name')
             ->paginate($this->perPage());
 
-        return $this->paginated($suppliers, SupplierResource::collection($suppliers));
+        return $this->paginated(
+            $suppliers,
+            SupplierResource::collection($suppliers)
+        );
     }
 
     /**
@@ -50,7 +53,10 @@ class SupplierController extends Controller
             'address' => $validated['address'] ?? '',
         ]);
 
-        return $this->created(new SupplierResource($supplier), 'Supplier berhasil dibuat');
+        return $this->created(
+            new SupplierResource($supplier),
+            'Supplier created successfully.'
+        );
     }
 
     /**
@@ -75,7 +81,10 @@ class SupplierController extends Controller
 
         $supplier->update($validated);
 
-        return $this->ok(new SupplierResource($supplier), 'Supplier berhasil diperbarui');
+        return $this->ok(
+            new SupplierResource($supplier),
+            'Supplier updated successfully.'
+        );
     }
 
     /**

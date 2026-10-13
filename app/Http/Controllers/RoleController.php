@@ -57,7 +57,7 @@ class RoleController extends Controller
             event: 'role.created',
             module: 'roles',
             auditable: $role,
-            description: 'Role baru dibuat.',
+            description: 'New role created.',
             after: [
                 'name' => $role->name,
                 'permissions' => $this->auditLogService->permissionNames($request->selectedPermission),
@@ -91,7 +91,7 @@ class RoleController extends Controller
             event: 'role.updated',
             module: 'roles',
             auditable: $role,
-            description: 'Role diperbarui.',
+            description: 'Role updated.',
             before: $before,
             after: [
                 'name' => $role->fresh()->name,
@@ -104,7 +104,7 @@ class RoleController extends Controller
                 event: 'role.permission_changed',
                 module: 'roles',
                 auditable: $role,
-                description: 'Permission role diperbarui.',
+                description: 'Role permissions updated.',
                 before: ['permissions' => array_values($beforePermissions)],
                 after: ['permissions' => array_values($afterPermissions)],
             );
@@ -131,7 +131,7 @@ class RoleController extends Controller
             event: 'role.deleted',
             module: 'roles',
             auditable: $role,
-            description: 'Role dihapus.',
+            description: 'Role deleted.',
             before: $before,
         );
 

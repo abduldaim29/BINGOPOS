@@ -8,7 +8,6 @@ use App\Models\Product;
 use App\Models\SalesInvoice;
 use App\Models\SalesInvoiceItem;
 use App\Models\SalesInvoiceReceipt;
-use App\Models\Setting;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
@@ -25,9 +24,9 @@ class SalesInvoiceController extends Controller
         }
 
         if ($request->has('search')) {
-            $query->where('invoice_number', 'like', '%' . $request->search . '%')
+            $query->where('invoice_number', 'like', '%'.$request->search.'%')
                 ->orWhereHas('customer', function ($q) use ($request) {
-                    $q->where('name', 'like', '%' . $request->search . '%');
+                    $q->where('name', 'like', '%'.$request->search.'%');
                 });
         }
 
@@ -76,7 +75,7 @@ class SalesInvoiceController extends Controller
                 'customer_id' => $validated['customer_id'],
                 'invoice_date' => $validated['invoice_date'],
                 'term_days' => $validated['term_days'] ?? 0,
-                'due_date' => $validated['term_days'] ? date('Y-m-d', strtotime($validated['invoice_date'] . ' +' . $validated['term_days'] . ' days')) : null,
+                'due_date' => $validated['term_days'] ? date('Y-m-d', strtotime($validated['invoice_date'].' +'.$validated['term_days'].' days')) : null,
                 'salesperson' => $validated['salesperson'],
                 'commission' => $validated['commission'] ?? 0,
                 'subject' => $validated['subject'],
@@ -128,7 +127,8 @@ class SalesInvoiceController extends Controller
             return redirect()->route('sales-invoices.index')->with('success', 'Invoice created successfully');
         } catch (\Exception $e) {
             DB::rollBack();
-            return back()->with('error', 'Failed to create invoice: ' . $e->getMessage());
+
+            return back()->with('error', 'Failed to create invoice: '.$e->getMessage());
         }
     }
 
@@ -181,7 +181,7 @@ class SalesInvoiceController extends Controller
                 'customer_id' => $validated['customer_id'],
                 'invoice_date' => $validated['invoice_date'],
                 'term_days' => $validated['term_days'] ?? 0,
-                'due_date' => $validated['term_days'] ? date('Y-m-d', strtotime($validated['invoice_date'] . ' +' . $validated['term_days'] . ' days')) : null,
+                'due_date' => $validated['term_days'] ? date('Y-m-d', strtotime($validated['invoice_date'].' +'.$validated['term_days'].' days')) : null,
                 'salesperson' => $validated['salesperson'],
                 'commission' => $validated['commission'] ?? 0,
                 'subject' => $validated['subject'],
@@ -248,7 +248,8 @@ class SalesInvoiceController extends Controller
             return redirect()->route('sales-invoices.index')->with('success', 'Invoice updated successfully');
         } catch (\Exception $e) {
             DB::rollBack();
-            return back()->with('error', 'Failed to update invoice: ' . $e->getMessage());
+
+            return back()->with('error', 'Failed to update invoice: '.$e->getMessage());
         }
     }
 
@@ -295,17 +296,17 @@ class SalesInvoiceController extends Controller
     {
         $prefix = 'INV-';
         $date = date('Ymd');
-        $lastInvoice = SalesInvoice::where('invoice_number', 'like', $prefix . $date . '%')
+        $lastInvoice = SalesInvoice::where('invoice_number', 'like', $prefix.$date.'%')
             ->orderBy('invoice_number', 'desc')
             ->first();
 
         if ($lastInvoice) {
-            $lastNumber = (int) str_replace($prefix . $date . '-', '', $lastInvoice->invoice_number);
+            $lastNumber = (int) str_replace($prefix.$date.'-', '', $lastInvoice->invoice_number);
             $newNumber = $lastNumber + 1;
         } else {
             $newNumber = 1;
         }
 
-        return $prefix . $date . '-' . str_pad($newNumber, 4, '0', STR_PAD_LEFT);
+        return $prefix.$date.'-'.str_pad($newNumber, 4, '0', STR_PAD_LEFT);
     }
 }

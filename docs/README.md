@@ -1,68 +1,79 @@
-# Dokumentasi Point of Sales
+# Point of Sale Documentation
 
-Dokumentasi ini ditujukan untuk developer yang ingin setup, memahami alur modul, dan melakukan maintenance aplikasi.
+This documentation is intended for developers who want to set up the application, understand module workflows, and maintain the application.
 
-## Daftar Isi
+## Table of Contents
 
 ### Onboarding
-- `docs/getting-started.md` — setup dari awal
-- `docs/configuration.md` — environment, payment, tax, printer
 
-### Arsitektur
-- `docs/architecture-overview.md` — stack, middleware, service layer
-- `docs/feature-index.md` — indeks semua modul
+- `docs/getting-started.md` — initial setup
+- `docs/configuration.md` — environment, payment, tax, and printer settings
 
-### POS & Transaksi
-- `docs/features/pos-transactions.md` — cart, hold/resume, checkout multi-payment
-- `docs/features/sales-returns.md` — retur penjualan, refund, store credit
-- `docs/features/cashier-shifts.md` — buka/tutup shift kasir
-- `docs/features/customer-portal.md` — invoice publik, bayar piutang online 🆕
-- `docs/features/dine-in.md` — QR menu, self-order, floor plan 🆕
+### Architecture
+
+- `docs/architecture-overview.md` — tech stack, middleware, and service layer
+- `docs/feature-index.md` — index of all modules
+
+### POS & Transactions
+
+- `docs/features/pos-transactions.md` — cart, hold/resume, and multi-payment checkout
+- `docs/features/sales-returns.md` — sales returns, refunds, and store credit
+- `docs/features/cashier-shifts.md` — opening and closing cashier shifts
+- `docs/features/customer-portal.md` — public invoices and online receivables payments 🆕
+- `docs/features/dine-in.md` — QR menu, self-ordering, and floor plan 🆕
 
 ### Inventory & Warehouse
-- `docs/features/inventory-stock.md` — produk, stock opname, mutation
-- `docs/features/multi-warehouse.md` — multi-gudang, stock transfer 🆕
-- `docs/features/unit-conversion.md` — multi-satuan (pcs, box, kg) 🆕
+
+- `docs/features/inventory-stock.md` — products, stock opname, and stock mutations
+- `docs/features/multi-warehouse.md` — multiple warehouses and stock transfers 🆕
+- `docs/features/unit-conversion.md` — multiple units of measurement (pcs, box, kg) 🆕
 
 ### Purchasing & Finance
-- `docs/features/purchasing-chain.md` — PO, goods receiving, supplier return 🆕
-- `docs/features/payables-suppliers.md` — hutang supplier
-- `docs/features/receivables.md` — piutang pelanggan
-- `docs/features/tax-management.md` — PPN, NPWP, NIB 🆕
+
+- `docs/features/purchasing-chain.md` — purchase orders (POs), goods receiving, and supplier returns 🆕
+- `docs/features/payables-suppliers.md` — supplier payables
+- `docs/features/receivables.md` — customer receivables
+- `docs/features/tax-management.md` — VAT, NPWP, and NIB 🆕
 
 ### Pricing & Loyalty
-- `docs/features/promotions-loyalty.md` — pricing rules, vouchers, loyalty, price list 🆕
+
+- `docs/features/promotions-loyalty.md` — pricing rules, vouchers, loyalty, and price lists 🆕
 
 ### CRM
-- `docs/features/member-management.md` — member CRUD
-- `docs/features/crm-segments.md` — segments, campaigns, reminders 🆕
 
-### Settings & Admin
-- `docs/features/settings-payments.md` — payment gateways, bank accounts, store profile, target
-- `docs/features/rbac-users-roles.md` — users, roles, permissions
+- `docs/features/member-management.md` — member CRUD operations
+- `docs/features/crm-segments.md` — segments, campaigns, and reminders 🆕
+
+### Settings & Administration
+
+- `docs/features/settings-payments.md` — payment gateways, bank accounts, store profile, and sales target
+- `docs/features/rbac-users-roles.md` — users, roles, and permissions
 - `docs/features/audit-logs.md` — audit trail
 
 ### Reports & Documents
-- `docs/features/reports-documents.md` — sales, profit, insights, PDF
+
+- `docs/features/reports-documents.md` — sales, profit, insights, and PDF documents
 
 ### Tools & Integrations
-- `docs/features/import-export.md` — CSV/Excel import & export 🆕
-- `docs/features/mobile-pos.md` — PWA, barcode scanner kamera 🆕
-- `docs/features/thermal-printer.md` — ESC/POS, WebUSB 🆕
+
+- `docs/features/import-export.md` — CSV/Excel import and export 🆕
+- `docs/features/mobile-pos.md` — PWA and camera-based barcode scanner 🆕
+- `docs/features/thermal-printer.md` — ESC/POS and WebUSB 🆕
 
 ### Release & Roadmap
-- `CHANGELOG.md` — riwayat rilis aplikasi
-- halaman publik `/roadmap` — rilis selesai dan arah pengembangan berikutnya
 
-## Cara Membaca Dokumentasi
+- `CHANGELOG.md` — application release history
+- Public `/roadmap` page — completed releases and future development direction
 
-1. Jika baru pertama kali: mulai dari `docs/getting-started.md`
-2. Jika ingin paham struktur: baca `docs/architecture-overview.md`
-3. Jika ingin kerja di modul tertentu: buka `docs/feature-index.md` → masuk ke dokumen fitur terkait
-4. Jika ada masalah akses: cek `docs/features/rbac-users-roles.md`
+## How to Read the Documentation
 
-## Catatan
+1. If this is your first time, start with `docs/getting-started.md`.
+2. To understand the structure, read `docs/architecture-overview.md`.
+3. To work on a specific module, open `docs/feature-index.md` and navigate to the relevant feature document.
+4. For access issues, check `docs/features/rbac-users-roles.md`.
 
-- Dokumentasi mencakup fitur yang sudah ada di repo dan menyebutkan batasan operasionalnya
-- Release identity mengikuti Git tag dan `APP_VERSION`
-- Setiap dokumen fitur mencakup tujuan, route, permission, alur user
+## Notes
+
+- The documentation covers features available in the repository and describes their operational limitations.
+- Release identity follows the Git tag and `APP_VERSION`.
+- Each feature document covers its purpose, routes, permissions, and user workflows.

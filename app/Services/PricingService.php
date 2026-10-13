@@ -20,7 +20,7 @@ class PricingService
         private readonly PriceListService $priceListService
     ) {}
 
-    // ponytail: per-cart price-list lookup is N+1 by design; price lists are tiny, cache if it ever shows up
+    // Potential N+1 query: price-list lookup per cart item; price lists are small, so cache if performance becomes an issue.
     private function basePriceFor(Product $product, ?Customer $customer = null, ?Outlet $outlet = null): int
     {
         return $this->priceListService->getBasePrice($product, $customer, $outlet);
@@ -163,8 +163,9 @@ class PricingService
     public function ruleLabel(PricingRule $rule): string
     {
         $currencySymbol = Setting::getCurrencySymbol();
+
         return match ($rule->kind) {
-            PricingRule::KIND_QTY_BREAK => 'Grosir '.$this->standardDiscountLabel($rule),
+            PricingRule::KIND_QTY_BREAK => 'Wholesale '.$this->standardDiscountLabel($rule),
             PricingRule::KIND_BUNDLE_PRICE => 'Bundle '.$currencySymbol.' '.number_format((float) $rule->discount_value, 0, ',', '.'),
             PricingRule::KIND_BUY_X_GET_Y => 'Buy X Get Y',
             default => $this->standardDiscountLabel($rule),
@@ -174,7 +175,7 @@ class PricingService
     private function buildPreview(Collection $carts, ?Customer $customer, Collection $rules, ?Outlet $outlet = null): array
     {
         $items = $carts->map(function (Cart $cart) use ($customer, $outlet) {
-            // ponytail: composite sell_price is 0; unit price = stored cart price / qty
+            // Composite product sell_price is 0; unit price = stored cart price / quantity.
             $baseUnitPrice = $cart->product->is_composite
                 ? (int) round($cart->price / max(1, (int) $cart->qty))
                 : $this->basePriceFor($cart->product, $customer, $outlet);
@@ -659,10 +660,11 @@ class PricingService
     private function standardDiscountLabel(PricingRule $rule): string
     {
         $currencySymbol = Setting::getCurrencySymbol();
+
         return match ($rule->discount_type) {
             PricingRule::TYPE_PERCENTAGE => rtrim(rtrim(number_format((float) $rule->discount_value, 2, '.', ''), '0'), '.').'% OFF',
-            PricingRule::TYPE_FIXED_AMOUNT => 'Hemat '.$currencySymbol.' '.number_format((float) $rule->discount_value, 0, ',', '.'),
-            PricingRule::TYPE_FIXED_PRICE => 'Harga '.$currencySymbol.' '.number_format((float) $rule->discount_value, 0, ',', '.'),
+            PricingRule::TYPE_FIXED_AMOUNT => 'Save '.$currencySymbol.' '.number_format((float) $rule->discount_value, 0, ',', '.'),
+            PricingRule::TYPE_FIXED_PRICE => 'Price '.$currencySymbol.' '.number_format((float) $rule->discount_value, 0, ',', '.'),
             default => $rule->name,
         };
     }

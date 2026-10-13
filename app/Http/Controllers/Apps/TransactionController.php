@@ -92,10 +92,10 @@ class TransactionController extends Controller
             })
             ->values();
 
-        // get all customers (including walk-in customer)
+        // Get all customers (including walk-in customer)
         $customers = Customer::latest()->get();
 
-        // get products with stock > 0 in active warehouse
+        // Get products with stock > 0 in active warehouse
         $products = Product::with(['category:id,name', 'units'])
             ->select('id', 'barcode', 'title', 'description', 'image', 'buy_price', 'sell_price', 'stock', 'category_id')
             ->when($warehouseId, function ($q) use ($warehouseId) {
@@ -131,7 +131,7 @@ class TransactionController extends Controller
             ];
         });
 
-        // get all categories
+        // Get all categories
         $categories = Category::select('id', 'name', 'image')
             ->orderBy('name')
             ->get();
@@ -264,7 +264,7 @@ class TransactionController extends Controller
             return redirect()->back()->with('error', 'Product not found.');
         }
 
-        // ponytail: composite branch skips unit logic; null unit_id is fine for composite carts
+        // Ponytail: composite branch skips unit logic; null unit_id is fine for composite carts
         $unitId = null;
 
         // Composite: check component stock
@@ -275,7 +275,7 @@ class TransactionController extends Controller
                 $whProduct = $component->warehouses()->where('warehouse_id', $warehouseId)->first();
                 $avail = $whProduct?->pivot->stock ?? 0;
                 if ($avail < $needed) {
-                    return redirect()->back()->with('error', "Stok {$component->title} tidak mencukupi.");
+                    return redirect()->back()->with('error', "Insufficient stock for {$component->title}.");
                 }
             }
             // Composite price = sum component prices
@@ -285,7 +285,7 @@ class TransactionController extends Controller
 
             // Reject an explicitly provided unit that does not belong to this product
             if (! empty($validated['unit_id'] ?? null) && ! $product->units()->whereKey($unitId)->exists()) {
-                return redirect()->back()->with('error', 'Satuan tidak valid untuk produk ini.');
+                return redirect()->back()->with('error', 'Invalid unit for this product.');
             }
 
             $unitConversion = app(UnitConversionService::class);
@@ -296,7 +296,7 @@ class TransactionController extends Controller
                 : (int) $product->stock;
 
             if ($availableStock < $baseQty) {
-                return redirect()->back()->with('error', 'Stok tidak mencukupi.');
+                return redirect()->back()->with('error', 'Insufficient stock.');
             }
 
             $sellPrice = $unitConversion->getSellPrice($product, $unitId);
@@ -329,7 +329,7 @@ class TransactionController extends Controller
             ]);
         }
 
-        return redirect()->route('transactions.index')->with('success', 'Product Added Successfully!.');
+        return redirect()->route('transactions.index')->with('success', 'Product added successfully!');
     }
 
     /**
@@ -389,7 +389,7 @@ class TransactionController extends Controller
         if (! $product) {
             return response()->json([
                 'success' => false,
-                'message' => 'Produk tidak ditemukan',
+                'message' => 'Product not found',
             ], 404);
         }
 
@@ -410,7 +410,7 @@ class TransactionController extends Controller
         if ($availableStock < $baseQty) {
             return response()->json([
                 'success' => false,
-                'message' => 'Stok tidak mencukupi. Tersedia: '.$availableStock,
+                'message' => 'Insufficient stock. Available: '.$availableStock,
             ], 422);
         }
 
@@ -445,13 +445,13 @@ class TransactionController extends Controller
         if ($activeCarts->isEmpty()) {
             return response()->json([
                 'success' => false,
-                'message' => 'Keranjang kosong, tidak ada yang bisa ditahan',
+                'message' => 'The cart is empty. There are no items to hold.',
             ], 422);
         }
 
         // Generate unique hold ID
         $holdId = 'HOLD-'.strtoupper(uniqid());
-        $label = $request->label ?: 'Transaksi '.now()->format('H:i');
+        $label = $request->label ?: 'Transaction '.now()->format('H:i');
 
         // Mark all active cart items as held
         Cart::where('cashier_id', $userId)
@@ -462,7 +462,7 @@ class TransactionController extends Controller
                 'held_at' => now(),
             ]);
 
-        return back()->with('success', 'Transaksi ditahan: '.$label);
+        return back()->with('success', 'Transaction held: '.$label);
     }
 
     /**
@@ -483,7 +483,7 @@ class TransactionController extends Controller
         if ($activeCarts > 0) {
             return response()->json([
                 'success' => false,
-                'message' => 'Selesaikan atau tahan transaksi aktif terlebih dahulu',
+                'message' => 'Complete or hold the active transaction first.',
             ], 422);
         }
 
@@ -495,7 +495,7 @@ class TransactionController extends Controller
         if ($heldCarts->isEmpty()) {
             return response()->json([
                 'success' => false,
-                'message' => 'Transaksi ditahan tidak ditemukan',
+                'message' => 'Held transaction not found.',
             ], 404);
         }
 
@@ -508,7 +508,7 @@ class TransactionController extends Controller
                 'held_at' => null,
             ]);
 
-        return back()->with('success', 'Transaksi dilanjutkan');
+        return back()->with('success', 'Transaction resumed.');
     }
 
     /**
@@ -529,19 +529,19 @@ class TransactionController extends Controller
             return request()->wantsJson()
                 ? response()->json([
                     'success' => false,
-                    'message' => 'Transaksi ditahan tidak ditemukan',
+                    'message' => 'Held transaction not found.',
                 ], 404)
-                : back()->with('error', 'Transaksi ditahan tidak ditemukan');
+                : back()->with('error', 'Held transaction not found.');
         }
 
         if (request()->wantsJson()) {
             return response()->json([
                 'success' => true,
-                'message' => 'Transaksi ditahan berhasil dihapus',
+                'message' => 'Held transaction deleted successfully.',
             ]);
         }
 
-        return back()->with('success', 'Transaksi ditahan berhasil dihapus');
+        return back()->with('success', 'Held transaction deleted successfully.');
     }
 
     /**
@@ -607,14 +607,14 @@ class TransactionController extends Controller
         if ($isPayLater && ! $request->filled('due_date')) {
             return redirect()
                 ->route('transactions.index')
-                ->with('error', 'Tanggal jatuh tempo wajib diisi untuk nota barang.');
+                ->with('error', 'A due date is required for pay-later transactions.');
         }
 
-        // ponytail: piutang wajib punya customer; walk-in (null) sah untuk transaksi biasa
+        // Ponytail: Pay-later transactions require a customer; walk-in (null) is valid for regular transactions.
         if ($isPayLater && ! $request->filled('customer_id')) {
             return redirect()
                 ->route('transactions.index')
-                ->with('error', 'Nota barang memerlukan pelanggan.');
+                ->with('error', 'A customer is required for pay-later transactions.');
         }
 
         $paymentSetting = null;
@@ -629,13 +629,13 @@ class TransactionController extends Controller
             if (! $gatewayReady) {
                 return redirect()
                     ->route('transactions.index')
-                    ->with('error', 'Gateway pembayaran belum dikonfigurasi.');
+                    ->with('error', 'The payment gateway has not been configured.');
             }
         }
 
         $tenderInput = is_array($request->input('tenders')) ? $request->input('tenders') : [];
         $useTenders = ! $isPayLater && $tenderInput !== [];
-        // ponytail: legacy single-method path kept — split tenders only activate when payload has tenders[]
+        // Keep the legacy single-method path; split tenders are activated only when the payload contains tenders[].
         $isCashPayment = empty($paymentGateway) && ! $isPayLater && ! $useTenders;
         $cashAmount = $isCashPayment ? max(0, (int) $request->cash) : 0;
 
@@ -677,7 +677,7 @@ class TransactionController extends Controller
 
             return redirect()
                 ->route('transactions.print', $result->transaction->invoice)
-                ->with('info', 'Transaksi menunggu approval supervisor.');
+                ->with('info', 'The transaction is awaiting supervisor approval.');
         }
 
         if ($useTenders) {
@@ -732,7 +732,7 @@ class TransactionController extends Controller
 
     public function print(Request $request, $invoice)
     {
-        // get transaction
+        // Get transaction
         $transaction = Transaction::with('details.product', 'details.pricingRule', 'cashier', 'customer', 'receivable', 'bankAccount', 'tenders')
             ->where('invoice', $invoice)
             ->firstOrFail();
@@ -863,25 +863,25 @@ class TransactionController extends Controller
         if ($transaction->payment_status === 'paid') {
             return redirect()
                 ->back()
-                ->with('error', 'Transaksi sudah dibayar.');
+                ->with('error', 'This transaction has already been paid.');
         }
 
         if ($transaction->payment_method !== 'bank_transfer') {
             return redirect()
                 ->back()
-                ->with('error', 'Hanya transaksi transfer bank yang dapat dikonfirmasi pembayarannya.');
+                ->with('error', 'Only bank transfer transactions can have their payments confirmed.');
         }
 
         if (! $transaction->bank_account_id) {
             return redirect()
                 ->back()
-                ->with('error', 'Transaksi transfer bank belum memiliki rekening tujuan.');
+                ->with('error', 'No destination bank account is assigned to this bank transfer transaction.');
         }
 
         if (! in_array($transaction->payment_status, ['pending', 'pending_approval'], true)) {
             return redirect()
                 ->back()
-                ->with('error', 'Status transaksi tidak dapat dikonfirmasi saat ini.');
+                ->with('error', 'The transaction status cannot be confirmed at this time.');
         }
 
         $beforeStatus = $transaction->payment_status;
@@ -893,7 +893,7 @@ class TransactionController extends Controller
             event: 'transaction.payment_confirmed',
             module: 'transactions',
             auditable: $transaction,
-            description: "Pembayaran untuk invoice {$transaction->invoice} dikonfirmasi.",
+            description: "Payment for invoice {$transaction->invoice} has been confirmed.",
             before: [
                 'invoice' => $transaction->invoice,
                 'payment_method' => $transaction->payment_method,
@@ -914,7 +914,7 @@ class TransactionController extends Controller
 
         return redirect()
             ->back()
-            ->with('success', "Pembayaran untuk invoice {$transaction->invoice} berhasil dikonfirmasi.");
+            ->with('success', "Payment for invoice {$transaction->invoice} has been confirmed successfully.");
     }
 
     private function ensureTransactionAccess(Request $request, Transaction $transaction): void

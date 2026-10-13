@@ -44,7 +44,7 @@ class DocumentController extends Controller
         }
 
         return [
-            'name' => Setting::get('store_name', 'Toko Anda'),
+            'name' => Setting::get('store_name', 'Your Store'),
             'logo' => $logo,
             'logo_data' => $logoData,
             'address' => Setting::get('store_address', ''),
@@ -133,7 +133,7 @@ class DocumentController extends Controller
             'barcode' => $this->barcode($transaction->invoice),
         ]);
 
-        // Set kertas 150mm x 100mm (dalam Points: 1mm = 2.83465pt)
+        // Set paper size to 150mm x 100mm (in points: 1mm = 2.83465pt)
         // 150mm = 425pt, 100mm = 283pt
         $pdf->setPaper([0, 0, 425, 283], 'landscape');
 
@@ -164,7 +164,7 @@ class DocumentController extends Controller
             'barcode' => $this->barcode($receivable->invoice),
         ])->setPaper('a5', 'portrait');
 
-        return $pdf->stream("piutang-{$receivable->invoice}.pdf");
+        return $pdf->stream("receivable-{$receivable->invoice}.pdf");
     }
 
     public function payable(Payable $payable)
@@ -179,7 +179,7 @@ class DocumentController extends Controller
             'barcode' => $this->barcode($payable->document_number),
         ])->setPaper('a5', 'portrait');
 
-        return $pdf->stream("hutang-{$payable->document_number}.pdf");
+        return $pdf->stream("payable-{$payable->document_number}.pdf");
     }
 
     public function salesInvoice(string $invoiceNumber)

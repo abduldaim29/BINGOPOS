@@ -1,23 +1,23 @@
 # Reports & Documents
 
-Kembali ke indeks dokumentasi: `docs/README.md`
+Back to the documentation index: `docs/README.md`
 
-## Tujuan
+## Purpose
 
-Menyediakan visibilitas operasional melalui laporan dan dokumen siap cetak / share.
+Provides operational visibility through reports and documents that are ready to print or share.
 
-## Fitur Saat Ini
+## Current Features
 
-- laporan penjualan
-- laporan profit
-- Advanced Sales Insights
-- invoice transaksi publik dan internal
-- receipt thermal 58mm / 80mm
-- shipping label
-- PDF receivable
-- PDF payable
+- Sales reports.
+- Profit reports.
+- Advanced Sales Insights.
+- Public and internal transaction invoices.
+- Thermal receipts in 58mm and 80mm formats.
+- Shipping labels.
+- Receivable PDFs.
+- Payable PDFs.
 
-## Halaman dan Route
+## Pages and Routes
 
 - `dashboard/reports/sales`
 - `dashboard/reports/profits`
@@ -28,46 +28,44 @@ Menyediakan visibilitas operasional melalui laporan dan dokumen siap cetak / sha
 - `pdf.receivables.show`
 - `pdf.payables.show`
 
-## Permission
+## Permissions
 
 - `reports-access`
 - `profits-access`
 - `reports-insights-access`
-- akses dokumen mengikuti modul asal seperti `transactions-access`, `receivables-access`, dan `payables-access`
+- Document access follows the permissions of the originating module, such as `transactions-access`, `receivables-access`, and `payables-access`.
 
-## Alur User
+## User Workflow
 
-1. user membuka laporan sales atau profit
-2. user memfilter data
-3. user membuka dokumen transaksi atau finansial terkait
-4. dokumen bisa dipakai untuk print/share
+1. The user opens the sales or profit report.
+2. The user filters the data.
+3. The user opens the relevant transaction or financial document.
+4. The document can be used for printing or sharing.
 
-## Integrasi Data
+## Data Integration
 
 - `transactions`
 - `transaction_details`
 - `profits`
 - `receivables`
 - `payables`
-- `settings` untuk identitas toko
+- `settings` for store identity and details.
 
 ## Advanced Sales Insights
 
-Dashboard insights menyediakan metrik operasional seperti penjualan per jam,
-performa kasir, repeat customer, dan ringkasan tren yang membantu pemilik mengambil
-keputusan berbasis data.
+The insights dashboard provides operational metrics such as hourly sales, cashier performance, repeat customers, and trend summaries to help business owners make data-driven decisions.
 
-## Efek Bisnis Penting
+## Important Business Effects
 
-- laporan sales dan profit bergantung pada kualitas data transaksi
-- sales return dan inventory correction dapat memengaruhi pembacaan operasional pada laporan terkait
+- Sales and profit reports depend on the quality of transaction data.
+- Sales returns and inventory corrections can affect operational insights in related reports.
 
-## Batasan Saat Ini
+## Current Limitations
 
-- cakupan metrik mengikuti data transaksi, customer, dan shift yang tersedia
-- analitik tidak menggantikan laporan akuntansi atau forecasting penuh
+- Metric coverage depends on the available transaction, customer, and shift data.
+- Analytics do not replace full accounting reports or comprehensive forecasting.
 
-## File Sentral
+## Central Files
 
 - `app/Http/Controllers/Reports/SalesReportController.php`
 - `app/Http/Controllers/Reports/ProfitReportController.php`

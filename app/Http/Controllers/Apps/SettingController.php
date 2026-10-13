@@ -49,10 +49,10 @@ class SettingController extends Controller
             'monthly_sales_target',
             $request->monthly_sales_target,
             $this->outletAccessService->activeOutlet($request),
-            'Target penjualan bulanan'
+            'Monthly sales target'
         );
 
-        return back()->with('success', 'Target berhasil disimpan');
+        return back()->with('success', 'Target saved successfully');
     }
 
     /**
@@ -119,22 +119,22 @@ class SettingController extends Controller
             $logoChanged = true;
         }
 
-        Setting::setForOutlet('store_name', $request->store_name, $outlet, 'Nama toko');
-        Setting::setForOutlet('store_address', $request->store_address, $outlet, 'Alamat toko');
-        Setting::setForOutlet('store_phone', $request->store_phone, $outlet, 'Telepon toko');
-        Setting::setForOutlet('store_email', $request->store_email, $outlet, 'Email toko');
-        Setting::setForOutlet('store_website', $request->store_website, $outlet, 'Website toko');
-        Setting::setForOutlet('store_city', $request->store_city, $outlet, 'Kota/Kabupaten toko');
-        Setting::setForOutlet('store_logo', $logoPath, $outlet, 'Logo toko');
-        Setting::set('store_npwp', $request->store_npwp, 'NPWP Toko');
-        Setting::set('store_nib', $request->store_nib, 'NIB Toko');
-        Setting::set('tax_default_rate', $request->tax_default_rate, 'Default tarif PPN (%)');
+        Setting::setForOutlet('store_name', $request->store_name, $outlet, 'Store name');
+        Setting::setForOutlet('store_address', $request->store_address, $outlet, 'Store address');
+        Setting::setForOutlet('store_phone', $request->store_phone, $outlet, 'Store phone');
+        Setting::setForOutlet('store_email', $request->store_email, $outlet, 'Store email');
+        Setting::setForOutlet('store_website', $request->store_website, $outlet, 'Store website');
+        Setting::setForOutlet('store_city', $request->store_city, $outlet, 'Store city/district');
+        Setting::setForOutlet('store_logo', $logoPath, $outlet, 'Store logo');
+        Setting::set('store_npwp', $request->store_npwp, 'Store NPWP');
+        Setting::set('store_nib', $request->store_nib, 'Store NIB');
+        Setting::set('tax_default_rate', $request->tax_default_rate, 'Default VAT rate (%)');
 
         $this->auditLogService->log(
             event: 'store.setting.updated',
             module: 'store_settings',
             auditable: ['target_label' => 'Store Profile'],
-            description: 'Profil toko diperbarui.',
+            description: 'Store profile updated.',
             before: $before,
             after: [
                 'store_name' => $request->store_name,
@@ -162,7 +162,7 @@ class SettingController extends Controller
                 'store_nib' => Setting::get('store_nib', ''),
                 'tax_default_rate' => Setting::get('tax_default_rate', '11.00'),
             ],
-        ])->with('success', 'Profil toko berhasil diperbarui');
+        ])->with('success', 'Store profile updated successfully');
     }
 
     public function printer()
@@ -185,10 +185,10 @@ class SettingController extends Controller
             'printer_paper_size' => ['required', 'in:80mm,58mm'],
         ]);
 
-        Setting::setForOutlet('printer_auto_print', $validated['printer_auto_print'] ? '1' : '0', $outlet, 'Auto-print receipt setelah transaksi');
-        Setting::setForOutlet('printer_paper_size', $validated['printer_paper_size'], $outlet, 'Ukuran kertas printer thermal');
+        Setting::setForOutlet('printer_auto_print', $validated['printer_auto_print'] ? '1' : '0', $outlet, 'Auto-print receipt after transaction');
+        Setting::setForOutlet('printer_paper_size', $validated['printer_paper_size'], $outlet, 'Thermal printer paper size');
 
-        return back()->with('success', 'Pengaturan printer disimpan.');
+        return back()->with('success', 'Printer settings saved.');
     }
 
     public function loyalty()
@@ -226,7 +226,7 @@ class SettingController extends Controller
         ) {
             return back()
                 ->withErrors([
-                    'tiers' => 'Threshold tier harus berurutan dari Regular ke Platinum.',
+                    'tiers' => 'Tier thresholds must be ordered from Regular to Platinum.',
                 ])
                 ->withInput();
         }
@@ -242,12 +242,12 @@ class SettingController extends Controller
             event: 'loyalty.setting.updated',
             module: 'loyalty_settings',
             auditable: ['target_label' => 'Loyalty Settings'],
-            description: 'Pengaturan loyalty diperbarui.',
+            description: 'Loyalty settings updated.',
             before: $before,
             after: $this->loyaltyService->settingsPayload()
         );
 
-        return back()->with('success', 'Pengaturan loyalty berhasil disimpan');
+        return back()->with('success', 'Loyalty settings saved successfully');
     }
 
     public function whatsapp()
@@ -283,12 +283,12 @@ class SettingController extends Controller
             'wa_auto_invoice' => ['boolean'],
         ]);
 
-        Setting::setForOutlet('wa_service_url', $validated['wa_service_url'] ?? '', $outlet, 'URL service WhatsApp');
-        Setting::setForOutlet('wa_enabled', ($validated['wa_enabled'] ?? false) ? '1' : '0', $outlet, 'WhatsApp gateway aktif');
-        Setting::setForOutlet('wa_auto_reminder', ($validated['wa_auto_reminder'] ?? false) ? '1' : '0', $outlet, 'Auto-kirim reminder via WA');
-        Setting::setForOutlet('wa_auto_invoice', ($validated['wa_auto_invoice'] ?? false) ? '1' : '0', $outlet, 'Auto-kirim invoice via WA');
+        Setting::setForOutlet('wa_service_url', $validated['wa_service_url'] ?? '', $outlet, 'WhatsApp service URL');
+        Setting::setForOutlet('wa_enabled', ($validated['wa_enabled'] ?? false) ? '1' : '0', $outlet, 'WhatsApp gateway enabled');
+        Setting::setForOutlet('wa_auto_reminder', ($validated['wa_auto_reminder'] ?? false) ? '1' : '0', $outlet, 'Automatically send reminders via WhatsApp');
+        Setting::setForOutlet('wa_auto_invoice', ($validated['wa_auto_invoice'] ?? false) ? '1' : '0', $outlet, 'Automatically send invoices via WhatsApp');
 
-        return back()->with('success', 'Pengaturan WhatsApp disimpan.');
+        return back()->with('success', 'WhatsApp settings saved.');
     }
 
     public function testWhatsapp(Request $request)
@@ -298,7 +298,7 @@ class SettingController extends Controller
 
         $sent = $this->whatsAppService->send(
             $request->target,
-            'Test pesan dari Point of Sales — '.config('app.url'),
+            'Test message from Point of Sales — '.config('app.url'),
             $outlet
         );
 

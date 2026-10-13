@@ -17,7 +17,7 @@ class ProductsImport implements ToModel, WithBatchInserts, WithChunkReading, Wit
     public function model(array $row)
     {
         $this->rowCount++;
-        $categoryName = trim($row['kategori'] ?? 'Umum');
+        $categoryName = trim($row['category'] ?? 'General');
         $category = Category::firstOrCreate(
             ['name' => $categoryName],
             ['description' => '', 'image' => 'default.png']
@@ -29,16 +29,16 @@ class ProductsImport implements ToModel, WithBatchInserts, WithChunkReading, Wit
             ['barcode' => $barcode],
             [
                 'sku' => $row['sku'] ?? $barcode,
-                'title' => $row['nama'] ?? '',
-                'description' => $row['deskripsi'] ?? '',
+                'title' => $row['name'] ?? '',
+                'description' => $row['description'] ?? '',
                 'category_id' => $category->id,
-                'buy_price' => (int) ($row['harga_beli'] ?? 0),
-                'sell_price' => (int) ($row['harga_jual'] ?? 0),
-                'stock' => (int) ($row['stok'] ?? 0),
-                'min_stock' => (int) ($row['min_stok'] ?? 0),
-                'max_stock' => (int) ($row['max_stok'] ?? 0),
-                'tax_type' => $row['tipe_pajak'] ?? 'exclusive',
-                'tax_rate' => (float) ($row['tarif_pajak'] ?? 11.00),
+                'buy_price' => (int) ($row['purchase_price'] ?? 0),
+                'sell_price' => (int) ($row['selling_price'] ?? 0),
+                'stock' => (int) ($row['stock'] ?? 0),
+                'min_stock' => (int) ($row['min_stock'] ?? 0),
+                'max_stock' => (int) ($row['max_stock'] ?? 0),
+                'tax_type' => $row['tax_type'] ?? 'exclusive',
+                'tax_rate' => (float) ($row['tax_rate'] ?? 11.00),
             ]
         );
     }
@@ -47,18 +47,18 @@ class ProductsImport implements ToModel, WithBatchInserts, WithChunkReading, Wit
     {
         return [
             'barcode' => ['required'],
-            'nama' => ['required', 'string', 'max:255'],
-            'harga_beli' => ['nullable', 'numeric', 'min:0'],
-            'harga_jual' => ['nullable', 'numeric', 'min:0'],
+            'name' => ['required', 'string', 'max:255'],
+            'purchase_price' => ['nullable', 'numeric', 'min:0'],
+            'selling_price' => ['nullable', 'numeric', 'min:0'],
         ];
     }
 
     public function customValidationMessages()
     {
         return [
-            'barcode.required' => 'Barcode wajib diisi.',
-            'barcode.unique' => 'Barcode sudah terdaftar.',
-            'nama.required' => 'Nama produk wajib diisi.',
+            'barcode.required' => 'The barcode is required.',
+            'barcode.unique' => 'The barcode is already registered.',
+            'name.required' => 'The product name is required.',
         ];
     }
 

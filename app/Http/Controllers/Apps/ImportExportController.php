@@ -17,17 +17,17 @@ class ImportExportController extends Controller
 {
     public function exportProducts()
     {
-        return Excel::download(new ProductsExport, 'produk.xlsx');
+        return Excel::download(new ProductsExport, 'products.xlsx');
     }
 
     public function exportCustomers()
     {
-        return Excel::download(new CustomersExport, 'customer.xlsx');
+        return Excel::download(new CustomersExport, 'customers.xlsx');
     }
 
     public function exportTransactions(Request $request)
     {
-        return Excel::download(new TransactionsExport($request), 'transaksi.xlsx');
+        return Excel::download(new TransactionsExport($request), 'transactions.xlsx');
     }
 
     public function importProducts(Request $request)
@@ -41,7 +41,7 @@ class ImportExportController extends Controller
 
         $successCount = $import->getRowCount();
 
-        return back()->with('success', "Import selesai. {$successCount} produk diimport.");
+        return back()->with('success', "Import completed. {$successCount} products imported.");
     }
 
     public function importCustomers(Request $request)
@@ -53,14 +53,14 @@ class ImportExportController extends Controller
         $import = new CustomersImport;
         Excel::import($import, $request->file('file'));
 
-        return back()->with('success', 'Import customer selesai.');
+        return back()->with('success', 'Customer import completed.');
     }
 
     public function downloadTemplate(string $type)
     {
         $headings = match ($type) {
-            'products' => ['barcode', 'sku', 'nama', 'deskripsi', 'kategori', 'harga_beli', 'harga_jual', 'stok', 'min_stok', 'max_stok', 'tipe_pajak', 'tarif_pajak'],
-            'customers' => ['nama', 'telepon', 'alamat'],
+            'products' => ['barcode', 'sku', 'name', 'description', 'category', 'purchase_price', 'selling_price', 'stock', 'min_stock', 'max_stock', 'tax_type', 'tax_rate'],
+            'customers' => ['name', 'phone', 'address'],
             default => abort(404),
         };
 

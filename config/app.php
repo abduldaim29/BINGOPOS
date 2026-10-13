@@ -13,9 +13,9 @@ return [
     |
     */
 
-    'name' => env('APP_NAME', 'Laravel'),
+    'name' => env('APP_NAME', 'BINGO_POS'),
 
-    'version' => env('APP_VERSION', 'v3.0.2'),
+    'version' => env('APP_VERSION', 'v1.0.0'),
 
     /*
     |--------------------------------------------------------------------------

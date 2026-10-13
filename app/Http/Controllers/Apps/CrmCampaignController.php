@@ -69,7 +69,7 @@ class CrmCampaignController extends Controller
 
         return redirect()
             ->route('crm-campaigns.show', $campaign)
-            ->with('success', 'Campaign CRM berhasil dibuat.');
+            ->with('success', 'CRM campaign created successfully.');
     }
 
     public function show(CustomerCampaign $crmCampaign)
@@ -107,7 +107,7 @@ class CrmCampaignController extends Controller
 
         return redirect()
             ->route('crm-campaigns.show', $crmCampaign)
-            ->with('success', 'Campaign CRM berhasil diperbarui.');
+            ->with('success', 'CRM campaign updated successfully.');
     }
 
     public function destroy(CustomerCampaign $crmCampaign)
@@ -118,7 +118,7 @@ class CrmCampaignController extends Controller
 
         return redirect()
             ->route('crm-campaigns.index')
-            ->with('success', 'Campaign CRM berhasil dihapus.');
+            ->with('success', 'CRM campaign deleted successfully.');
     }
 
     public function process(CustomerCampaign $crmCampaign)
@@ -129,7 +129,7 @@ class CrmCampaignController extends Controller
 
         return redirect()
             ->route('crm-campaigns.show', $crmCampaign)
-            ->with('success', 'Campaign berhasil diproses ke audience.');
+            ->with('success', 'Campaign successfully processed for the audience.');
     }
 
     public function cancel(CustomerCampaign $crmCampaign)
@@ -140,21 +140,21 @@ class CrmCampaignController extends Controller
 
         return redirect()
             ->route('crm-campaigns.show', $crmCampaign)
-            ->with('success', 'Campaign dibatalkan.');
+            ->with('success', 'Campaign cancelled successfully.');
     }
 
     public function markLogSent(CustomerCampaignLog $log)
     {
         $this->crmAutomationService->markLog($log, CustomerCampaignLog::STATUS_SENT);
 
-        return back()->with('success', 'Log campaign ditandai sebagai terkirim.');
+        return back()->with('success', 'Campaign log marked as sent.');
     }
 
     public function markLogSkipped(CustomerCampaignLog $log)
     {
         $this->crmAutomationService->markLog($log, CustomerCampaignLog::STATUS_SKIPPED);
 
-        return back()->with('success', 'Log campaign dilewati.');
+        return back()->with('success', 'Campaign log skipped successfully.');
     }
 
     public function shareTransaction(Transaction $transaction, Request $request)
@@ -163,7 +163,7 @@ class CrmCampaignController extends Controller
 
         return redirect()
             ->route('crm-campaigns.show', $campaign)
-            ->with('success', 'Campaign share invoice transaksi berhasil dibuat.');
+            ->with('success', 'Transaction invoice-sharing campaign created successfully.');
     }
 
     public function shareReceivable(Receivable $receivable, Request $request)
@@ -172,7 +172,7 @@ class CrmCampaignController extends Controller
 
         return redirect()
             ->route('crm-campaigns.show', $campaign)
-            ->with('success', 'Campaign share piutang berhasil dibuat.');
+            ->with('success', 'Receivable-sharing campaign created successfully.');
     }
 
     private function validateCampaign(Request $request): array

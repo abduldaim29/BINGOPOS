@@ -1,36 +1,36 @@
 # POS & Transactions
 
-Kembali ke indeks dokumentasi: `docs/README.md`
+Back to the documentation index: `docs/README.md`
 
-## Daftar Isi
+## Table of Contents
 
-- Tujuan
-- Fitur Saat Ini
-- Halaman dan Route
-- Permission
-- Alur User
-- Integrasi Data
-- Batasan Saat Ini
-- File Sentral
+- Purpose
+- Current Features
+- Pages and Routes
+- Permissions
+- User Workflow
+- Data Integration
+- Current Limitations
+- Central Files
 
-## Tujuan
+## Purpose
 
-Menyediakan alur kasir cepat untuk pencarian produk, pengelolaan cart, checkout, hold/resume, dan distribusi dokumen transaksi.
+Provide a fast cashier workflow for product search, cart management, checkout, hold/resume, and transaction document distribution.
 
-## Fitur Saat Ini
+## Current Features
 
-- cari produk via barcode / pencarian
-- cart multi-item
-- update qty cart
-- hold transaction
-- resume held cart
-- clear held cart
-- checkout tunai, split payment (maksimal dua tender), bank transfer, Midtrans, Xendit, pay later
-- print invoice / receipt / shipping label
-- share invoice publik
-- add customer langsung dari POS
+- Search for products by barcode or keyword.
+- Multi-item cart.
+- Update cart quantities.
+- Hold transactions.
+- Resume held carts.
+- Clear held carts.
+- Checkout with cash, split payments (maximum of two tenders), bank transfer, Midtrans, Xendit, and pay later.
+- Print invoices, receipts, and shipping labels.
+- Share public invoices.
+- Add customers directly from the POS.
 
-## Halaman dan Route
+## Pages and Routes
 
 - `dashboard/transactions`
 - `dashboard/transactions/history`
@@ -46,22 +46,22 @@ Menyediakan alur kasir cepat untuk pencarian produk, pengelolaan cart, checkout,
 - `transactions.print`
 - `transactions.public`
 
-## Permission
+## Permissions
 
 - `transactions-access`
 
-Operasi transaksional tertentu juga mewajibkan middleware `active_shift`.
+Certain transactional operations also require the `active_shift` middleware.
 
-## Alur User
+## User Workflow
 
-1. kasir membuka halaman transaksi
-2. jika shift aktif, kasir dapat cari produk dan membangun cart
-3. cart dapat di-hold lalu di-resume
-4. checkout membuat transaksi, detail, profit, dan pengurangan stok
-5. jika `pay_later`, sistem membuat receivable
-6. user diarahkan ke dokumen print / invoice
+1. The cashier opens the transactions page.
+2. If a shift is active, the cashier can search for products and build a cart.
+3. The cart can be held and resumed later.
+4. Checkout creates the transaction, transaction details, profit records, and stock deductions.
+5. If `pay_later` is selected, the system creates a receivable.
+6. The user is redirected to the print document or invoice.
 
-## Integrasi Data
+## Data Integration
 
 - `transactions`
 - `transaction_details`
@@ -70,15 +70,14 @@ Operasi transaksional tertentu juga mewajibkan middleware `active_shift`.
 - `bank_accounts`
 - `payment_settings`
 
-## Batasan Saat Ini
+## Current Limitations
 
-- split payment tidak tersedia saat offline; refund split pada versi ini dicatat sebagai refund tunai
+- Split payments are unavailable offline; split-payment refunds are recorded as cash refunds in this version.
+- Cart operations and checkout depend on an active shift.
+- Payment gateways require valid configuration.
+- Checkout remains the central point for sales-related stock changes.
 
-- operasi cart dan checkout bergantung pada shift aktif
-- payment gateway bergantung pada konfigurasi valid
-- checkout masih menjadi pusat perubahan stok penjualan
-
-## File Sentral
+## Central Files
 
 - `routes/web.php`
 - `app/Http/Controllers/Apps/TransactionController.php`

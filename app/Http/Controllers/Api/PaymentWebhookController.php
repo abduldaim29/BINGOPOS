@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\PaymentSetting;
+use App\Models\SafepayWebhookEvent;
 use App\Models\Transaction;
 use App\Models\TransactionTender;
 use App\Services\TransactionTenderService;
@@ -264,5 +265,260 @@ class PaymentWebhookController extends Controller
         }
 
         return $providerId;
+    }
+
+    /**
+     * Handle Safepay notification webhook
+     * URL: POST /api/webhooks/safepay
+     */
+    public function safepay(Request $request)
+    {
+        try {
+            $eventId = $request->header('X-SFPY-EVENT-ID');
+            $eventType = $request->header('X-SFPY-EVENT-TYPE');
+            $aggregatorId = $request->header('X-SFPY-AGGREGATOR-ID');
+            $signature = $request->header('X-SFPY-SIGNATURE');
+            $timestamp = $request->header('X-SFPY-TIMESTAMP');
+
+            if (blank($eventId) || blank($eventType) || blank($aggregatorId) || blank($signature) || blank($timestamp)) {
+                Log::warning('Safepay Webhook: Missing required headers', [
+                    'provider' => 'safepay',
+                    'verification_result' => 'invalid',
+                    'error_category' => 'missing_headers',
+                ]);
+
+                return response()->json(['status' => 'error', 'message' => 'Missing required headers'], 400);
+            }
+
+            $rawBody = $request->getContent();
+
+            if (blank($rawBody)) {
+                Log::warning('Safepay Webhook: Empty request body', [
+                    'provider' => 'safepay',
+                    'verification_result' => 'invalid',
+                    'error_category' => 'empty_body',
+                ]);
+
+                return response()->json(['status' => 'error', 'message' => 'Empty request body'], 400);
+            }
+
+            $payload = json_decode($rawBody, true);
+
+            if (! is_array($payload)) {
+                Log::warning('Safepay Webhook: Invalid JSON payload', [
+                    'provider' => 'safepay',
+                    'verification_result' => 'invalid',
+                    'error_category' => 'invalid_json',
+                ]);
+
+                return response()->json(['status' => 'error', 'message' => 'Invalid JSON payload'], 400);
+            }
+
+            $paymentSetting = PaymentSetting::where('safepay_aggregator_id', $aggregatorId)->first();
+
+            if (! $paymentSetting || ! $paymentSetting->safepay_enabled) {
+                Log::warning('Safepay Webhook: Aggregator not configured', [
+                    'provider' => 'safepay',
+                    'aggregator_id' => $aggregatorId,
+                    'verification_result' => 'misconfigured',
+                    'error_category' => 'aggregator_not_found',
+                ]);
+
+                return response()->json(['status' => 'error', 'message' => 'Aggregator not configured'], 400);
+            }
+
+            $webhookSecret = $paymentSetting->resolvedSecret('safepay_webhook_secret');
+
+            if (blank($webhookSecret)) {
+                Log::warning('Safepay Webhook: Webhook secret not configured', [
+                    'provider' => 'safepay',
+                    'aggregator_id' => $aggregatorId,
+                    'verification_result' => 'misconfigured',
+                    'error_category' => 'missing_webhook_secret',
+                ]);
+
+                return response()->json(['status' => 'error', 'message' => 'Webhook secret not configured'], 400);
+            }
+
+            if (! $this->verifySafepaySignature($webhookSecret, $timestamp, $rawBody, $signature)) {
+                Log::warning('Safepay Webhook: Invalid signature', [
+                    'provider' => 'safepay',
+                    'event_id' => $eventId,
+                    'aggregator_id' => $aggregatorId,
+                    'verification_result' => 'invalid',
+                    'error_category' => 'invalid_signature',
+                ]);
+
+                return response()->json(['status' => 'error', 'message' => 'Invalid signature'], 403);
+            }
+
+            $decodedSecret = base64_decode($webhookSecret);
+
+            if ($decodedSecret === false) {
+                Log::warning('Safepay Webhook: Invalid base64 webhook secret', [
+                    'provider' => 'safepay',
+                    'aggregator_id' => $aggregatorId,
+                    'verification_result' => 'invalid',
+                    'error_category' => 'invalid_secret_encoding',
+                ]);
+
+                return response()->json(['status' => 'error', 'message' => 'Invalid webhook secret encoding'], 400);
+            }
+
+            $expectedSignature = 'sha256='.hash_hmac('sha256', $timestamp.'.'.$rawBody, $decodedSecret);
+
+            if (! hash_equals($expectedSignature, $signature)) {
+                Log::warning('Safepay Webhook: Signature mismatch after verification', [
+                    'provider' => 'safepay',
+                    'event_id' => $eventId,
+                    'verification_result' => 'invalid',
+                    'error_category' => 'signature_mismatch',
+                ]);
+
+                return response()->json(['status' => 'error', 'message' => 'Signature mismatch'], 403);
+            }
+
+            $eventModel = SafepayWebhookEvent::firstOrCreate(
+                ['event_id' => $eventId],
+                [
+                    'event_type' => $eventType,
+                    'aggregator_id' => $aggregatorId,
+                    'payload' => $payload,
+                ]
+            );
+
+            if ($eventModel->wasRecentlyCreated) {
+                $this->processSafepayEvent($eventType, $payload, $paymentSetting);
+            }
+
+            Log::info('Safepay Webhook: Event processed', [
+                'provider' => 'safepay',
+                'event_id' => $eventId,
+                'event_type' => $eventType,
+                'verification_result' => 'valid',
+            ]);
+
+            return response()->json(['status' => 'success']);
+
+        } catch (\Exception $e) {
+            Log::error('Safepay Webhook Error', [
+                'provider' => 'safepay',
+                'event_id' => $request->header('X-SFPY-EVENT-ID'),
+                'verification_result' => 'unknown',
+                'error_category' => 'exception',
+                'message' => $e->getMessage(),
+            ]);
+
+            return response()->json(['status' => 'error', 'message' => $e->getMessage()], 500);
+        }
+    }
+
+    private function verifySafepaySignature(string $webhookSecret, string $timestamp, string $rawBody, string $providedSignature): bool
+    {
+        try {
+            $decodedSecret = base64_decode($webhookSecret);
+
+            if ($decodedSecret === false) {
+                return false;
+            }
+
+            $expectedSignature = 'sha256='.hash_hmac('sha256', $timestamp.'.'.$rawBody, $decodedSecret);
+
+            return hash_equals($expectedSignature, $providedSignature);
+        } catch (\Exception $e) {
+            Log::error('Safepay signature verification error', [
+                'error' => $e->getMessage(),
+            ]);
+
+            return false;
+        }
+    }
+
+    private function processSafepayEvent(string $eventType, array $payload, PaymentSetting $paymentSetting): void
+    {
+        $paymentData = $payload['subject']['payment'] ?? null;
+
+        if (! $paymentData) {
+            Log::warning('Safepay Webhook: Missing payment data in payload', [
+                'event_type' => $eventType,
+            ]);
+
+            return;
+        }
+
+        $orderId = $paymentData['order_id'] ?? null;
+
+        if (blank($orderId)) {
+            Log::warning('Safepay Webhook: Missing order_id in payment data', [
+                'event_type' => $eventType,
+            ]);
+
+            return;
+        }
+
+        $invoice = $this->baseInvoice($orderId);
+        $transaction = Transaction::where('invoice', $invoice)->with('warehouse.outlet')->first();
+
+        if (! $transaction) {
+            Log::warning('Safepay Webhook: Transaction not found', [
+                'provider' => 'safepay',
+                'order_id' => $orderId,
+                'invoice' => $invoice,
+                'verification_result' => 'valid',
+                'error_category' => 'transaction_not_found',
+            ]);
+
+            return;
+        }
+
+        $newStatus = $this->mapSafepayStatus($eventType, $paymentData['status'] ?? null);
+
+        $tender = TransactionTender::where('transaction_id', $transaction->id)
+            ->where('method', TransactionTender::METHOD_SAFEPAY)
+            ->get()
+            ->first(fn (TransactionTender $t) => $orderId === $t->order_reference);
+
+        if ($tender) {
+            $this->updateTenderSafely($tender, $newStatus, $paymentData['token'] ?? null);
+            $transaction->update(['payment_status' => app(TransactionTenderService::class)->aggregateStatus(
+                $transaction->tenders()->get()->map(fn (TransactionTender $t) => ['method' => $t->method, 'payment_status' => $t->payment_status])->all()
+            )]);
+        }
+    }
+
+    private function updateTenderSafely(TransactionTender $tender, string $newStatus, ?string $paymentReference): void
+    {
+        if ($tender->payment_status === 'paid' && $newStatus !== 'paid') {
+            Log::warning('Safepay Webhook: Attempting to reverse paid tender', [
+                'tender_id' => $tender->id,
+                'current_status' => $tender->payment_status,
+                'new_status' => $newStatus,
+            ]);
+
+            return;
+        }
+
+        $tender->update([
+            'payment_status' => $newStatus,
+            'payment_reference' => $paymentReference ?: $tender->payment_reference,
+            'paid_at' => $newStatus === 'paid' ? now() : $tender->paid_at,
+        ]);
+    }
+
+    private function mapSafepayStatus(string $eventType, ?string $paymentStatus): string
+    {
+        $finalStates = ['payment.completed', 'payment.settled'];
+
+        if (in_array($eventType, $finalStates, true)) {
+            return 'paid';
+        }
+
+        $failedStates = ['payment.failed', 'payment.rejected', 'payment.voided'];
+
+        if (in_array($eventType, $failedStates, true)) {
+            return 'failed';
+        }
+
+        return 'pending';
     }
 }

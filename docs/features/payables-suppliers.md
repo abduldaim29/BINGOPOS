@@ -1,23 +1,23 @@
 # Payables & Suppliers
 
-Kembali ke indeks dokumentasi: `docs/README.md`
+Back to the documentation index: `docs/README.md`
 
-## Tujuan
+## Purpose
 
-Menangani master supplier dan pencatatan hutang supplier beserta pelunasannya.
+Manage supplier master data and record supplier debts along with their repayments.
 
-## Fitur Saat Ini
+## Current Features
 
-- CRUD supplier
-- list payables
-- detail payable
-- pembayaran hutang supplier
-- status hutang
-- PDF payable
-- payable dari goods receiving pada purchase order
-- supplier return yang mengoreksi stok dan saldo payable
+- Supplier CRUD operations
+- Payables list
+- Payable details
+- Supplier debt payments
+- Debt status
+- Payable PDF documents
+- Payables generated from goods receiving against purchase orders
+- Supplier returns that adjust stock and payable balances
 
-## Halaman dan Route
+## Pages and Routes
 
 - `dashboard/suppliers`
 - `dashboard/payables`
@@ -25,38 +25,36 @@ Menangani master supplier dan pencatatan hutang supplier beserta pelunasannya.
 - `payables.pay`
 - `pdf.payables.show`
 
-## Permission
+## Permissions
 
 - `suppliers-access`
 - `payables-access`
 - `payables-pay`
 
-## Alur User
+## User Workflow
 
-1. admin/kasir mengelola data supplier
-2. hutang supplier dicatat pada modul payable
-3. pembayaran dicatat bertahap sampai lunas
-4. user dapat membuka detail dan dokumen hutang
+1. Administrators or cashiers manage supplier data.
+2. Supplier debts are recorded in the payables module.
+3. Payments are recorded in installments until the debt is fully paid.
+4. Users can view debt details and documents.
 
-## Integrasi Data
+## Data Integration
 
 - `suppliers`
 - `payables`
 - `payable_payments`
 - `bank_accounts`
 
-## Efek Bisnis Penting
+## Important Business Implications
 
-- payable tidak hanya master data; status hutang menentukan visibilitas kewajiban operasional
-- dokumen PDF hutang tersedia untuk kebutuhan administrasi
+- Payables are more than master data; debt status determines the visibility of operational liabilities.
+- Supplier debt PDF documents are available for administrative purposes.
 
-## Integrasi Purchasing
+## Purchasing Integration
 
-Purchase order dan goods receiving menjadi sumber kewajiban supplier. Goods receiving
-dapat membuat atau memperbarui payable dan membawa konteks gudang. Supplier return
-mengoreksi stok serta saldo kewajiban terkait sesuai alur operasionalnya.
+Purchase orders and goods receiving serve as sources of supplier liabilities. Goods receiving can create or update payables and carry warehouse context. Supplier returns adjust stock and the related liability balance according to the operational workflow.
 
-## File Sentral
+## Central Files
 
 - `app/Http/Controllers/Apps/SupplierController.php`
 - `app/Http/Controllers/Apps/PayableController.php`

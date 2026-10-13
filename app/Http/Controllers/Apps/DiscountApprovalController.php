@@ -25,7 +25,7 @@ class DiscountApprovalController extends Controller
                 'id' => $t->id,
                 'invoice' => $t->invoice,
                 'cashier' => $t->cashier?->name,
-                'customer' => $t->customer?->name ?? 'Umum',
+                'customer' => $t->customer?->name ?? 'General Customer',
                 'discount' => (int) $t->discount,
                 'grand_total' => (int) $t->grand_total,
                 'created_at' => $t->created_at?->toISOString(),
@@ -42,7 +42,7 @@ class DiscountApprovalController extends Controller
 
         $this->logAndUpdate($transaction, 'approved');
 
-        return back()->with('success', 'Diskon disetujui.');
+        return back()->with('success', 'Discount approved.');
     }
 
     public function deny(Request $request, Transaction $transaction)
@@ -51,13 +51,13 @@ class DiscountApprovalController extends Controller
 
         $this->logAndUpdate($transaction, 'denied', $request->notes);
 
-        return back()->with('success', 'Diskon ditolak.');
+        return back()->with('success', 'Discount denied.');
     }
 
     private function logAndUpdate(Transaction $transaction, string $status, ?string $notes = null): void
     {
         \DB::transaction(function () use ($transaction, $status, $notes) {
-            // ponytail: approval only settles the approval state — payment stays tied to the actual method.
+            // Note: approval only settles the approval state — payment stays tied to the actual method.
             // grand_total already excludes the manual discount (LoyaltyService), so denying re-adds it.
             $paymentStatus = match ($transaction->payment_method) {
                 'cash' => 'paid',
@@ -100,7 +100,7 @@ class DiscountApprovalController extends Controller
             event: 'discount_approval.'.$status,
             module: 'transactions',
             auditable: $transaction,
-            description: "Diskon transaksi {$transaction->invoice} di".($status === 'approved' ? 'setujui' : 'tolak'),
+            description: "Discount for transaction {$transaction->invoice} was ".($status === 'approved' ? 'approved' : 'denied'),
             after: ['discount_approval_status' => $status],
         );
     }

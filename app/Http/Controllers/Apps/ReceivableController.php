@@ -100,7 +100,7 @@ class ReceivableController extends Controller
             $remaining = $receivable->remaining;
             if ($validated['amount'] > $remaining) {
                 throw ValidationException::withMessages([
-                    'amount' => 'Nominal melebihi sisa piutang.',
+                    'amount' => 'The amount exceeds the remaining receivable balance.',
                 ]);
             }
 
@@ -109,7 +109,7 @@ class ReceivableController extends Controller
                     BankAccount::active()->forOutlet($this->outletAccessService->activeOutlet($request))
                         ->whereKey($validated['bank_account_id'])->exists(),
                     422,
-                    'Rekening bank tidak tersedia untuk outlet aktif.'
+                    'The bank account is not available for the active outlet.'
                 );
             }
 
@@ -140,7 +140,7 @@ class ReceivableController extends Controller
 
         return redirect()
             ->route('receivables.show', $receivable)
-            ->with('success', 'Pembayaran piutang berhasil dicatat.');
+            ->with('success', 'Receivable payment recorded successfully.');
     }
 
     public function aging()
@@ -178,7 +178,7 @@ class ReceivableController extends Controller
 
         $receivable->update(['collection_notes' => $validated['collection_notes'] ?? null]);
 
-        return back()->with('success', 'Catatan penagihan berhasil disimpan.');
+        return back()->with('success', 'Collection notes saved successfully.');
     }
 
     private function ensureAccess(Receivable $receivable): void

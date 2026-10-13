@@ -89,6 +89,7 @@ export default function Create() {
                                 setSelected={(product) => setData("product_id", product?.id || "")}
                                 placeholder="Select Product"
                                 errors={errors.product_id}
+                                displayKey="title"
                             />
                             <Textarea
                                 label="Description"

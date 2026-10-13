@@ -16,7 +16,7 @@ class OutletContextController extends Controller
         $outlet = $this->outletAccess->accessibleOutlets($request->user())->firstWhere('id', (int) $outletId);
 
         abort_unless($outlet, 404);
-        abort_if($this->outletAccess->hasActiveShiftInOtherOutlet($request->user(), $outlet), 422, 'Tutup shift aktif sebelum mengganti outlet.');
+        abort_if($this->outletAccess->hasActiveShiftInOtherOutlet($request->user(), $outlet), 422, 'Close the active shift before switching outlets.');
 
         $request->session()->put('active_outlet_id', $outlet->id);
 

@@ -1,18 +1,18 @@
 # WhatsApp Gateway
 
-Kirim pesan WhatsApp otomatis via campaign CRM, reminder piutang, dan invoice share.
+Automatically sends WhatsApp messages through CRM campaigns, receivable reminders, and invoice sharing.
 
-## Cara Kerja
+## How It Works
 
-```
-Laravel App  ──HTTP──>  whatsapp-service (Node.js)  ──>  WhatsApp Web
+```text
+Laravel App ──HTTP──> whatsapp-service (Node.js) ──> WhatsApp Web
                               │
-                        Puppeteer (headless Chrome)
+                       Puppeteer (headless Chrome)
 ```
 
-- `whatsapp-service/` adalah Express server port 3001 yang menjalankan `whatsapp-web.js`
-- Session disimpan di folder `session/` (persistent — restart server tidak perlu scan ulang)
-- Laravel memanggil Node service via HTTP (cURL) dari `WhatsAppService.php`
+- `whatsapp-service/` is an Express server running on port 3001 that uses `whatsapp-web.js`.
+- The session is stored in the `session/` folder and persists across server restarts, so rescanning the QR code is not required after every restart.
+- Laravel calls the Node.js service over HTTP (cURL) through `WhatsAppService.php`.
 
 ## Setup
 
@@ -23,44 +23,49 @@ npm start
 # → Running on port 3001
 ```
 
-## Halaman Settings
+## Settings Page
 
-`Dashboard > Pengaturan > WhatsApp`
+`Dashboard > Settings > WhatsApp`
 
-| Fitur | Fungsi |
+| Feature | Function |
 |-------|--------|
-| URL Service | Alamat Node service (default: `http://localhost:3001`) |
-| Hubungkan | Init Client WA, generate QR code |
-| QR Scan | Scan dengan WhatsApp > Perangkat Tertaut > Perangkat Baru |
-| Putuskan | Hapus session + disconnect |
-| Kirim Otomatis | Auto-kirim reminder piutang / invoice via campaign |
-| Test Kirim | Kirim pesan test ke nomor tertentu |
+| Service URL | Node.js service address (default: `http://localhost:3001`) |
+| Connect | Initializes the WhatsApp client and generates a QR code. |
+| QR Scan | Scan using WhatsApp > Linked Devices > Link a Device. |
+| Disconnect | Deletes the session and disconnects. |
+| Auto Send | Automatically sends receivable reminders and invoices through campaigns. |
+| Test Send | Sends a test message to a specified phone number. |
 
-## Endpoint Node Service
+## Node.js Service Endpoints
 
 | Endpoint | Method | Description |
 |----------|--------|-------------|
-| `/start` | POST | Init Client WA, mulai QR generation |
-| `/status` | GET | `{connected, phone, qr, starting}` |
-| `/send` | POST | Kirim pesan `{target, message}` |
-| `/disconnect` | POST | Hapus session + disconnect |
+| `/start` | POST | Initializes the WhatsApp client and starts QR code generation. |
+| `/status` | GET | Returns `{connected, phone, qr, starting}`. |
+| `/send` | POST | Sends a message using `{target, message}`. |
+| `/disconnect` | POST | Deletes the session and disconnects. |
 
-## Integrasi Campaign
+## Campaign Integration
 
-Di `CrmAutomationService@processCampaign()`:
-- Jika gateway aktif (`wa_enabled=true`) + terhubung → kirim WA beneran ke setiap customer
-- Update log status jadi `sent` setelah sukses
-- Fallback ke `wa.me` link jika gateway mati
+In `CrmAutomationService@processCampaign()`:
 
-## Permission
+- If the gateway is enabled (`wa_enabled=true`) and connected, it sends actual WhatsApp messages to each customer.
+- Updates the log status to `sent` after a successful send.
+- Falls back to a `wa.me` link if the gateway is unavailable.
 
-- `whatsapp-settings-access` — lihat halaman settings
-- `whatsapp-settings-update` — ubah konfigurasi + connect/disconnect
+## Permissions
 
-## Catatan Teknis
+- `whatsapp-settings-access` — View the settings page.
+- `whatsapp-settings-update` — Change configuration and connect/disconnect.
 
-- Membutuhkan Chrome/Chromium di server (Puppeteer internal)
-- Session persistent via `LocalAuth` — tidak perlu scan ulang tiap restart
-- Rate limit: WhatsApp Web punya batas pengiriman, hindari >100 pesan berturut-turut
-- ToS: whatsapp-web.js menggunakan WhatsApp Web secara tidak resmi
-- Deploy production: jalankan dengan PM2: `pm2 start whatsapp-service/server.js --name wa-service`
+## Technical Notes
+
+- Requires Chrome/Chromium on the server (used internally by Puppeteer).
+- Sessions persist through `LocalAuth`, so rescanning is not required after every restart.
+- **Rate limits:** WhatsApp Web has sending limits. Avoid sending more than 100 messages consecutively.
+- **Terms of Service:** `whatsapp-web.js` uses WhatsApp Web unofficially.
+- **Production deployment:** Run with PM2:
+
+```bash
+pm2 start whatsapp-service/server.js --name wa-service
+```

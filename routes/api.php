@@ -24,6 +24,7 @@ use Illuminate\Support\Facades\Route;
 Route::prefix('webhooks')->group(function () {
     Route::post('/midtrans', [PaymentWebhookController::class, 'midtrans'])->name('webhooks.midtrans');
     Route::post('/xendit', [PaymentWebhookController::class, 'xendit'])->name('webhooks.xendit');
+    Route::post('/safepay', [PaymentWebhookController::class, 'safepay'])->name('webhooks.safepay');
 });
 
 Route::prefix('v1')->group(function () {

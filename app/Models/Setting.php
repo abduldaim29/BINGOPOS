@@ -18,11 +18,12 @@ class Setting extends Model
     ];
 
     /**
-     * Get a setting value by key
+     * Get a setting value by key.
      */
     public static function get(string $key, $default = null)
     {
         $query = static::where('key', $key);
+
         if (Schema::hasColumn('settings', 'outlet_id')) {
             $query->whereNull('outlet_id');
         }
@@ -50,6 +51,7 @@ class Setting extends Model
             }
 
             $value = static::where('key', $key)->where('outlet_id', $outlet->id)->value('value');
+
             if ($value !== null) {
                 return $value;
             }
@@ -85,11 +87,12 @@ class Setting extends Model
     }
 
     /**
-     * Set a setting value by key
+     * Set a setting value by key.
      */
     public static function set(string $key, $value, ?string $description = null)
     {
         $attributes = ['key' => $key];
+
         if (Schema::hasColumn('settings', 'outlet_id')) {
             $attributes['outlet_id'] = null;
         }
@@ -112,7 +115,7 @@ class Setting extends Model
     }
 
     /**
-     * Get currency code (e.g., PKR, USD, EUR)
+     * Get the currency code (e.g., PKR, USD, EUR).
      */
     public static function getCurrencyCode(?Outlet $outlet = null): string
     {
@@ -120,7 +123,7 @@ class Setting extends Model
     }
 
     /**
-     * Get currency symbol (e.g., Rs, $, €)
+     * Get the currency symbol (e.g., Rs, $, €).
      */
     public static function getCurrencySymbol(?Outlet $outlet = null): string
     {
@@ -128,7 +131,7 @@ class Setting extends Model
     }
 
     /**
-     * Get currency locale for formatting (e.g., en-PK, en-US)
+     * Get the currency locale for formatting (e.g., en-PK, en-US).
      */
     public static function getCurrencyLocale(?Outlet $outlet = null): string
     {
@@ -136,7 +139,7 @@ class Setting extends Model
     }
 
     /**
-     * Get decimal places for currency
+     * Get the number of decimal places for currency.
      */
     public static function getCurrencyDecimalPlaces(?Outlet $outlet = null): int
     {
@@ -144,7 +147,7 @@ class Setting extends Model
     }
 
     /**
-     * Format number as currency
+     * Format a number as currency.
      */
     public static function formatCurrency(float $amount, ?Outlet $outlet = null): string
     {

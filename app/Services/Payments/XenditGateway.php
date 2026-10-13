@@ -29,7 +29,7 @@ class XenditGateway
     private function createInvoiceRequest(Transaction $transaction, array $config, ?array $channels = null, ?int $amount = null, ?string $externalId = null): array
     {
         if (! ($config['enabled'] ?? false)) {
-            throw new PaymentGatewayException('Xendit tidak aktif atau belum dikonfigurasi.');
+            throw new PaymentGatewayException('Xendit is inactive or has not been configured.');
         }
 
         $customer = $transaction->customer;
@@ -37,7 +37,7 @@ class XenditGateway
         $payload = [
             'external_id' => $externalId ?? $transaction->invoice,
             'amount' => $amount ?? (int) $transaction->grand_total,
-            'description' => 'Pembayaran transaksi #'.$transaction->invoice,
+            'description' => 'Transaction payment #'.$transaction->invoice,
             'customer' => [
                 'given_names' => optional($customer)->name ?? 'Customer',
                 'email' => optional($customer)->email ?? config('mail.from.address'),

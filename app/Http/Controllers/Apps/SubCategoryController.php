@@ -6,8 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Models\Category;
 use App\Models\SubCategory;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Redirect;
 use Inertia\Inertia;
 
@@ -52,7 +52,7 @@ class SubCategoryController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request): \Illuminate\Http\RedirectResponse
+    public function store(Request $request): RedirectResponse
     {
         $request->validate([
             'category_id' => 'required|exists:categories,id',
@@ -89,7 +89,7 @@ class SubCategoryController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, SubCategory $subCategory): \Illuminate\Http\RedirectResponse
+    public function update(Request $request, SubCategory $subCategory): RedirectResponse
     {
         $request->validate([
             'category_id' => 'required|exists:categories,id',
@@ -113,7 +113,7 @@ class SubCategoryController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(SubCategory $subCategory): \Illuminate\Http\RedirectResponse
+    public function destroy(SubCategory $subCategory): RedirectResponse
     {
         $subCategory->delete();
 

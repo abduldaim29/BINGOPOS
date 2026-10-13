@@ -98,7 +98,9 @@ class Product extends Model
         if (! $this->is_composite) {
             return $this->stockTotal();
         }
+
         $minStock = null;
+
         foreach ($this->components as $component) {
             $available = (int) floor($component->stockTotal() / max(1, (float) $component->pivot->qty));
             $minStock = $minStock === null ? $available : min($minStock, $available);
@@ -137,6 +139,7 @@ class Product extends Model
         if ($this->min_stock <= 0) {
             return false;
         }
+
         $stock = $warehouseId
             ? (int) ($this->warehouses()->where('warehouse_id', $warehouseId)->first()?->pivot->stock ?? 0)
             : $this->stockTotal();

@@ -82,7 +82,7 @@ class UserController extends Controller
             event: 'user.created',
             module: 'users',
             auditable: $user,
-            description: 'Pengguna baru dibuat.',
+            description: 'New user created.',
             after: $this->userPayload(
                 $user,
                 $this->auditLogService->roleNames($request->selectedRoles),
@@ -135,15 +135,15 @@ class UserController extends Controller
             $avatarChanged = true;
         }
 
-        // check if user send request password
+        // check if user sends a password update request
         if ($request->password) {
-            // update user data password
+            // update user password
             $user->update([
                 'password' => bcrypt($request->password),
             ]);
         }
 
-        // update user data name
+        // update user name
         $user->update([
             'name' => $request->name,
             'email' => $request->email,
@@ -161,7 +161,7 @@ class UserController extends Controller
             event: 'user.updated',
             module: 'users',
             auditable: $user,
-            description: 'Data pengguna diperbarui.',
+            description: 'User data updated.',
             before: $before,
             after: $after,
         );
@@ -171,7 +171,7 @@ class UserController extends Controller
                 event: 'user.role_changed',
                 module: 'users',
                 auditable: $user,
-                description: 'Role pengguna diperbarui.',
+                description: 'User roles updated.',
                 before: ['roles' => array_values($beforeRoles)],
                 after: ['roles' => array_values($afterRoles)],
             );
@@ -194,7 +194,7 @@ class UserController extends Controller
                 event: 'user.deleted',
                 module: 'users',
                 auditable: $user,
-                description: 'Pengguna dihapus.',
+                description: 'User deleted.',
                 before: $this->userPayload($user, $user->roles->pluck('name')->all(), false),
             );
         }

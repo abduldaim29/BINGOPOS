@@ -9,9 +9,9 @@ import { useState, useEffect, useCallback, useRef } from "react";
  * @param {function} onScan - Callback when barcode is scanned
  * @param {object} options - Configuration options
  * @param {number} options.minLength - Minimum barcode length (default: 3)
- * @param {number} options.maxDelay - Max delay between keystrokes in ms (default: 50)
- * @param {boolean} options.enabled - Enable/disable scanner (default: true)
- * @param {string[]} options.ignoreInputs - Input types to ignore (default: ['text', 'number', 'search'])
+ * @param {number} options.maxDelay - Maximum delay between keystrokes in ms (default: 50)
+ * @param {boolean} options.enabled - Enable or disable scanner (default: true)
+ * @param {string[]} options.ignoreInputs - Input types to ignore
  *
  * @returns {object} { lastBarcode, isScanning, reset }
  */
@@ -33,14 +33,20 @@ export default function useBarcodeScanner(onScan, options = {}) {
     const reset = useCallback(() => {
         bufferRef.current = "";
         setIsScanning(false);
+
+        if (timeoutRef.current) {
+            clearTimeout(timeoutRef.current);
+            timeoutRef.current = null;
+        }
     }, []);
 
     const handleKeyDown = useCallback(
         (e) => {
             if (!enabled) return;
 
-            // Ignore if typing in input fields
+            // Ignore input fields where the user is typing
             const activeElement = document.activeElement;
+
             if (activeElement) {
                 const tagName = activeElement.tagName.toLowerCase();
                 const inputType = activeElement
@@ -48,49 +54,68 @@ export default function useBarcodeScanner(onScan, options = {}) {
                     ?.toLowerCase();
 
                 if (tagName === "textarea") return;
+
                 if (
                     tagName === "input" &&
                     ignoreInputs.includes(inputType || "text")
-                )
+                ) {
                     return;
+                }
+
+                if (activeElement.isContentEditable) return;
             }
 
             const now = Date.now();
             const timeSinceLastKey = now - lastKeyTimeRef.current;
 
-            // If too much time has passed, reset buffer
-            if (timeSinceLastKey > maxDelay && bufferRef.current.length > 0) {
+            // Reset the buffer if too much time has passed
+            if (
+                timeSinceLastKey > maxDelay &&
+                bufferRef.current.length > 0
+            ) {
                 bufferRef.current = "";
+                setIsScanning(false);
             }
 
             lastKeyTimeRef.current = now;
 
-            // Handle Enter key - end of barcode
+            // Enter marks the end of a barcode scan
             if (e.key === "Enter") {
                 if (bufferRef.current.length >= minLength) {
                     const barcode = bufferRef.current;
+
                     setLastBarcode(barcode);
                     setIsScanning(false);
                     onScan?.(barcode);
                 }
+
                 bufferRef.current = "";
+
+                if (timeoutRef.current) {
+                    clearTimeout(timeoutRef.current);
+                    timeoutRef.current = null;
+                }
+
                 return;
             }
 
-            // Only accept alphanumeric characters and common barcode chars
-            if (e.key.length === 1 && /^[a-zA-Z0-9\-_.]$/.test(e.key)) {
+            // Accept alphanumeric characters and common barcode characters
+            if (
+                e.key.length === 1 &&
+                /^[a-zA-Z0-9\-_.]$/.test(e.key)
+            ) {
                 bufferRef.current += e.key;
                 setIsScanning(true);
 
-                // Clear timeout and set new one
+                // Restart the timeout after every character
                 if (timeoutRef.current) {
                     clearTimeout(timeoutRef.current);
                 }
 
                 timeoutRef.current = setTimeout(() => {
-                    // Reset if no more input
                     bufferRef.current = "";
                     setIsScanning(false);
+                    timeoutRef.current = null;
                 }, maxDelay * 3);
             }
         },
@@ -98,14 +123,20 @@ export default function useBarcodeScanner(onScan, options = {}) {
     );
 
     useEffect(() => {
-        if (!enabled) return;
+        if (!enabled) {
+            bufferRef.current = "";
+            setIsScanning(false);
+            return;
+        }
 
         window.addEventListener("keydown", handleKeyDown);
 
         return () => {
             window.removeEventListener("keydown", handleKeyDown);
+
             if (timeoutRef.current) {
                 clearTimeout(timeoutRef.current);
+                timeoutRef.current = null;
             }
         };
     }, [enabled, handleKeyDown]);
@@ -122,8 +153,8 @@ export default function useBarcodeScanner(onScan, options = {}) {
  *
  * function MyComponent() {
  *     const { lastBarcode, isScanning } = useBarcodeScanner((barcode) => {
- *         console.log('Scanned:', barcode);
- *         // Find product by barcode and add to cart
+ *         console.log("Scanned:", barcode);
+ *         // Find product by barcode and add it to the cart
  *     });
  *
  *     return (

@@ -15,6 +15,8 @@ class TransactionTender extends Model
 
     public const METHOD_XENDIT = 'xendit';
 
+    public const METHOD_SAFEPAY = 'safepay';
+
     public const METHOD_QRIS = 'qris';
 
     public const STATUS_PAID = 'paid';

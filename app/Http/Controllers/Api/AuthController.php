@@ -37,7 +37,7 @@ class AuthController extends Controller
         $key = 'api-login:'.$request->ip();
 
         if (RateLimiter::tooManyAttempts($key, 5)) {
-            return $this->error('Terlalu banyak percobaan login. Coba lagi nanti.', 429);
+            return $this->error('Too many login attempts. Please try again later.', 429);
         }
 
         $user = User::query()->where('email', $request->string('email')->toString())->first();
@@ -49,12 +49,12 @@ class AuthController extends Controller
                 event: 'api.auth.login_failed',
                 module: 'auth',
                 auditable: $user,
-                description: 'Login API gagal.',
+                description: 'API login failed.',
                 meta: ['severity' => 'warning', 'ip' => $request->ip()],
             );
 
             throw ValidationException::withMessages([
-                'email' => ['Kredensial yang diberikan tidak cocok dengan data kami.'],
+                'email' => ['The provided credentials do not match our records.'],
             ]);
         }
 
@@ -64,7 +64,7 @@ class AuthController extends Controller
             event: 'api.auth.login_succeeded',
             module: 'auth',
             auditable: $user,
-            description: 'Login API berhasil.',
+            description: 'API login successful.',
             meta: ['severity' => 'info', 'ip' => $request->ip()],
         );
 
@@ -82,7 +82,7 @@ class AuthController extends Controller
             'user' => $user->only(['id', 'name', 'email']),
             'roles' => $user->getRoleNames()->all(),
             'permissions' => $abilities,
-        ], 'Login berhasil');
+        ], 'Login successful');
     }
 
     /**
@@ -97,11 +97,11 @@ class AuthController extends Controller
             event: 'api.auth.logout',
             module: 'auth',
             auditable: $request->user(),
-            description: 'Logout API.',
+            description: 'API logout.',
             meta: ['severity' => 'info', 'ip' => $request->ip()],
         );
 
-        return $this->ok(null, 'Logout berhasil');
+        return $this->ok(null, 'Logout successful');
     }
 
     /**
@@ -133,7 +133,7 @@ class AuthController extends Controller
     public function register(Request $request): JsonResponse
     {
         if (! config('security.auth.public_registration', false)) {
-            return $this->forbidden('Pendaftaran publik sedang ditutup.');
+            return $this->forbidden('Public registration is currently closed.');
         }
 
         $request->validate([
@@ -158,7 +158,7 @@ class AuthController extends Controller
             event: 'api.auth.register',
             module: 'auth',
             auditable: $user,
-            description: 'Registrasi API.',
+            description: 'API registration.',
             meta: ['severity' => 'info', 'ip' => $request->ip()],
         );
 
@@ -168,6 +168,6 @@ class AuthController extends Controller
             'token' => $token,
             'token_type' => 'Bearer',
             'user' => $user->only(['id', 'name', 'email']),
-        ], 'Registrasi berhasil');
+        ], 'Registration successful');
     }
 }

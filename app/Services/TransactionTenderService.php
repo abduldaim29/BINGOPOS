@@ -15,12 +15,14 @@ class TransactionTenderService
         TransactionTender::METHOD_BANK_TRANSFER,
         TransactionTender::METHOD_MIDTRANS,
         TransactionTender::METHOD_XENDIT,
+        TransactionTender::METHOD_SAFEPAY,
         TransactionTender::METHOD_QRIS,
     ];
 
     public const GATEWAY_METHODS = [
         TransactionTender::METHOD_MIDTRANS,
         TransactionTender::METHOD_XENDIT,
+        TransactionTender::METHOD_SAFEPAY,
         TransactionTender::METHOD_QRIS,
     ];
 
@@ -38,13 +40,13 @@ class TransactionTenderService
             }
 
             throw ValidationException::withMessages([
-                'tenders' => 'Metode pembayaran wajib diisi.',
+                'tenders' => 'A payment method is required.',
             ]);
         }
 
         if (count($input) > 2) {
             throw ValidationException::withMessages([
-                'tenders' => 'Maksimal dua metode pembayaran diperbolehkan.',
+                'tenders' => 'A maximum of two payment methods is allowed.',
             ]);
         }
 
@@ -57,7 +59,7 @@ class TransactionTenderService
 
             if (! in_array($method, self::METHODS, true)) {
                 throw ValidationException::withMessages([
-                    "tenders.{$index}.method" => 'Metode pembayaran tidak valid.',
+                    "tenders.{$index}.method" => 'Invalid payment method.',
                 ]);
             }
 
@@ -73,7 +75,7 @@ class TransactionTenderService
 
             if ($amount < 1) {
                 throw ValidationException::withMessages([
-                    "tenders.{$index}.amount" => 'Nominal pembayaran harus lebih besar dari nol.',
+                    "tenders.{$index}.amount" => 'The payment amount must be greater than zero.',
                 ]);
             }
 
@@ -87,14 +89,14 @@ class TransactionTenderService
 
                 if ($cashReceived < $amount) {
                     throw ValidationException::withMessages([
-                        "tenders.{$index}.cash_received" => 'Uang tunai kurang dari nominal tender.',
+                        "tenders.{$index}.cash_received" => 'The cash received is less than the payment amount.',
                     ]);
                 }
 
                 $change = $cashReceived - $amount;
             } elseif (isset($tender['cash_received']) && (int) $tender['cash_received'] > 0) {
                 throw ValidationException::withMessages([
-                    "tenders.{$index}.cash_received" => 'Uang diterima hanya berlaku untuk pembayaran tunai.',
+                    "tenders.{$index}.cash_received" => 'Cash received applies only to cash payments.',
                 ]);
             }
 
@@ -109,7 +111,7 @@ class TransactionTenderService
 
                 if (! $account) {
                     throw ValidationException::withMessages([
-                        "tenders.{$index}.bank_account_id" => 'Rekening tujuan transfer wajib dipilih.',
+                        "tenders.{$index}.bank_account_id" => 'A destination bank account must be selected.',
                     ]);
                 }
 
@@ -131,13 +133,13 @@ class TransactionTenderService
 
         if ($gatewayCount > 1) {
             throw ValidationException::withMessages([
-                'tenders' => 'Hanya satu pembayaran gateway yang diperbolehkan per transaksi.',
+                'tenders' => 'Only one gateway payment is allowed per transaction.',
             ]);
         }
 
         if ($bankTransferCount > 1) {
             throw ValidationException::withMessages([
-                'tenders' => 'Hanya satu transfer bank yang diperbolehkan per transaksi.',
+                'tenders' => 'Only one bank transfer is allowed per transaction.',
             ]);
         }
 
@@ -145,7 +147,7 @@ class TransactionTenderService
 
         if ($total !== $grandTotal) {
             throw ValidationException::withMessages([
-                'tenders' => 'Jumlah pembayaran harus sama dengan total transaksi.',
+                'tenders' => 'The payment total must equal the transaction total.',
             ]);
         }
 
@@ -157,7 +159,7 @@ class TransactionTenderService
 
                 if (! $gateway || ! $this->setting($outlet)->isGatewayReady($gateway)) {
                     throw ValidationException::withMessages([
-                        'tenders' => 'Gateway pembayaran belum dikonfigurasi.',
+                        'tenders' => 'The payment gateway has not been configured.',
                     ]);
                 }
             }

@@ -154,8 +154,8 @@ class HandleInertiaRequests extends Middleware
 
                         return [
                             'id' => $item->id,
-                            'title' => "Piutang: {$item->invoice}",
-                            'subtitle' => 'Sisa '.$currencySymbol.' '.number_format($remaining, 0, ',', '.'),
+                            'title' => "Accounts Receivable: {$item->invoice}",
+                            'subtitle' => 'Remaining '.$currencySymbol.' '.number_format($remaining, 0, ',', '.'),
                             'time' => optional($item->due_date)->diffForHumans(),
                             'status' => $item->status,
                             'aging_bucket' => $item->aging_bucket,
@@ -174,8 +174,8 @@ class HandleInertiaRequests extends Middleware
 
                         return [
                             'id' => $item->id,
-                            'title' => "Hutang: {$item->document_number}",
-                            'subtitle' => 'Sisa '.$currencySymbol.' '.number_format($remaining, 0, ',', '.'),
+                            'title' => "Accounts Payable: {$item->document_number}",
+                            'subtitle' => 'Remaining '.$currencySymbol.' '.number_format($remaining, 0, ',', '.'),
                             'time' => optional($item->due_date)->diffForHumans(),
                             'status' => $item->status,
                             'aging_bucket' => $item->aging_bucket,
@@ -197,7 +197,7 @@ class HandleInertiaRequests extends Middleware
         }
 
         $storeProfile = [
-            'name' => 'Toko Anda',
+            'name' => 'Your Store',
             'logo' => null,
             'address' => '',
             'phone' => '',
@@ -217,7 +217,7 @@ class HandleInertiaRequests extends Middleware
             }
 
             $storeProfile = [
-                'name' => Setting::getForOutlet('store_name', $outlet, 'Toko Anda'),
+                'name' => Setting::getForOutlet('store_name', $outlet, 'Your Store'),
                 'logo' => $logo,
                 'address' => Setting::getForOutlet('store_address', $outlet, ''),
                 'phone' => Setting::getForOutlet('store_phone', $outlet, ''),
@@ -267,7 +267,7 @@ class HandleInertiaRequests extends Middleware
                 'available' => ['en', 'id'],
                 'names' => [
                     'en' => 'English',
-                    'id' => 'Indonesia',
+                    'id' => 'Indonesian',
                 ],
             ],
             'lowStockNotifications' => $lowStockNotifications,

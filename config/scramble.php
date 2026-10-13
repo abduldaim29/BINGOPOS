@@ -52,8 +52,8 @@ return [
         /*
          * Description rendered on the home page of the API documentation (`/docs/api`).
          */
-        'description' => 'REST API untuk Dikasir — sistem kasir (POS) open source untuk UMKM Indonesia. '
-            .'Semua endpoint (kecuali login/register/webhooks) memerlukan Bearer token dari POST /api/v1/auth/login.',
+        'description' => 'REST API for Dikasir — open-source point-of-sale (POS) system for Indonesian MSMEs. '
+            .'All endpoints (except login/register/webhooks) require a Bearer token from POST /api/v1/auth/login.',
     ],
 
     'ui' => [

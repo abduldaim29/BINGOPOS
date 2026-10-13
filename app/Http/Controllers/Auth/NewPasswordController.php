@@ -72,7 +72,7 @@ class NewPasswordController extends Controller
                     event: 'auth.password_changed',
                     module: 'auth',
                     auditable: $user,
-                    description: 'Password akun direset melalui email.',
+                    description: 'Account password reset via email.',
                     meta: [
                         'severity' => 'high',
                         'route' => $request->route()?->getName(),

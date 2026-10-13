@@ -10,7 +10,7 @@ class SetLocale
 {
     public function handle(Request $request, Closure $next): Response
     {
-        $availableLocales = ['id', 'en'];
+        $availableLocales = ['en'];
         $defaultLocale = 'en';
 
         $locale = $defaultLocale;
@@ -32,6 +32,7 @@ class SetLocale
             }
         }
 
+        // Default to English if the locale is not in available locales
         if (! in_array($locale, $availableLocales)) {
             $locale = $defaultLocale;
         }

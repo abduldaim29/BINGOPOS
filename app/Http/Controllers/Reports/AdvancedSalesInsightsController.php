@@ -304,7 +304,7 @@ class AdvancedSalesInsightsController extends Controller
         return $this->detailMetricsQuery($filters)
             ->selectRaw('
                 p.category_id,
-                COALESCE(c.name, \'Tanpa Kategori\') as category_name,
+                COALESCE(c.name, \'Uncategorized\') as category_name,
                 SUM(td.qty) as qty_sold,
                 SUM(td.price) as revenue_total,
                 SUM((td.price - ROUND((COALESCE(t.discount, 0) * td.price) / NULLIF(tx.subtotal_after_promo, 0))) - (p.buy_price * td.qty)) as profit_total

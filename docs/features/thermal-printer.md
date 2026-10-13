@@ -1,74 +1,79 @@
 # Thermal Printer
 
-Kembali ke indeks dokumentasi: `docs/README.md`
+Back to the documentation index: `docs/README.md`
 
-## Tujuan
+## Purpose
 
-Cetak receipt ke printer thermal (ESC/POS protocol) langsung dari browser via WebUSB, atau melalui server-side text generation.
+Print receipts directly to thermal printers using the ESC/POS protocol through browser-based WebUSB, or through server-side text generation.
 
-## Fitur Saat Ini
+## Current Features
 
-### ThermalPrintService (Server-side)
-- Generate teks receipt dalam format monospace
-- Support 80mm (48 karakter) dan 58mm (32 karakter)
-- Format: header toko, invoice info, item list, subtotal, diskon, PPN, total, pembayaran, footer
-- Output: plain text (`generateReceiptText`) dan HTML (`generateReceiptHtml`)
+### ThermalPrintService (Server-Side)
+
+- Generate receipt text in monospace format.
+- Support 80mm (48 characters) and 58mm (32 characters) paper sizes.
+- Format includes store header, invoice information, item list, subtotal, discount, VAT, total, payment details, and footer.
+- Output formats: plain text (`generateReceiptText`) and HTML (`generateReceiptHtml`).
 
 ### Thermal Print Route
-- `GET /dashboard/documents/transactions/{invoice}/print/thermal` — HTML receipt
-- Dapat dibuka di tab baru untuk print via browser
+
+- `GET /dashboard/documents/transactions/{invoice}/print/thermal` — HTML receipt.
+- Can be opened in a new tab for printing through the browser.
 
 ### Printer Settings
-- Paper size: 80mm / 58mm
-- Auto-print toggle (cetak otomatis setelah transaksi)
 
-## ESC/POS WebUSB (Client-side)
+- Paper size: 80mm / 58mm.
+- Auto-print toggle (automatically print after a transaction).
 
-Cetak langsung byte ESC/POS ke printer via WebUSB (tanpa dialog print browser):
+## ESC/POS WebUSB (Client-Side)
 
-- Generator byte: `resources/js/Utils/escpos.js` — `buildReceiptBytes(data, paperSize)` (58mm/80mm, auto cut `GS V`), `drawerKickBytes(pin)` (ESC p untuk buka cash drawer)
-- Connector: `requestPrinter()` / `getPrinter()` / `printBytes()` — WebUSB, filter device printer class 7
-- Tombol di **Settings > Printer**: Hubungkan Printer, Test Print, Buka Laci (Kick), Putuskan
-- **Auto-print** setelah checkout non-QRIS (jika setting auto-print aktif + printer sudah terhubung + status bukan pending) + drawer kick otomatis untuk pembayaran tunai (`Print.jsx`)
+Print ESC/POS bytes directly to a printer through WebUSB without opening the browser's print dialog.
 
-> **Catatan:** WebUSB hanya tersedia di browser Chromium (Chrome/Edge/Opera) dan butuh gesture pengguna (klik tombol "Hubungkan Printer"). Browser lain tetap bisa cetak via `window.print()`.
+- **Byte generator:** `resources/js/Utils/escpos.js`
+  - `buildReceiptBytes(data, paperSize)` — supports 58mm/80mm paper sizes and automatic cutting using `GS V`.
+  - `drawerKickBytes(pin)` — uses `ESC p` to open the cash drawer.
+- **Connector:** `requestPrinter()` / `getPrinter()` / `printBytes()` — uses WebUSB and filters for printer-class devices (class 7).
+- **Buttons under Settings > Printer:** Connect Printer, Test Print, Open Cash Drawer (Kick), and Disconnect.
+- **Auto-print:** After checkout for non-QRIS transactions, provided auto-print is enabled, the printer is connected, and the transaction status is not pending. Automatic cash drawer kick is also supported for cash payments (`Print.jsx`).
 
-## Route
+> **Note:** WebUSB is available only in Chromium-based browsers such as Chrome, Edge, and Opera, and requires a user gesture (clicking the "Connect Printer" button). Other browsers can still print using `window.print()`.
 
-| Route | Method | Fungsi |
+## Routes
+
+| Route | Method | Function |
 |-------|--------|--------|
-| `pdf.transactions.thermal` | GET | HTML receipt thermal |
-| `settings.printer` | GET | Halaman settings printer |
-| `settings.printer.update` | POST | Simpan settings printer |
+| `pdf.transactions.thermal` | GET | Thermal HTML receipt |
+| `settings.printer` | GET | Printer settings page |
+| `settings.printer.update` | POST | Save printer settings |
 
-## Format Receipt (80mm)
+## Receipt Format (80mm)
 
-```
-            TOKO ANDA
-        Jl. Contoh No. 123
-        Telp: 021-123456
+```text
+            YOUR STORE
+        123 Example Street
+        Phone: 021-123456
 --------------------------------
 No: TRX-XXXXXXXXXX
-Tgl: 22/06/2026 14:30
-Kasir: Arya
-Pelanggan: Umum
+Date: 22/06/2026 14:30
+Cashier: Arya
+Customer: General Customer
 --------------------------------
-Produk A
-2x @ 10.000          20.000
-Produk B
-1x @ 15.000          15.000
+Product A
+2x @ 10,000           20,000
+Product B
+1x @ 15,000           15,000
 --------------------------------
-Subtotal             35.000
-PPN                   3.850
+Subtotal              35,000
+VAT                    3,850
 --------------------------------
-TOTAL                38.850
-Tunai                50.000
-Kembali              11.150
+TOTAL                 38,850
+Cash                  50,000
+Change                11,150
 --------------------------------
-        Terima kasih
+        Thank you
 ```
 
-## Catatan
+## Notes
 
-- Untuk print via jaringan: gunakan `NetworkPrintConnector` atau `WindowsPrintConnector` (belum ada di codebase)
-- Print shift X/Z report juga memakai ThermalPrintService (`generateShiftReportText`)
+- For network printing, use `NetworkPrintConnector` or `WindowsPrintConnector` (not yet available in the codebase).
+- Shift X/Z reports also use `ThermalPrintService` through `generateShiftReportText`.

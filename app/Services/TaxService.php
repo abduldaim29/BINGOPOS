@@ -10,7 +10,7 @@ class TaxService
 
     public function __construct()
     {
-        $this->defaultRate = (float) (Setting::get('tax_default_rate', '11.00'));
+        $this->defaultRate = (float) (Setting::get('tax_default_rate', '18.00'));
     }
 
     public function getDefaultRate(): float
