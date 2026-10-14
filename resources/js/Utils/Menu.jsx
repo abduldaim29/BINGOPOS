@@ -74,6 +74,20 @@ export default function Menu() {
                     permissions: hasAnyPermission(["categories-access"]),
                 },
                 {
+                    title: t("sidebar.items.subCategories"),
+                    href: route("sub-categories.index"),
+                    active: url === "/dashboard/sub-categories" ? true : false,
+                    icon: <IconCategory size={20} strokeWidth={1.5} />,
+                    permissions: hasAnyPermission(["categories-access"]),
+                },
+                {
+                    title: t("sidebar.items.items"),
+                    href: route("product-types.index"),
+                    active: url === "/dashboard/product-types" ? true : false,
+                    icon: <IconBooks size={20} strokeWidth={1.5} />,
+                    permissions: hasAnyPermission(["categories-access"]),
+                },
+                {
                     title: t("sidebar.items.products"),
                     href: route("products.index"),
                     active: url === "/dashboard/products" ? true : false,
