@@ -32,16 +32,27 @@ class ImportExportController extends Controller
 
     public function importProducts(Request $request)
     {
-        $request->validate([
-            'file' => ['required', 'file', 'mimes:xlsx,xls,csv', 'max:5120'],
-        ]);
+        try {
+            $request->validate([
+                'file' => ['required', 'file', 'mimes:xlsx,xls,csv', 'max:5120'],
+            ]);
 
-        $import = new ProductsImport;
-        Excel::import($import, $request->file('file'));
+            $import = new ProductsImport;
+            Excel::import($import, $request->file('file'));
 
-        $successCount = $import->getRowCount();
+            $successCount = $import->getRowCount();
 
-        return back()->with('success', "Import completed. {$successCount} products imported.");
+            return back()->with('success', "Import completed. {$successCount} products imported.");
+        } catch (\Maatwebsite\Excel\Validators\ValidationException $e) {
+            $failures = $e->failures();
+            $errorMessages = collect($failures)->map(function ($failure) {
+                return "Row {$failure->row()}: " . implode(', ', $failure->errors());
+            })->implode('; ');
+
+            return back()->with('error', "Validation failed: {$errorMessages}");
+        } catch (\Exception $e) {
+            return back()->with('error', "Import failed: " . $e->getMessage());
+        }
     }
 
     public function importCustomers(Request $request)
@@ -59,7 +70,7 @@ class ImportExportController extends Controller
     public function downloadTemplate(string $type)
     {
         $headings = match ($type) {
-            'products' => ['barcode', 'sku', 'name', 'description', 'category', 'purchase_price', 'selling_price', 'stock', 'min_stock', 'max_stock', 'tax_type', 'tax_rate'],
+            'products' => ['Category', 'Sub Category', 'Product Image', 'Product Name', 'Description', 'Purchase Price', 'Selling Price', 'Stock', 'Minimum Stock', 'Maximum Stock', 'Units'],
             'customers' => ['name', 'phone', 'address'],
             default => abort(404),
         };

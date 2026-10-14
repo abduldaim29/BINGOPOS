@@ -10,7 +10,7 @@ class TransactionDetail extends Model
     use HasFactory;
 
     /**
-     * Fillable attributes
+     * fillable
      *
      * @var array
      */
@@ -30,6 +30,9 @@ class TransactionDetail extends Model
         'pricing_rule_kind',
         'pricing_group_key',
         'pricing_group_label',
+        'restaurant_deal_id',
+        'restaurant_deal_name',
+        'restaurant_deal_type',
     ];
 
     protected $casts = [
@@ -66,6 +69,11 @@ class TransactionDetail extends Model
     public function pricingRule()
     {
         return $this->belongsTo(PricingRule::class);
+    }
+
+    public function restaurantDeal()
+    {
+        return $this->belongsTo(RestaurantDeal::class);
     }
 
     public function salesReturnItems()

@@ -17,28 +17,46 @@ class ProductsImport implements ToModel, WithBatchInserts, WithChunkReading, Wit
     public function model(array $row)
     {
         $this->rowCount++;
-        $categoryName = trim($row['category'] ?? 'General');
+
+        // Handle both naming conventions: 'category' and 'Category'
+        $categoryName = trim($row['category'] ?? $row['Category'] ?? 'General');
         $category = Category::firstOrCreate(
             ['name' => $categoryName],
             ['description' => '', 'image' => 'default.png']
         );
 
-        $barcode = (string) ($row['barcode'] ?? '');
+        // Handle both naming conventions: 'barcode' and 'Barcode'
+        $barcode = (string) ($row['barcode'] ?? $row['Barcode'] ?? '');
+        if (empty($barcode)) {
+            // Generate barcode if not provided
+            $barcode = '20' . substr((string) time(), -10) . str_pad((string) rand(0, 9999), 4, '0', STR_PAD_LEFT);
+        }
+
+        // Handle both naming conventions for other fields
+        $sku = $row['sku'] ?? $row['SKU'] ?? $barcode;
+        $name = $row['name'] ?? $row['Product Name'] ?? $row['Name'] ?? '';
+        $description = $row['description'] ?? $row['Description'] ?? '';
+        $purchasePrice = $row['purchase_price'] ?? $row['Purchase Price'] ?? 0;
+        $sellingPrice = $row['selling_price'] ?? $row['Selling Price'] ?? 0;
+        $stock = $row['stock'] ?? $row['Stock'] ?? 0;
+        $minStock = $row['min_stock'] ?? $row['Minimum Stock'] ?? 0;
+        $maxStock = $row['max_stock'] ?? $row['Maximum Stock'] ?? 0;
 
         return Product::updateOrCreate(
             ['barcode' => $barcode],
             [
-                'sku' => $row['sku'] ?? $barcode,
-                'title' => $row['name'] ?? '',
-                'description' => $row['description'] ?? '',
+                'sku' => $sku,
+                'title' => $name,
+                'description' => $description,
                 'category_id' => $category->id,
-                'buy_price' => (int) ($row['purchase_price'] ?? 0),
-                'sell_price' => (int) ($row['selling_price'] ?? 0),
-                'stock' => (int) ($row['stock'] ?? 0),
-                'min_stock' => (int) ($row['min_stock'] ?? 0),
-                'max_stock' => (int) ($row['max_stock'] ?? 0),
-                'tax_type' => $row['tax_type'] ?? 'exclusive',
-                'tax_rate' => (float) ($row['tax_rate'] ?? 11.00),
+                'buy_price' => (int) $purchasePrice,
+                'sell_price' => (int) $sellingPrice,
+                'stock' => (int) $stock,
+                'min_stock' => (int) $minStock,
+                'max_stock' => (int) $maxStock,
+                'tax_type' => $row['tax_type'] ?? $row['Tax Type'] ?? 'exclusive',
+                'tax_rate' => (float) ($row['tax_rate'] ?? $row['Tax Rate'] ?? 18.00),
+                'image' => 'default.png', // Use default image since import doesn't handle base64 images
             ]
         );
     }
@@ -46,7 +64,6 @@ class ProductsImport implements ToModel, WithBatchInserts, WithChunkReading, Wit
     public function rules(): array
     {
         return [
-            'barcode' => ['required'],
             'name' => ['required', 'string', 'max:255'],
             'purchase_price' => ['nullable', 'numeric', 'min:0'],
             'selling_price' => ['nullable', 'numeric', 'min:0'],
@@ -56,8 +73,6 @@ class ProductsImport implements ToModel, WithBatchInserts, WithChunkReading, Wit
     public function customValidationMessages()
     {
         return [
-            'barcode.required' => 'The barcode is required.',
-            'barcode.unique' => 'The barcode is already registered.',
             'name.required' => 'The product name is required.',
         ];
     }

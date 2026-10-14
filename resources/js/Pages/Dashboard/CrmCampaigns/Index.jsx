@@ -32,7 +32,7 @@ export default function Index({ campaigns, filters }) {
                     <div>
                         <h1 className="text-2xl font-bold text-slate-900 dark:text-white">CRM Campaigns</h1>
                         <p className="text-sm text-slate-500 dark:text-slate-400">
-                            Kelola promo broadcast, reminder, dan share invoice berbasis audience CRM.
+                            Manage promotional broadcasts, reminders, and invoice sharing based on CRM audiences.
                         </p>
                     </div>
                     {can("crm-campaigns-create") && (
@@ -41,7 +41,7 @@ export default function Index({ campaigns, filters }) {
                             href={route("crm-campaigns.create")}
                             icon={<IconCirclePlus size={18} />}
                             className="bg-primary-500 text-white hover:bg-primary-600 shadow-lg shadow-primary-500/30"
-                            label="Buat Campaign"
+                            label="Create Campaign"
                         />
                     )}
                 </div>
@@ -53,7 +53,7 @@ export default function Index({ campaigns, filters }) {
                             onChange={(event) => handleFilterChange("type", event.target.value)}
                             className="h-11 rounded-xl border border-slate-200 bg-slate-50 px-4 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
                         >
-                            <option value="">Semua Tipe</option>
+                            <option value="">All Types</option>
                             <option value="promo_broadcast">Promo Broadcast</option>
                             <option value="invoice_share">Invoice Share</option>
                             <option value="due_date_reminder">Due Date Reminder</option>
@@ -64,7 +64,7 @@ export default function Index({ campaigns, filters }) {
                             onChange={(event) => handleFilterChange("status", event.target.value)}
                             className="h-11 rounded-xl border border-slate-200 bg-slate-50 px-4 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
                         >
-                            <option value="">Semua Status</option>
+                            <option value="">All Statuses</option>
                             <option value="draft">Draft</option>
                             <option value="ready">Ready</option>
                             <option value="processed">Processed</option>
@@ -73,15 +73,15 @@ export default function Index({ campaigns, filters }) {
                     </div>
                 </div>
 
-                <Table.Card title="Daftar CRM Campaign">
+                <Table.Card title="CRM Campaign List">
                     <Table>
                         <Table.Thead>
                             <tr>
                                 <Table.Th>Campaign</Table.Th>
-                                <Table.Th>Tipe</Table.Th>
+                                <Table.Th>Type</Table.Th>
                                 <Table.Th>Status</Table.Th>
-                                <Table.Th>Log</Table.Th>
-                                <Table.Th className="w-36 text-center">Aksi</Table.Th>
+                                <Table.Th>Logs</Table.Th>
+                                <Table.Th className="w-36 text-center">Actions</Table.Th>
                             </tr>
                         </Table.Thead>
                         <Table.Tbody>
@@ -93,7 +93,7 @@ export default function Index({ campaigns, filters }) {
                                                 {campaign.name}
                                             </Link>
                                             <p className="text-xs text-slate-500 dark:text-slate-400">
-                                                Dibuat oleh {campaign.creator?.name || "-"}
+                                                Created by {campaign.creator?.name || "-"}
                                             </p>
                                         </Table.Td>
                                         <Table.Td>{campaign.type}</Table.Td>
@@ -122,7 +122,7 @@ export default function Index({ campaigns, filters }) {
                                     </tr>
                                 ))
                             ) : (
-                                <Table.Empty colSpan={5} message="Belum ada campaign CRM.">
+                                <Table.Empty colSpan={5} message="No CRM campaigns found.">
                                     <div className="mx-auto mb-3 flex h-16 w-16 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800">
                                         <IconBroadcast size={28} className="text-slate-400" />
                                     </div>

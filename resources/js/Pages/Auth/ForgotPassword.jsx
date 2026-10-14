@@ -24,7 +24,7 @@ export default function ForgotPassword({ status, botGuard }) {
 
     return (
         <>
-            <Head title="Lupa Password" />
+            <Head title="Forgot Password" />
 
             <div className="min-h-screen flex bg-slate-50 dark:bg-slate-950">
                 <div className="flex-1 flex items-center justify-center p-8">
@@ -38,14 +38,14 @@ export default function ForgotPassword({ status, botGuard }) {
                                     <IconShoppingCart size={24} className="text-white" />
                                 </div>
                                 <span className="text-2xl font-bold text-slate-900 dark:text-white">
-                                    Aplikasi Kasir
+                                    Cashier Application
                                 </span>
                             </Link>
                             <h1 className="text-3xl font-bold text-slate-900 dark:text-white">
                                 Reset Password
                             </h1>
                             <p className="mt-2 text-slate-600 dark:text-slate-400">
-                                Masukkan email Anda untuk menerima link reset password.
+                                Enter your email address to receive a password reset link.
                             </p>
                         </div>
 
@@ -84,7 +84,7 @@ export default function ForgotPassword({ status, botGuard }) {
                                                 ? "border-danger-500 focus:border-danger-500"
                                                 : "border-slate-200 dark:border-slate-700 focus:border-primary-500"
                                         } bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-400 focus:ring-4 focus:ring-primary-500/20 transition-all`}
-                                        placeholder="nama@email.com"
+                                        placeholder="name@email.com"
                                     />
                                 </div>
                                 {errors.email && (
@@ -98,7 +98,7 @@ export default function ForgotPassword({ status, botGuard }) {
                                     className="inline-flex h-12 flex-1 items-center justify-center gap-2 rounded-xl border-2 border-slate-200 bg-white font-semibold text-slate-700 transition-all hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
                                 >
                                     <IconArrowLeft size={18} />
-                                    Kembali
+                                    Back
                                 </Link>
                                 <button
                                     type="submit"
@@ -108,10 +108,10 @@ export default function ForgotPassword({ status, botGuard }) {
                                     {processing ? (
                                         <>
                                             <IconLoader2 size={18} className="animate-spin" />
-                                            Mengirim...
+                                            Sending...
                                         </>
                                     ) : (
-                                        "Kirim Link Reset"
+                                        "Send Reset Link"
                                     )}
                                 </button>
                             </div>
@@ -124,9 +124,9 @@ export default function ForgotPassword({ status, botGuard }) {
                         <div className="w-24 h-24 rounded-2xl bg-white/20 flex items-center justify-center mx-auto mb-8">
                             <IconMail size={48} />
                         </div>
-                        <h2 className="text-3xl font-bold mb-4">Pemulihan Akun Aman</h2>
+                        <h2 className="text-3xl font-bold mb-4">Secure Account Recovery</h2>
                         <p className="text-lg opacity-90">
-                            Link reset password membantu memulihkan akses akun tanpa membuka jalur bypass ke dashboard.
+                            A password reset link helps you recover account access without creating a bypass to the dashboard.
                         </p>
                     </div>
                 </div>

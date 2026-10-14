@@ -21,6 +21,7 @@ use App\Http\Controllers\Apps\PayableController;
 use App\Http\Controllers\Apps\PaymentSettingController;
 use App\Http\Controllers\Apps\PriceListController;
 use App\Http\Controllers\Apps\PricingRuleController;
+use App\Http\Controllers\Apps\RestaurantDealController;
 use App\Http\Controllers\Apps\ProductController;
 use App\Http\Controllers\Apps\ProductTypeController;
 use App\Http\Controllers\Apps\PurchaseOrderController;
@@ -169,6 +170,12 @@ Route::group(['prefix' => 'dashboard', 'middleware' => ['auth', 'verified']], fu
     Route::post('pricing-rules/preview', [PricingRuleController::class, 'preview'])
         ->middleware('permission:pricing-rules-access')
         ->name('pricing-rules.preview');
+    Route::resource('restaurant-deals', RestaurantDealController::class)
+        ->except(['show'])
+        ->middlewareFor('index', 'permission:restaurant-deals-access')
+        ->middlewareFor(['create', 'store'], 'permission:restaurant-deals-create')
+        ->middlewareFor(['edit', 'update'], 'permission:restaurant-deals-edit')
+        ->middlewareFor('destroy', 'permission:restaurant-deals-delete');
     Route::get('stock-opnames', [StockOpnameController::class, 'index'])->middleware('permission:stock-opnames-access')->name('stock-opnames.index');
     Route::get('stock-opnames/create', [StockOpnameController::class, 'create'])->middleware('permission:stock-opnames-create')->name('stock-opnames.create');
     Route::post('stock-opnames', [StockOpnameController::class, 'store'])->middleware('permission:stock-opnames-create')->name('stock-opnames.store');

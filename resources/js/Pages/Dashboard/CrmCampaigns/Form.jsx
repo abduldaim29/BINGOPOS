@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo, useState } from "react";
 import { Head, useForm } from "@inertiajs/react";
 import Button from "@/Components/Dashboard/Button";
 import { IconArrowLeft, IconBroadcast, IconDeviceFloppy } from "@tabler/icons-react";
@@ -9,7 +9,7 @@ export default function Form({ mode = "create", campaign = null, audienceOptions
         name: campaign?.name ?? "",
         type: campaign?.type ?? "promo_broadcast",
         channel: campaign?.channel ?? "whatsapp_link",
-        message_template: campaign?.message_template ?? "Halo {{name}}, ada promo spesial untuk Anda.",
+        message_template: campaign?.message_template ?? "Hello {{name}}, we have a special promotion for you.",
         save_as_draft: true,
         audience_filters: {
             segment_ids: campaign?.audience_filters?.segment_ids ?? [],
@@ -36,7 +36,7 @@ export default function Form({ mode = "create", campaign = null, audienceOptions
 
     return (
         <>
-            <Head title={isEdit ? "Edit CRM Campaign" : "Buat CRM Campaign"} />
+            <Head title={isEdit ? "Edit CRM Campaign" : "Create CRM Campaign"} />
             <div className="w-full">
                 <div className="mb-6">
                     <Button
@@ -44,13 +44,13 @@ export default function Form({ mode = "create", campaign = null, audienceOptions
                         href={route("crm-campaigns.index")}
                         icon={<IconArrowLeft size={18} />}
                         className="mb-3 border-none bg-transparent px-0 text-slate-500 shadow-none hover:bg-transparent hover:text-primary-600 dark:text-slate-400"
-                        label="Kembali ke CRM campaigns"
+                        label="Back to CRM Campaigns"
                     />
                     <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
-                        {isEdit ? "Edit CRM Campaign" : "Buat CRM Campaign"}
+                        {isEdit ? "Edit CRM Campaign" : "Create CRM Campaign"}
                     </h1>
                     <p className="text-sm text-slate-500 dark:text-slate-400">
-                        Bangun audience dari segment dan siapkan campaign WhatsApp/manual follow-up.
+                        Build an audience from segments and prepare WhatsApp/manual follow-ups.
                     </p>
                 </div>
 
@@ -61,13 +61,13 @@ export default function Form({ mode = "create", campaign = null, audienceOptions
                                 <IconBroadcast size={22} />
                             </div>
                             <div>
-                                <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Informasi Campaign</h2>
-                                <p className="text-sm text-slate-500 dark:text-slate-400">Campaign disimpan sebagai draft dan dapat diproses menjadi audience nyata.</p>
+                                <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Campaign Information</h2>
+                                <p className="text-sm text-slate-500 dark:text-slate-400">The campaign is saved as a draft and can be processed into an actual audience.</p>
                             </div>
                         </div>
                         <div className="grid gap-4 md:grid-cols-2">
                             <div>
-                                <label className="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-300">Nama Campaign</label>
+                                <label className="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-300">Campaign Name</label>
                                 <input
                                     type="text"
                                     value={data.name}
@@ -76,7 +76,7 @@ export default function Form({ mode = "create", campaign = null, audienceOptions
                                 />
                             </div>
                             <div>
-                                <label className="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-300">Tipe Campaign</label>
+                                <label className="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-300">Campaign Type</label>
                                 <select
                                     value={data.type}
                                     onChange={(event) => setData("type", event.target.value)}
@@ -104,7 +104,7 @@ export default function Form({ mode = "create", campaign = null, audienceOptions
                                     checked={data.save_as_draft}
                                     onChange={(event) => setData("save_as_draft", event.target.checked)}
                                 />
-                                <span className="text-sm font-medium text-slate-700 dark:text-slate-300">Simpan sebagai draft</span>
+                                <span className="text-sm font-medium text-slate-700 dark:text-slate-300">Save as Draft</span>
                             </label>
                         </div>
                     </div>
@@ -113,7 +113,7 @@ export default function Form({ mode = "create", campaign = null, audienceOptions
                         <h2 className="mb-4 text-lg font-semibold text-slate-900 dark:text-white">Audience Builder</h2>
                         <div className="grid gap-4 md:grid-cols-2">
                             <div className="md:col-span-2">
-                                <label className="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-300">Segment Customer</label>
+                                <label className="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-300">Customer Segments</label>
                                 <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
                                     {audienceOptions.segment_options.map((segment) => {
                                         const checked = data.audience_filters.segment_ids.includes(segment.value);
@@ -149,7 +149,7 @@ export default function Form({ mode = "create", campaign = null, audienceOptions
                                 </select>
                             </div>
                             <div>
-                                <label className="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-300">Status Piutang</label>
+                                <label className="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-300">Receivable Status</label>
                                 <select
                                     value={data.audience_filters.receivable_status}
                                     onChange={(event) => setAudienceFilter("receivable_status", event.target.value)}
@@ -176,7 +176,7 @@ export default function Form({ mode = "create", campaign = null, audienceOptions
                     </div>
 
                     <div className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
-                        <h2 className="mb-4 text-lg font-semibold text-slate-900 dark:text-white">Template Pesan</h2>
+                        <h2 className="mb-4 text-lg font-semibold text-slate-900 dark:text-white">Message Template</h2>
                         <textarea
                             rows="5"
                             value={data.message_template}
@@ -190,7 +190,7 @@ export default function Form({ mode = "create", campaign = null, audienceOptions
                             type="link"
                             href={route("crm-campaigns.index")}
                             className="border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
-                            label="Batal"
+                            label="Cancel"
                         />
                         <button
                             type="submit"
@@ -198,7 +198,7 @@ export default function Form({ mode = "create", campaign = null, audienceOptions
                             className="inline-flex items-center justify-center gap-2 rounded-xl bg-primary-500 px-5 py-2.5 font-medium text-white hover:bg-primary-600 disabled:opacity-50"
                         >
                             <IconDeviceFloppy size={18} />
-                            {processing ? "Menyimpan..." : "Simpan Campaign"}
+                            {processing ? "Saving..." : "Save Campaign"}
                         </button>
                     </div>
                 </form>

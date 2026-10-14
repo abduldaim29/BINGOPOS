@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import DashboardLayout from "@/Layouts/DashboardLayout";
 import { Head, useForm, usePage, Link } from "@inertiajs/react";
@@ -15,7 +16,7 @@ import {
 export default function Create({ categories }) {
     const { errors } = usePage().props;
 
-    const { data, setData, post, processing } = useForm({
+    const { data, setData, post, processing, transform } = useForm({
         category_id: "",
         name: "",
         code: "",
@@ -30,11 +31,38 @@ export default function Create({ categories }) {
         setData("category_id", value?.id || "");
     };
 
+    // Generate a subcategory code when the field is left blank.
+    const generateSubCategoryCode = () => {
+        const date = new Date();
+        const datePart = [
+            date.getFullYear(),
+            String(date.getMonth() + 1).padStart(2, "0"),
+            String(date.getDate()).padStart(2, "0"),
+        ].join("");
+
+        const randomPart = Math.random()
+            .toString(36)
+            .substring(2, 7)
+            .toUpperCase();
+
+        return `SC-${datePart}-${randomPart}`;
+    };
+
     const submit = (e) => {
         e.preventDefault();
+
+        transform((formData) => ({
+            ...formData,
+            code:
+                String(formData.code || "").trim() ||
+                generateSubCategoryCode(),
+        }));
+
         post(route("sub-categories.store"), {
-            onSuccess: () => toast.success("Sub category created successfully"),
-            onError: () => toast.error("Failed to save sub category"),
+            onSuccess: () =>
+                toast.success("Sub category created successfully"),
+            onError: () =>
+                toast.error("Failed to save sub category"),
         });
     };
 
@@ -50,8 +78,12 @@ export default function Create({ categories }) {
                     <IconArrowLeft size={16} />
                     Back to Sub Categories
                 </Link>
+
                 <h1 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                    <IconCategory size={28} className="text-primary-500" />
+                    <IconCategory
+                        size={28}
+                        className="text-primary-500"
+                    />
                     Add New Sub Category
                 </h1>
             </div>
@@ -70,16 +102,25 @@ export default function Create({ categories }) {
                                 searchable={true}
                                 displayKey="name"
                             />
-                            <Input
-                                type="text"
-                                label="Sub Category Code"
-                                placeholder="e.g., SC001"
-                                errors={errors.code}
-                                onChange={(e) =>
-                                    setData("code", e.target.value)
-                                }
-                                value={data.code}
-                            />
+
+                            <div>
+                                <Input
+                                    type="text"
+                                    label="Sub Category Code (optional)"
+                                    placeholder="Leave blank to auto-generate"
+                                    errors={errors.code}
+                                    onChange={(e) =>
+                                        setData("code", e.target.value)
+                                    }
+                                    value={data.code}
+                                />
+
+                                <p className="text-xs text-slate-500 mt-1">
+                                    Leave this field empty to generate an SC
+                                    code automatically when you save.
+                                </p>
+                            </div>
+
                             <Input
                                 type="text"
                                 label="Sub Category Name"
@@ -90,6 +131,7 @@ export default function Create({ categories }) {
                                 }
                                 value={data.name}
                             />
+
                             <Textarea
                                 label="Description"
                                 placeholder="Sub category description"
@@ -100,6 +142,7 @@ export default function Create({ categories }) {
                                 value={data.description}
                                 rows={4}
                             />
+
                             <Checkbox
                                 label="Active"
                                 checked={data.is_active}
@@ -116,6 +159,7 @@ export default function Create({ categories }) {
                             >
                                 Cancel
                             </Link>
+
                             <button
                                 type="submit"
                                 disabled={processing}

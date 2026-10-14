@@ -179,6 +179,12 @@ class PermissionSeeder extends Seeder
         $create('dine-orders-access');
         $create('dine-orders-process');
 
+        // restaurant deals
+        $create('restaurant-deals-access');
+        $create('restaurant-deals-create');
+        $create('restaurant-deals-edit');
+        $create('restaurant-deals-delete');
+
         app(PermissionRegistrar::class)->forgetCachedPermissions();
     }
 }

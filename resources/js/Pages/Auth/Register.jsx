@@ -15,13 +15,15 @@ import {
 
 export default function Register({ botGuard, userRoles }) {
     const roleLabels = {
-        'super-admin': 'Super Administrator',
-        'administrator': 'Administrator/Manager',
-        'inventory-manager': 'Inventory Manager',
-        'cashier': 'Cashier',
+        "super-admin": "Super Administrator",
+        administrator: "Administrator/Manager",
+        "inventory-manager": "Inventory Manager",
+        cashier: "Cashier",
     };
+
     const honeypotField = botGuard?.honeypot_field || "company_website";
     const tokenField = botGuard?.token_field || "bot_guard_token";
+
     const { data, setData, post, processing, errors, reset } = useForm({
         name: "",
         email: "",
@@ -31,6 +33,7 @@ export default function Register({ botGuard, userRoles }) {
         [honeypotField]: "",
         [tokenField]: botGuard?.token || "",
     });
+
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
@@ -45,7 +48,7 @@ export default function Register({ botGuard, userRoles }) {
 
     return (
         <>
-            <Head title="Daftar" />
+            <Head title="Register" />
 
             <div className="min-h-screen flex bg-slate-50 dark:bg-slate-950">
                 {/* Left - Decoration */}
@@ -54,18 +57,21 @@ export default function Register({ botGuard, userRoles }) {
                         <div className="w-24 h-24 rounded-2xl bg-white/20 flex items-center justify-center mx-auto mb-8">
                             <IconShoppingCart size={48} />
                         </div>
+
                         <h2 className="text-3xl font-bold mb-4">
-                            Bergabung Bersama Kami
+                            Join Us
                         </h2>
+
                         <p className="text-lg opacity-90">
-                            Mulai kelola bisnis Anda dengan sistem Point of Sale
-                            yang modern, cepat, dan mudah digunakan.
+                            Start managing your business with a modern, fast,
+                            and easy-to-use Point of Sale system.
                         </p>
+
                         <div className="mt-8 space-y-3">
                             {[
-                                "Gratis untuk memulai",
-                                "Setup dalam 5 menit",
-                                "Dukungan penuh",
+                                "Free to get started",
+                                "Set up in 5 minutes",
+                                "Full support",
                             ].map((feature, i) => (
                                 <div
                                     key={i}
@@ -97,15 +103,18 @@ export default function Register({ botGuard, userRoles }) {
                                         className="text-white"
                                     />
                                 </div>
+
                                 <span className="text-2xl font-bold text-slate-900 dark:text-white">
-                                    Aplikasi Kasir
+                                    Cashier Application
                                 </span>
                             </Link>
+
                             <h1 className="text-3xl font-bold text-slate-900 dark:text-white">
-                                Buat Akun Baru
+                                Create a New Account
                             </h1>
+
                             <p className="mt-2 text-slate-600 dark:text-slate-400">
-                                Daftarkan bisnis Anda sekarang
+                                Register your business today
                             </p>
                         </div>
 
@@ -116,27 +125,31 @@ export default function Register({ botGuard, userRoles }) {
                                 data={data}
                                 setData={setData}
                             />
+
                             {errors.human && (
                                 <div className="rounded-xl bg-danger-50 px-4 py-3 text-sm text-danger-600 dark:bg-danger-950/40 dark:text-danger-300">
                                     {errors.human}
                                 </div>
                             )}
+
                             {/* Name */}
                             <div>
                                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                                    Nama Lengkap
+                                    Full Name
                                 </label>
+
                                 <div className="relative">
                                     <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">
                                         <IconUser size={20} />
                                     </div>
+
                                     <input
                                         type="text"
                                         value={data.name}
                                         onChange={(e) =>
                                             setData("name", e.target.value)
                                         }
-                                        placeholder="Nama Anda"
+                                        placeholder="Your name"
                                         className={`w-full h-12 pl-12 pr-4 rounded-xl border-2 ${
                                             errors.name
                                                 ? "border-danger-500 focus:border-danger-500"
@@ -144,6 +157,7 @@ export default function Register({ botGuard, userRoles }) {
                                         } bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-400 focus:ring-4 focus:ring-primary-500/20 transition-all`}
                                     />
                                 </div>
+
                                 {errors.name && (
                                     <p className="mt-1.5 text-sm text-danger-500">
                                         {errors.name}
@@ -156,17 +170,19 @@ export default function Register({ botGuard, userRoles }) {
                                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                                     Email
                                 </label>
+
                                 <div className="relative">
                                     <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">
                                         <IconMail size={20} />
                                     </div>
+
                                     <input
                                         type="email"
                                         value={data.email}
                                         onChange={(e) =>
                                             setData("email", e.target.value)
                                         }
-                                        placeholder="nama@email.com"
+                                        placeholder="name@email.com"
                                         className={`w-full h-12 pl-12 pr-4 rounded-xl border-2 ${
                                             errors.email
                                                 ? "border-danger-500 focus:border-danger-500"
@@ -174,6 +190,7 @@ export default function Register({ botGuard, userRoles }) {
                                         } bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-400 focus:ring-4 focus:ring-primary-500/20 transition-all`}
                                     />
                                 </div>
+
                                 {errors.email && (
                                     <p className="mt-1.5 text-sm text-danger-500">
                                         {errors.email}
@@ -184,8 +201,9 @@ export default function Register({ botGuard, userRoles }) {
                             {/* Role Selection */}
                             <div>
                                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                                    Peran (Role)
+                                    Role
                                 </label>
+
                                 <div className="relative">
                                     <select
                                         value={data.role}
@@ -197,17 +215,30 @@ export default function Register({ botGuard, userRoles }) {
                                                 ? "border-danger-500 focus:border-danger-500"
                                                 : "border-slate-200 dark:border-slate-700 focus:border-primary-500"
                                         } bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-4 focus:ring-primary-500/20 transition-all`}
+                                        style={{
+                                            WebkitAppearance: "none",
+                                            MozAppearance: "none",
+                                            appearance: "none",
+                                            backgroundImage: "none",
+                                        }}
                                     >
                                         {userRoles?.map((role) => (
-                                            <option key={role.id} value={role.name}>
-                                                {roleLabels[role.name] || role.name}
+                                            <option
+                                                key={role.id}
+                                                value={role.name}
+                                            >
+                                                {roleLabels[role.name] ||
+                                                    role.name}
                                             </option>
                                         ))}
                                     </select>
+
+                                    {/* Custom Dropdown Arrow */}
                                     <div className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">
                                         <IconChevronDown size={20} />
                                     </div>
                                 </div>
+
                                 {errors.role && (
                                     <p className="mt-1.5 text-sm text-danger-500">
                                         {errors.role}
@@ -220,10 +251,12 @@ export default function Register({ botGuard, userRoles }) {
                                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                                     Password
                                 </label>
+
                                 <div className="relative">
                                     <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">
                                         <IconLock size={20} />
                                     </div>
+
                                     <input
                                         type={
                                             showPassword ? "text" : "password"
@@ -232,13 +265,14 @@ export default function Register({ botGuard, userRoles }) {
                                         onChange={(e) =>
                                             setData("password", e.target.value)
                                         }
-                                        placeholder="Minimal 8 karakter"
+                                        placeholder="Minimum 8 characters"
                                         className={`w-full h-12 pl-12 pr-12 rounded-xl border-2 ${
                                             errors.password
                                                 ? "border-danger-500 focus:border-danger-500"
                                                 : "border-slate-200 dark:border-slate-700 focus:border-primary-500"
                                         } bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-400 focus:ring-4 focus:ring-primary-500/20 transition-all`}
                                     />
+
                                     <button
                                         type="button"
                                         onClick={() =>
@@ -253,6 +287,7 @@ export default function Register({ botGuard, userRoles }) {
                                         )}
                                     </button>
                                 </div>
+
                                 {errors.password && (
                                     <p className="mt-1.5 text-sm text-danger-500">
                                         {errors.password}
@@ -263,12 +298,14 @@ export default function Register({ botGuard, userRoles }) {
                             {/* Confirm Password */}
                             <div>
                                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                                    Konfirmasi Password
+                                    Confirm Password
                                 </label>
+
                                 <div className="relative">
                                     <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">
                                         <IconLock size={20} />
                                     </div>
+
                                     <input
                                         type={
                                             showConfirmPassword
@@ -282,13 +319,14 @@ export default function Register({ botGuard, userRoles }) {
                                                 e.target.value
                                             )
                                         }
-                                        placeholder="Ulangi password"
+                                        placeholder="Re-enter your password"
                                         className={`w-full h-12 pl-12 pr-12 rounded-xl border-2 ${
                                             errors.password_confirmation
                                                 ? "border-danger-500 focus:border-danger-500"
                                                 : "border-slate-200 dark:border-slate-700 focus:border-primary-500"
                                         } bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-400 focus:ring-4 focus:ring-primary-500/20 transition-all`}
                                     />
+
                                     <button
                                         type="button"
                                         onClick={() =>
@@ -305,6 +343,7 @@ export default function Register({ botGuard, userRoles }) {
                                         )}
                                     </button>
                                 </div>
+
                                 {errors.password_confirmation && (
                                     <p className="mt-1.5 text-sm text-danger-500">
                                         {errors.password_confirmation}
@@ -324,21 +363,21 @@ export default function Register({ botGuard, userRoles }) {
                                             size={20}
                                             className="animate-spin"
                                         />
-                                        Memproses...
+                                        Processing...
                                     </>
                                 ) : (
-                                    "Daftar Sekarang"
+                                    "Register Now"
                                 )}
                             </button>
 
                             {/* Login Link */}
                             <p className="text-center text-sm text-slate-600 dark:text-slate-400">
-                                Sudah punya akun?{" "}
+                                Already have an account?{" "}
                                 <Link
                                     href="/login"
                                     className="text-primary-500 hover:text-primary-600 font-semibold"
                                 >
-                                    Masuk disini
+                                    Log in here
                                 </Link>
                             </p>
                         </form>

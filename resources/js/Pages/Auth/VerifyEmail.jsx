@@ -23,7 +23,7 @@ export default function VerifyEmail({ status, botGuard }) {
 
     return (
         <>
-            <Head title="Verifikasi Email" />
+            <Head title="Verify Email" />
 
             <div className="min-h-screen flex bg-slate-50 dark:bg-slate-950">
                 <div className="flex-1 flex items-center justify-center p-8">
@@ -40,7 +40,7 @@ export default function VerifyEmail({ status, botGuard }) {
                                     />
                                 </div>
                                 <span className="text-2xl font-bold text-slate-900 dark:text-white">
-                                    Aplikasi Kasir
+                                    Cashier Application
                                 </span>
                             </Link>
 
@@ -52,27 +52,29 @@ export default function VerifyEmail({ status, botGuard }) {
                             </div>
 
                             <h1 className="text-3xl font-bold text-slate-900 dark:text-white">
-                                Verifikasi Email Anda
+                                Verify Your Email
                             </h1>
                             <p className="mt-2 text-slate-600 dark:text-slate-400 leading-relaxed">
-                                Sebelum masuk ke dashboard, klik link verifikasi
-                                yang sudah kami kirim ke email Anda. Jika email
-                                belum diterima, kirim ulang dari halaman ini.
+                                Before accessing the dashboard, click the
+                                verification link we sent to your email. If you
+                                haven't received the email, you can resend it
+                                from this page.
                             </p>
                         </div>
 
                         {status === "verification-link-sent" && (
                             <div className="mb-6 p-4 rounded-xl bg-success-50 dark:bg-success-950/50 text-success-700 dark:text-success-400 text-sm">
-                                Link verifikasi baru sudah dikirim ke email
-                                Anda.
+                                A new verification link has been sent to your
+                                email address.
                             </div>
                         )}
 
                         <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-sm">
                             <div className="mb-5 rounded-xl bg-slate-50 dark:bg-slate-800/80 p-4 text-sm text-slate-600 dark:text-slate-300">
-                                Pastikan juga memeriksa folder spam atau
-                                promotion jika email belum terlihat di inbox.
+                                Also check your spam or promotions folder if
+                                the email isn't visible in your inbox.
                             </div>
+
                             {errors.human && (
                                 <div className="mb-5 rounded-xl bg-danger-50 px-4 py-3 text-sm text-danger-600 dark:bg-danger-950/40 dark:text-danger-300">
                                     {errors.human}
@@ -85,6 +87,7 @@ export default function VerifyEmail({ status, botGuard }) {
                                     data={data}
                                     setData={setData}
                                 />
+
                                 <button
                                     type="submit"
                                     disabled={processing}
@@ -96,12 +99,12 @@ export default function VerifyEmail({ status, botGuard }) {
                                                 size={20}
                                                 className="animate-spin"
                                             />
-                                            Mengirim ulang...
+                                            Resending...
                                         </>
                                     ) : (
                                         <>
                                             <IconRefresh size={18} />
-                                            Kirim Ulang Email Verifikasi
+                                            Resend Verification Email
                                         </>
                                     )}
                                 </button>
@@ -113,7 +116,7 @@ export default function VerifyEmail({ status, botGuard }) {
                                     className="w-full h-12 rounded-xl border-2 border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 font-semibold hover:bg-slate-50 dark:hover:bg-slate-700 transition-all flex items-center justify-center gap-2"
                                 >
                                     <IconLogout size={18} />
-                                    Keluar
+                                    Log Out
                                 </Link>
                             </form>
                         </div>
@@ -125,19 +128,22 @@ export default function VerifyEmail({ status, botGuard }) {
                         <div className="w-24 h-24 rounded-2xl bg-white/20 flex items-center justify-center mx-auto mb-8">
                             <IconMailCheck size={48} />
                         </div>
+
                         <h2 className="text-3xl font-bold mb-4">
-                            Aktivasi Akun Lebih Aman
+                            Safer Account Activation
                         </h2>
+
                         <p className="text-lg opacity-90">
-                            Verifikasi email membantu memastikan hanya akun yang
-                            valid yang dapat mengakses dashboard dan data
-                            operasional toko.
+                            Email verification helps ensure that only valid
+                            accounts can access the dashboard and your store's
+                            operational data.
                         </p>
+
                         <div className="mt-8 flex flex-wrap justify-center gap-3">
                             {[
-                                "Akses Terverifikasi",
-                                "Perlindungan Akun",
-                                "Dashboard Aman",
+                                "Verified Access",
+                                "Account Protection",
+                                "Secure Dashboard",
                             ].map((item, index) => (
                                 <span
                                     key={index}

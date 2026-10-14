@@ -1,168 +1,214 @@
-import React from "react";
-import { Head, Link } from "@inertiajs/react";
+import React, { useMemo } from "react";
+import { Head, Link, router } from "@inertiajs/react";
 import DashboardLayout from "@/Layouts/DashboardLayout";
-import {
-    IconArrowLeft,
-    IconDeviceDesktopAnalytics,
-    IconHistory,
-    IconUser,
-} from "@tabler/icons-react";
+import Table from "@/Components/Dashboard/Table";
+import Pagination from "@/Components/Dashboard/Pagination";
+import { IconEye, IconFileSearch } from "@tabler/icons-react";
 
 const formatDateTime = (value) =>
     value
-        ? new Intl.DateTimeFormat("id-ID", {
+        ? new Intl.DateTimeFormat("en-US", {
               dateStyle: "medium",
               timeStyle: "short",
           }).format(new Date(value))
         : "-";
 
-const renderValue = (value) => {
-    if (value === null || value === undefined || value === "") return "-";
-    if (typeof value === "boolean") return value ? "true" : "false";
-    if (Array.isArray(value) || typeof value === "object") {
-        return JSON.stringify(value, null, 2);
-    }
-
-    return String(value);
-};
-
-function KeyValueTable({ data }) {
-    const entries = Object.entries(data || {});
-
-    if (entries.length === 0) {
-        return (
-            <div className="rounded-2xl border border-dashed border-slate-200 p-4 text-sm text-slate-500 dark:border-slate-700 dark:text-slate-400">
-                Tidak ada data.
-            </div>
-        );
-    }
-
-    return (
-        <div className="overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-800">
-            <table className="min-w-full divide-y divide-slate-200 dark:divide-slate-800">
-                <tbody className="divide-y divide-slate-200 bg-white dark:divide-slate-800 dark:bg-slate-900">
-                    {entries.map(([key, value]) => (
-                        <tr key={key}>
-                            <td className="w-64 bg-slate-50 px-4 py-3 text-sm font-medium text-slate-700 dark:bg-slate-800/60 dark:text-slate-200">
-                                {key}
-                            </td>
-                            <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-300">
-                                <pre className="whitespace-pre-wrap break-words font-sans">
-                                    {renderValue(value)}
-                                </pre>
-                            </td>
-                        </tr>
-                    ))}
-                </tbody>
-            </table>
-        </div>
+export default function Index({
+    auditLogs,
+    filters,
+    users = [],
+    modules = [],
+    events = [],
+}) {
+    const currentFilters = useMemo(
+        () => ({
+            user_id: filters?.user_id || "",
+            module: filters?.module || "",
+            event: filters?.event || "",
+            date_from: filters?.date_from || "",
+            date_to: filters?.date_to || "",
+            search: filters?.search || "",
+        }),
+        [filters]
     );
-}
 
-export default function Show({ auditLog }) {
+    const updateFilters = (nextFilters) => {
+        router.get(route("audit-logs.index"), nextFilters, {
+            preserveState: true,
+            replace: true,
+        });
+    };
+
     return (
         <>
-            <Head title={`Audit Log ${auditLog.id}`} />
+            <Head title="Audit Log" />
 
-            <div className="space-y-6">
-                <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-                    <div>
-                        <h1 className="flex items-center gap-2 text-2xl font-bold text-slate-900 dark:text-white">
-                            <IconHistory size={28} className="text-primary-500" />
-                            Detail Audit Log
-                        </h1>
-                        <p className="text-sm text-slate-500 dark:text-slate-400">
-                            Event {auditLog.event} pada modul {auditLog.module}.
-                        </p>
-                    </div>
-                    <Link
-                        href={route("audit-logs.index")}
-                        className="inline-flex items-center gap-2 rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
-                    >
-                        <IconArrowLeft size={18} />
-                        Kembali
-                    </Link>
-                </div>
-
-                <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-                    <div className="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
-                        <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                            Waktu
-                        </p>
-                        <p className="mt-2 text-sm font-semibold text-slate-900 dark:text-white">
-                            {formatDateTime(auditLog.created_at)}
-                        </p>
-                    </div>
-                    <div className="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
-                        <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                            <IconUser size={14} />
-                            Aktor
-                        </p>
-                        <p className="mt-2 text-sm font-semibold text-slate-900 dark:text-white">
-                            {auditLog.user?.name || "System"}
-                        </p>
-                        <p className="text-xs text-slate-500 dark:text-slate-400">
-                            {auditLog.user?.email || "-"}
-                        </p>
-                    </div>
-                    <div className="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
-                        <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                            Target
-                        </p>
-                        <p className="mt-2 text-sm font-semibold text-slate-900 dark:text-white">
-                            {auditLog.target_label || "-"}
-                        </p>
-                        <p className="text-xs text-slate-500 dark:text-slate-400">
-                            {auditLog.auditable_type || "-"}#{auditLog.auditable_id || "-"}
-                        </p>
-                    </div>
-                    <div className="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
-                        <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                            <IconDeviceDesktopAnalytics size={14} />
-                            Client
-                        </p>
-                        <p className="mt-2 text-sm font-semibold text-slate-900 dark:text-white">
-                            {auditLog.ip_address || "-"}
-                        </p>
-                        <p className="line-clamp-2 text-xs text-slate-500 dark:text-slate-400">
-                            {auditLog.user_agent || "-"}
-                        </p>
-                    </div>
-                </div>
-
-                <div className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
-                    <p className="text-sm font-semibold text-slate-900 dark:text-white">
-                        Deskripsi
-                    </p>
-                    <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
-                        {auditLog.description}
-                    </p>
-                </div>
-
-                <div className="grid gap-6 xl:grid-cols-2">
-                    <div className="space-y-3">
-                        <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
-                            Before
-                        </h2>
-                        <KeyValueTable data={auditLog.before || {}} />
-                    </div>
-                    <div className="space-y-3">
-                        <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
-                            After
-                        </h2>
-                        <KeyValueTable data={auditLog.after || {}} />
-                    </div>
-                </div>
-
-                <div className="space-y-3">
-                    <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
-                        Meta
-                    </h2>
-                    <KeyValueTable data={auditLog.meta || {}} />
-                </div>
+            <div className="mb-6">
+                <h1 className="flex items-center gap-2 text-2xl font-bold text-slate-900 dark:text-white">
+                    <IconFileSearch size={28} className="text-primary-500" />
+                    Audit Log
+                </h1>
+                <p className="text-sm text-slate-500 dark:text-slate-400">
+                    History of sensitive activities for operational and administrative investigations.
+                </p>
             </div>
+
+            <div className="mb-4 grid grid-cols-1 gap-3 rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900 md:grid-cols-3">
+                <select
+                    value={currentFilters.user_id}
+                    onChange={(event) =>
+                        updateFilters({
+                            ...currentFilters,
+                            user_id: event.target.value,
+                        })
+                    }
+                    className="h-11 rounded-xl border border-slate-200 bg-slate-50 px-4 text-sm text-slate-800 outline-none transition focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
+                >
+                    <option value="">All Actors</option>
+                    {users.map((user) => (
+                        <option key={user.id} value={user.id}>
+                            {user.name}
+                        </option>
+                    ))}
+                </select>
+
+                <select
+                    value={currentFilters.module}
+                    onChange={(event) =>
+                        updateFilters({
+                            ...currentFilters,
+                            module: event.target.value,
+                        })
+                    }
+                    className="h-11 rounded-xl border border-slate-200 bg-slate-50 px-4 text-sm text-slate-800 outline-none transition focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
+                >
+                    <option value="">All Modules</option>
+                    {modules.map((module) => (
+                        <option key={module} value={module}>
+                            {module}
+                        </option>
+                    ))}
+                </select>
+
+                <select
+                    value={currentFilters.event}
+                    onChange={(event) =>
+                        updateFilters({
+                            ...currentFilters,
+                            event: event.target.value,
+                        })
+                    }
+                    className="h-11 rounded-xl border border-slate-200 bg-slate-50 px-4 text-sm text-slate-800 outline-none transition focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
+                >
+                    <option value="">All Events</option>
+                    {events.map((eventName) => (
+                        <option key={eventName} value={eventName}>
+                            {eventName}
+                        </option>
+                    ))}
+                </select>
+
+                <input
+                    type="date"
+                    value={currentFilters.date_from}
+                    onChange={(event) =>
+                        updateFilters({
+                            ...currentFilters,
+                            date_from: event.target.value,
+                        })
+                    }
+                    className="h-11 rounded-xl border border-slate-200 bg-slate-50 px-4 text-sm text-slate-800 outline-none transition focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
+                />
+
+                <input
+                    type="date"
+                    value={currentFilters.date_to}
+                    onChange={(event) =>
+                        updateFilters({
+                            ...currentFilters,
+                            date_to: event.target.value,
+                        })
+                    }
+                    className="h-11 rounded-xl border border-slate-200 bg-slate-50 px-4 text-sm text-slate-800 outline-none transition focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
+                />
+
+                <input
+                    type="text"
+                    value={currentFilters.search}
+                    onChange={(event) =>
+                        updateFilters({
+                            ...currentFilters,
+                            search: event.target.value,
+                        })
+                    }
+                    placeholder="Search target or description"
+                    className="h-11 rounded-xl border border-slate-200 bg-slate-50 px-4 text-sm text-slate-800 outline-none transition focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
+                />
+            </div>
+
+            <Table.Card title="Audit History">
+                <Table>
+                    <Table.Thead>
+                        <tr>
+                            <Table.Th>Time</Table.Th>
+                            <Table.Th>Actor</Table.Th>
+                            <Table.Th>Module</Table.Th>
+                            <Table.Th>Event</Table.Th>
+                            <Table.Th>Target</Table.Th>
+                            <Table.Th>Description</Table.Th>
+                            <Table.Th className="w-20 text-center">Action</Table.Th>
+                        </tr>
+                    </Table.Thead>
+                    <Table.Tbody>
+                        {auditLogs.data.length > 0 ? (
+                            auditLogs.data.map((log) => (
+                                <tr
+                                    key={log.id}
+                                    className="transition-colors hover:bg-slate-50 dark:hover:bg-slate-800/50"
+                                >
+                                    <Table.Td>{formatDateTime(log.created_at)}</Table.Td>
+                                    <Table.Td>
+                                        <div>
+                                            <p className="font-medium text-slate-800 dark:text-slate-200">
+                                                {log.user?.name || "System"}
+                                            </p>
+                                            <p className="text-xs text-slate-500 dark:text-slate-400">
+                                                {log.user?.email || "-"}
+                                            </p>
+                                        </div>
+                                    </Table.Td>
+                                    <Table.Td>{log.module}</Table.Td>
+                                    <Table.Td>
+                                        <span className="inline-flex rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-700 dark:bg-slate-800 dark:text-slate-300">
+                                            {log.event}
+                                        </span>
+                                    </Table.Td>
+                                    <Table.Td>{log.target_label || "-"}</Table.Td>
+                                    <Table.Td>{log.description}</Table.Td>
+                                    <Table.Td className="text-center">
+                                        <Link
+                                            href={route("audit-logs.show", log.id)}
+                                            className="inline-flex items-center gap-1 rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-700 transition hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+                                        >
+                                            <IconEye size={14} />
+                                            Details
+                                        </Link>
+                                    </Table.Td>
+                                </tr>
+                            ))
+                        ) : (
+                            <Table.Empty
+                                colSpan={7}
+                                message="No audit log data available."
+                            />
+                        )}
+                    </Table.Tbody>
+                </Table>
+            </Table.Card>
+
+            {auditLogs.last_page > 1 && <Pagination links={auditLogs.links} />}
         </>
     );
 }
 
-Show.layout = (page) => <DashboardLayout children={page} />;
+Index.layout = (page) => <DashboardLayout children={page} />;

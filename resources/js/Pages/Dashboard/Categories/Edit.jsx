@@ -43,19 +43,19 @@ export default function Edit({ category }) {
         e.preventDefault();
         post(route("categories.update", category.id), {
             onSuccess: (page) => {
-                toast.success("Kategori berhasil diperbarui");
+                toast.success("Category updated successfully");
                 // Update image preview with the new path from server response
                 if (page.props.category?.image) {
                     setImagePreview(page.props.category.image);
                 }
             },
-            onError: () => toast.error("Gagal memperbarui kategori"),
+            onError: () => toast.error("Failed to update category"),
         });
     };
 
     return (
         <>
-            <Head title="Edit Kategori" />
+            <Head title="Edit Category" />
 
             <div className="mb-6">
                 <Link
@@ -63,11 +63,11 @@ export default function Edit({ category }) {
                     className="inline-flex items-center gap-2 text-sm text-slate-500 hover:text-primary-600 mb-3"
                 >
                     <IconArrowLeft size={16} />
-                    Kembali ke Kategori
+                    Back to Categories
                 </Link>
                 <h1 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
                     <IconCategory size={28} className="text-primary-500" />
-                    Edit Kategori
+                    Edit Category
                 </h1>
                 <p className="text-sm text-slate-500 mt-1">{category.name}</p>
             </div>
@@ -79,7 +79,7 @@ export default function Edit({ category }) {
                             <div>
                                 <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-3 flex items-center gap-2">
                                     <IconPhoto size={16} />
-                                    Gambar
+                                    Image
                                 </h3>
                                 <div className="aspect-video rounded-xl bg-slate-100 dark:bg-slate-800 border-2 border-dashed border-slate-300 dark:border-slate-700 flex items-center justify-center overflow-hidden mb-3">
                                     {imagePreview ? (
@@ -112,8 +112,8 @@ export default function Edit({ category }) {
                             <div className="space-y-4">
                                 <Input
                                     type="text"
-                                    label="Nama Kategori"
-                                    placeholder="Masukkan nama"
+                                    label="Category Name"
+                                    placeholder="Enter name"
                                     errors={errors.name}
                                     onChange={(e) =>
                                         setData("name", e.target.value)
@@ -121,8 +121,8 @@ export default function Edit({ category }) {
                                     value={data.name}
                                 />
                                 <Textarea
-                                    label="Deskripsi"
-                                    placeholder="Deskripsi kategori"
+                                    label="Description"
+                                    placeholder="Category description"
                                     errors={errors.description}
                                     onChange={(e) =>
                                         setData("description", e.target.value)
@@ -138,7 +138,7 @@ export default function Edit({ category }) {
                                 href={route("categories.index")}
                                 className="px-5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 font-medium transition-colors"
                             >
-                                Batal
+                                Cancel
                             </Link>
                             <button
                                 type="submit"
@@ -147,8 +147,8 @@ export default function Edit({ category }) {
                             >
                                 <IconDeviceFloppy size={18} />
                                 {processing
-                                    ? "Menyimpan..."
-                                    : "Simpan Perubahan"}
+                                    ? "Saving..."
+                                    : "Save Changes"}
                             </button>
                         </div>
                     </div>

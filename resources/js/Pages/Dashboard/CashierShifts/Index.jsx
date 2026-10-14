@@ -17,7 +17,7 @@ import { formatCurrency } from "@/Utils/currency";
 const formatDateTime = (value) => {
     if (!value) return "-";
 
-    return new Intl.DateTimeFormat("id-ID", {
+    return new Intl.DateTimeFormat("en-US", {
         dateStyle: "medium",
         timeStyle: "short",
     }).format(new Date(value));
@@ -100,7 +100,7 @@ export default function Index({
 
     return (
         <>
-            <Head title="Shift Kasir" />
+            <Head title="Cashier Shifts" />
 
             <div className="space-y-6">
                 <div
@@ -110,10 +110,10 @@ export default function Index({
                     <div>
                         <h1 className="flex items-center gap-2 text-2xl font-bold text-slate-900 dark:text-white">
                             <IconHistory size={28} className="text-primary-500" />
-                            Shift Kasir
+                            Cashier Shifts
                         </h1>
                         <p className="text-sm text-slate-500 dark:text-slate-400">
-                            Buka shift, pantau shift aktif, dan review cash closing.
+                            Open shifts, monitor active shifts, and review cash closing.
                         </p>
                     </div>
                     {activeShift && (
@@ -122,7 +122,7 @@ export default function Index({
                             className="inline-flex items-center gap-2 rounded-xl bg-primary-500 px-4 py-2.5 text-sm font-medium text-white shadow-lg shadow-primary-500/30 transition-colors hover:bg-primary-600"
                         >
                             <IconEye size={18} />
-                            <span>Lihat Shift Aktif</span>
+                            <span>View Active Shift</span>
                         </Link>
                     )}
                 </div>
@@ -134,17 +134,17 @@ export default function Index({
                     >
                         <div className="mb-4">
                             <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
-                                Buka Shift Baru
+                                Open New Shift
                             </h2>
                             <p className="text-sm text-slate-500 dark:text-slate-400">
-                                Shift aktif diperlukan sebelum kasir dapat memproses transaksi.
+                                An active shift is required before the cashier can process transactions.
                             </p>
                         </div>
 
                         <form onSubmit={handleOpenShift} className="grid gap-4 md:grid-cols-4">
                             <div>
                                 <label className="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-300">
-                                    Modal Awal
+                                    Opening Cash
                                 </label>
                                 <input
                                     type="number"
@@ -160,7 +160,7 @@ export default function Index({
                             </div>
                             <div>
                                 <label className="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-300">
-                                    Gudang / Cabang
+                                    Warehouse / Branch
                                 </label>
                                 <select
                                     value={warehouseId}
@@ -176,14 +176,14 @@ export default function Index({
                             </div>
                             <div className="md:col-span-2">
                                 <label className="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-300">
-                                    Catatan
+                                    Notes
                                 </label>
                                 <input
                                     type="text"
                                     value={notes}
                                     onChange={(event) => setNotes(event.target.value)}
                                     className="h-11 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 text-sm text-slate-800 outline-none transition focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
-                                    placeholder="Opsional"
+                                    placeholder="Optional"
                                 />
                             </div>
                             <div className="md:col-span-4">
@@ -192,7 +192,7 @@ export default function Index({
                                     className="inline-flex items-center gap-2 rounded-xl bg-primary-500 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-primary-600"
                                 >
                                     <IconCashBanknote size={18} />
-                                    <span>Buka Shift</span>
+                                    <span>Open Shift</span>
                                 </button>
                             </div>
                         </form>
@@ -203,7 +203,7 @@ export default function Index({
                     <div data-tour="shifts-active" className="grid gap-4 md:grid-cols-4">
                         <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4 dark:border-emerald-900/50 dark:bg-emerald-950/30">
                             <p className="text-xs font-semibold uppercase tracking-wide text-emerald-700 dark:text-emerald-300">
-                                Shift Aktif
+                                Active Shift
                             </p>
                             <p className="mt-2 text-lg font-semibold text-emerald-900 dark:text-emerald-100">
                                 {activeShift.user?.name}
@@ -219,7 +219,7 @@ export default function Index({
                         </div>
                         <div className="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
                             <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                                Modal Awal
+                                Opening Cash
                             </p>
                             <p className="mt-2 text-lg font-semibold text-slate-900 dark:text-white">
                                 {formatCurrency(activeShift.opening_cash)}
@@ -235,7 +235,7 @@ export default function Index({
                         </div>
                         <div className="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
                             <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                                Total Transaksi
+                                Total Transactions
                             </p>
                             <p className="mt-2 text-lg font-semibold text-slate-900 dark:text-white">
                                 {activeShift.transactions_count}
@@ -256,7 +256,7 @@ export default function Index({
                                 className="inline-flex items-center gap-2 rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
                             >
                                 <IconPrinter size={18} />
-                                <span>Cetak Laporan X</span>
+                                <span>Print X Report</span>
                             </button>
                             <button
                                 type="button"
@@ -264,7 +264,7 @@ export default function Index({
                                 className="inline-flex items-center gap-2 rounded-xl border border-emerald-200 px-4 py-2.5 text-sm font-medium text-emerald-700 transition-colors hover:bg-emerald-50 dark:border-emerald-900/50 dark:text-emerald-300 dark:hover:bg-emerald-950/30"
                             >
                                 <IconCashBanknote size={18} />
-                                <span>Kas Masuk</span>
+                                <span>Cash In</span>
                             </button>
                             <button
                                 type="button"
@@ -272,7 +272,7 @@ export default function Index({
                                 className="inline-flex items-center gap-2 rounded-xl border border-rose-200 px-4 py-2.5 text-sm font-medium text-rose-700 transition-colors hover:bg-rose-50 dark:border-rose-900/50 dark:text-rose-300 dark:hover:bg-rose-950/30"
                             >
                                 <IconCashBanknote size={18} />
-                                <span>Kas Keluar</span>
+                                <span>Cash Out</span>
                             </button>
                         </div>
                     </div>
@@ -289,12 +289,12 @@ export default function Index({
                             className="relative w-full max-w-sm rounded-2xl bg-white p-6 shadow-xl dark:bg-slate-900"
                         >
                             <h3 className="text-lg font-bold text-slate-800 dark:text-white">
-                                {cashModal === "in" ? "Catat Kas Masuk" : "Catat Kas Keluar"}
+                                {cashModal === "in" ? "Record Cash In" : "Record Cash Out"}
                             </h3>
                             <div className="mt-4 space-y-3">
                                 <div>
                                     <label className="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-300">
-                                        Nominal
+                                        Amount
                                     </label>
                                     <input
                                         type="number"
@@ -309,7 +309,7 @@ export default function Index({
                                 </div>
                                 <div>
                                     <label className="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-300">
-                                        Keterangan (opsional)
+                                        Description (optional)
                                     </label>
                                     <input
                                         type="text"
@@ -318,8 +318,8 @@ export default function Index({
                                         className="h-11 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 text-sm text-slate-800 outline-none transition focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
                                         placeholder={
                                             cashModal === "in"
-                                                ? "Misal: setoran tambahan modal"
-                                                : "Misal: beli galon, kirim uang ke kasir pusat"
+                                                ? "E.g., additional opening cash deposit"
+                                                : "E.g., buying a water jug, sending money to the main cashier"
                                         }
                                         maxLength={255}
                                     />
@@ -331,7 +331,7 @@ export default function Index({
                                     onClick={() => setCashModal(null)}
                                     className="flex-1 rounded-xl border border-slate-200 py-2.5 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
                                 >
-                                    Batal
+                                    Cancel
                                 </button>
                                 <button
                                     type="submit"
@@ -341,7 +341,7 @@ export default function Index({
                                             : "bg-rose-500 hover:bg-rose-600"
                                     }`}
                                 >
-                                    Simpan
+                                    Save
                                 </button>
                             </div>
                         </form>
@@ -358,7 +358,7 @@ export default function Index({
                             onChange={(event) => handleFilterChange("cashier_id", event.target.value)}
                             className="h-11 rounded-xl border border-slate-200 bg-slate-50 px-4 text-sm text-slate-800 outline-none transition focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
                         >
-                            <option value="">Semua Kasir</option>
+                            <option value="">All Cashiers</option>
                             {cashiers.map((cashier) => (
                                 <option key={cashier.id} value={cashier.id}>
                                     {cashier.name}
@@ -376,7 +376,7 @@ export default function Index({
                         onChange={(event) => handleFilterChange("status", event.target.value)}
                         className="h-11 rounded-xl border border-slate-200 bg-slate-50 px-4 text-sm text-slate-800 outline-none transition focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
                     >
-                        <option value="">Semua Status</option>
+                        <option value="">All Statuses</option>
                         <option value="open">Open</option>
                         <option value="closed">Closed</option>
                         <option value="force_closed">Force Closed</option>
@@ -396,17 +396,17 @@ export default function Index({
                 </div>
 
                 <div data-tour="shifts-history">
-                    <Table.Card title="Histori Shift Kasir">
+                    <Table.Card title="Cashier Shift History">
                     <Table>
                         <Table.Thead>
                             <tr>
-                                <Table.Th>Kasir</Table.Th>
+                                <Table.Th>Cashier</Table.Th>
                                 <Table.Th>Status</Table.Th>
-                                <Table.Th>Buka</Table.Th>
-                                <Table.Th>Tutup</Table.Th>
+                                <Table.Th>Opened</Table.Th>
+                                <Table.Th>Closed</Table.Th>
                                 <Table.Th>Expected Cash</Table.Th>
-                                <Table.Th>Selisih</Table.Th>
-                                <Table.Th className="w-24 text-center">Aksi</Table.Th>
+                                <Table.Th>Difference</Table.Th>
+                                <Table.Th className="w-24 text-center">Action</Table.Th>
                             </tr>
                         </Table.Thead>
                         <Table.Tbody>
@@ -419,7 +419,7 @@ export default function Index({
                                                     {shift.user?.name || "-"}
                                                 </p>
                                                 <p className="text-xs text-slate-500 dark:text-slate-400">
-                                                    Modal {formatCurrency(shift.opening_cash)}
+                                                    Opening Cash {formatCurrency(shift.opening_cash)}
                                                 </p>
                                             </div>
                                         </Table.Td>
@@ -463,7 +463,7 @@ export default function Index({
                                     colSpan={7}
                                     message={
                                         <div className="text-slate-500 dark:text-slate-400">
-                                            Belum ada histori shift kasir.
+                                            No cashier shift history available.
                                         </div>
                                     }
                                 >

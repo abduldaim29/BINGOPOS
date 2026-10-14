@@ -41,9 +41,6 @@ IconRulerMeasure,
     IconListDetails,
     IconBrandWhatsapp,
     IconToolsKitchen2,
-    IconPrinter,
-    IconDownload,
-    IconTag,
 } from "@tabler/icons-react";
 import hasAnyPermission from "./Permission";
 import React from "react";
@@ -70,13 +67,6 @@ export default function Menu() {
             title: t("sidebar.sections.masterData"),
             details: [
                 {
-                    title: t("sidebar.items.products"),
-                    href: route("products.index"),
-                    active: url === "/dashboard/products" ? true : false,
-                    icon: <IconBox size={20} strokeWidth={1.5} />,
-                    permissions: hasAnyPermission(["products-access"]),
-                },
-                {
                     title: t("sidebar.items.categories"),
                     href: route("categories.index"),
                     active: url === "/dashboard/categories" ? true : false,
@@ -84,18 +74,11 @@ export default function Menu() {
                     permissions: hasAnyPermission(["categories-access"]),
                 },
                 {
-                    title: t("sidebar.items.subCategories"),
-                    href: route("sub-categories.index"),
-                    active: url === "/dashboard/sub-categories" ? true : false,
-                    icon: <IconCategory size={20} strokeWidth={1.5} />,
-                    permissions: hasAnyPermission(["categories-access"]),
-                },
-                {
-                    title: t("sidebar.items.items"),
-                    href: route("product-types.index"),
-                    active: url === "/dashboard/product-types" ? true : false,
-                    icon: <IconTag size={20} strokeWidth={1.5} />,
-                    permissions: hasAnyPermission(["categories-access"]),
+                    title: t("sidebar.items.products"),
+                    href: route("products.index"),
+                    active: url === "/dashboard/products" ? true : false,
+                    icon: <IconBox size={20} strokeWidth={1.5} />,
+                    permissions: hasAnyPermission(["products-access"]),
                 },
                 {
                     title: t("sidebar.items.customers"),
@@ -116,13 +99,6 @@ export default function Menu() {
         {
             title: t("sidebar.sections.sales"),
             details: [
-                {
-                    title: t("sidebar.items.salesInvoices"),
-                    href: route("sales-invoices.index"),
-                    active: url.startsWith("/dashboard/sales-invoices"),
-                    icon: <IconFileInvoice size={20} strokeWidth={1.5} />,
-                    permissions: hasAnyPermission(["transactions-access"]),
-                },
                 {
                     title: t("sidebar.items.transactions"),
                     href: route("transactions.index"),
@@ -247,6 +223,13 @@ export default function Menu() {
                     active: url.startsWith("/dashboard/pricing-rules"),
                     icon: <IconChartInfographic size={20} strokeWidth={1.5} />,
                     permissions: hasAnyPermission(["pricing-rules-access"]),
+                },
+                {
+                    title: t("sidebar.items.restaurantDeals"),
+                    href: route("restaurant-deals.index"),
+                    active: url.startsWith("/dashboard/restaurant-deals"),
+                    icon: <IconGift size={20} strokeWidth={1.5} />,
+                    permissions: hasAnyPermission(["restaurant-deals-access"]),
                 },
                 {
                     title: t("sidebar.items.customerVouchers"),

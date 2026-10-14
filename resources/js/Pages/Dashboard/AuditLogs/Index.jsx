@@ -7,7 +7,7 @@ import { IconEye, IconFileSearch } from "@tabler/icons-react";
 
 const formatDateTime = (value) =>
     value
-        ? new Intl.DateTimeFormat("id-ID", {
+        ? new Intl.DateTimeFormat("en-US", {
               dateStyle: "medium",
               timeStyle: "short",
           }).format(new Date(value))
@@ -49,7 +49,7 @@ export default function Index({
                     Audit Log
                 </h1>
                 <p className="text-sm text-slate-500 dark:text-slate-400">
-                    Histori aktivitas sensitif untuk investigasi operasional dan administratif.
+                    History of sensitive activities for operational and administrative investigations.
                 </p>
             </div>
 
@@ -64,7 +64,7 @@ export default function Index({
                     }
                     className="h-11 rounded-xl border border-slate-200 bg-slate-50 px-4 text-sm text-slate-800 outline-none transition focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
                 >
-                    <option value="">Semua Aktor</option>
+                    <option value="">All Actors</option>
                     {users.map((user) => (
                         <option key={user.id} value={user.id}>
                             {user.name}
@@ -82,7 +82,7 @@ export default function Index({
                     }
                     className="h-11 rounded-xl border border-slate-200 bg-slate-50 px-4 text-sm text-slate-800 outline-none transition focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
                 >
-                    <option value="">Semua Modul</option>
+                    <option value="">All Modules</option>
                     {modules.map((module) => (
                         <option key={module} value={module}>
                             {module}
@@ -100,7 +100,7 @@ export default function Index({
                     }
                     className="h-11 rounded-xl border border-slate-200 bg-slate-50 px-4 text-sm text-slate-800 outline-none transition focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
                 >
-                    <option value="">Semua Event</option>
+                    <option value="">All Events</option>
                     {events.map((eventName) => (
                         <option key={eventName} value={eventName}>
                             {eventName}
@@ -141,22 +141,22 @@ export default function Index({
                             search: event.target.value,
                         })
                     }
-                    placeholder="Cari target atau deskripsi"
+                    placeholder="Search target or description"
                     className="h-11 rounded-xl border border-slate-200 bg-slate-50 px-4 text-sm text-slate-800 outline-none transition focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
                 />
             </div>
 
-            <Table.Card title="Histori Audit">
+            <Table.Card title="Audit History">
                 <Table>
                     <Table.Thead>
                         <tr>
-                            <Table.Th>Waktu</Table.Th>
-                            <Table.Th>Aktor</Table.Th>
-                            <Table.Th>Modul</Table.Th>
+                            <Table.Th>Time</Table.Th>
+                            <Table.Th>Actor</Table.Th>
+                            <Table.Th>Module</Table.Th>
                             <Table.Th>Event</Table.Th>
                             <Table.Th>Target</Table.Th>
-                            <Table.Th>Deskripsi</Table.Th>
-                            <Table.Th className="w-20 text-center">Aksi</Table.Th>
+                            <Table.Th>Description</Table.Th>
+                            <Table.Th className="w-20 text-center">Action</Table.Th>
                         </tr>
                     </Table.Thead>
                     <Table.Tbody>
@@ -191,7 +191,7 @@ export default function Index({
                                             className="inline-flex items-center gap-1 rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-700 transition hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
                                         >
                                             <IconEye size={14} />
-                                            Detail
+                                            Details
                                         </Link>
                                     </Table.Td>
                                 </tr>
@@ -199,7 +199,7 @@ export default function Index({
                         ) : (
                             <Table.Empty
                                 colSpan={7}
-                                message="Belum ada data audit log."
+                                message="No audit log data available."
                             />
                         )}
                     </Table.Tbody>

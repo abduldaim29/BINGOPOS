@@ -181,9 +181,9 @@ export default function Index({ categories }) {
                         <Table>
                             <Table.Thead>
                                 <tr>
-                                    <Table.Th className="w-10">No</Table.Th>
-                                    <Table.Th>Kategori</Table.Th>
-                                    <Table.Th>Deskripsi</Table.Th>
+                                    <Table.Th className="w-10">No.</Table.Th>
+                                    <Table.Th>Category</Table.Th>
+                                    <Table.Th>Description</Table.Th>
                                     <Table.Th></Table.Th>
                                 </tr>
                             </Table.Thead>
@@ -290,7 +290,7 @@ export default function Index({ categories }) {
                         />
                     </div>
                     <h3 className="text-lg font-medium text-slate-800 dark:text-slate-200 mb-1">
-                        Belum Ada Kategori
+                        No Categories Yet
                     </h3>
                     <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
                         {t("categories.addFirst")}
