@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useForm, useFieldArray } from "@inertiajs/react";
+import { useForm } from "@inertiajs/react";
 import {
     IconPlus,
     IconTrash,
@@ -53,20 +53,6 @@ export default function Form({ deal, outlets, products, activeOutlet }) {
               }
     );
 
-    const {
-        fields: itemFields,
-        append: appendItem,
-        remove: removeItem,
-        move: moveItem,
-    } = useFieldArray("items", { keyName: "id" });
-
-    const {
-        fields: slotFields,
-        append: appendSlot,
-        remove: removeSlot,
-        move: moveSlot,
-    } = useFieldArray("slots", { keyName: "id" });
-
     const handleSubmit = (e) => {
         e.preventDefault();
 
@@ -99,24 +85,56 @@ export default function Form({ deal, outlets, products, activeOutlet }) {
     };
 
     const addItem = () => {
-        appendItem({
-            product_id: "",
-            restaurant_deal_slot_id: "",
-            is_required: true,
-            min_qty: 1,
-            max_qty: 1,
-            sort_order: itemFields.length,
-        });
+        setData("items", [
+            ...data.items,
+            {
+                id: Date.now(),
+                product_id: "",
+                restaurant_deal_slot_id: "",
+                is_required: true,
+                min_qty: 1,
+                max_qty: 1,
+                sort_order: data.items.length,
+            },
+        ]);
+    };
+
+    const removeItem = (index) => {
+        const newItems = data.items.filter((_, i) => i !== index);
+        setData("items", newItems);
+    };
+
+    const moveItem = (fromIndex, toIndex) => {
+        const newItems = [...data.items];
+        const [movedItem] = newItems.splice(fromIndex, 1);
+        newItems.splice(toIndex, 0, movedItem);
+        setData("items", newItems.map((item, i) => ({ ...item, sort_order: i })));
     };
 
     const addSlot = () => {
-        appendSlot({
-            name: "",
-            description: "",
-            min_selection: 1,
-            max_selection: 1,
-            sort_order: slotFields.length,
-        });
+        setData("slots", [
+            ...data.slots,
+            {
+                id: Date.now(),
+                name: "",
+                description: "",
+                min_selection: 1,
+                max_selection: 1,
+                sort_order: data.slots.length,
+            },
+        ]);
+    };
+
+    const removeSlot = (index) => {
+        const newSlots = data.slots.filter((_, i) => i !== index);
+        setData("slots", newSlots);
+    };
+
+    const moveSlot = (fromIndex, toIndex) => {
+        const newSlots = [...data.slots];
+        const [movedSlot] = newSlots.splice(fromIndex, 1);
+        newSlots.splice(toIndex, 0, movedSlot);
+        setData("slots", newSlots.map((slot, i) => ({ ...slot, sort_order: i })));
     };
 
     return (
@@ -345,13 +363,13 @@ export default function Form({ deal, outlets, products, activeOutlet }) {
                             Tambah Slot
                         </button>
                     </div>
-                    {slotFields.length === 0 ? (
+                    {data.slots.length === 0 ? (
                         <p className="text-sm text-slate-500 dark:text-slate-400">
                             Belum ada slot. Klik "Tambah Slot" untuk membuat slot.
                         </p>
                     ) : (
                         <div className="space-y-4">
-                            {slotFields.map((slot, index) => (
+                            {data.slots.map((slot, index) => (
                                 <div
                                     key={slot.id}
                                     className="rounded-lg border border-slate-200 p-4 dark:border-slate-700"
@@ -393,13 +411,12 @@ export default function Form({ deal, outlets, products, activeOutlet }) {
                                             </label>
                                             <input
                                                 type="text"
-                                                value={data.slots[index]?.name || ""}
-                                                onChange={(e) =>
-                                                    setData(
-                                                        `slots.${index}.name`,
-                                                        e.target.value
-                                                    )
-                                                }
+                                                value={slot.name || ""}
+                                                onChange={(e) => {
+                                                    const newSlots = [...data.slots];
+                                                    newSlots[index] = { ...newSlots[index], name: e.target.value };
+                                                    setData("slots", newSlots);
+                                                }}
                                                 className="w-full rounded-lg border border-slate-300 px-4 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 dark:border-slate-600 dark:bg-slate-700 dark:text-white"
                                                 placeholder="Contoh: Main Dish"
                                             />
@@ -410,13 +427,12 @@ export default function Form({ deal, outlets, products, activeOutlet }) {
                                             </label>
                                             <input
                                                 type="number"
-                                                value={data.slots[index]?.min_selection || 1}
-                                                onChange={(e) =>
-                                                    setData(
-                                                        `slots.${index}.min_selection`,
-                                                        parseInt(e.target.value) || 1
-                                                    )
-                                                }
+                                                value={slot.min_selection || 1}
+                                                onChange={(e) => {
+                                                    const newSlots = [...data.slots];
+                                                    newSlots[index] = { ...newSlots[index], min_selection: parseInt(e.target.value) || 1 };
+                                                    setData("slots", newSlots);
+                                                }}
                                                 className="w-full rounded-lg border border-slate-300 px-4 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 dark:border-slate-600 dark:bg-slate-700 dark:text-white"
                                                 min="1"
                                             />
@@ -427,13 +443,12 @@ export default function Form({ deal, outlets, products, activeOutlet }) {
                                             </label>
                                             <input
                                                 type="number"
-                                                value={data.slots[index]?.max_selection || 1}
-                                                onChange={(e) =>
-                                                    setData(
-                                                        `slots.${index}.max_selection`,
-                                                        parseInt(e.target.value) || 1
-                                                    )
-                                                }
+                                                value={slot.max_selection || 1}
+                                                onChange={(e) => {
+                                                    const newSlots = [...data.slots];
+                                                    newSlots[index] = { ...newSlots[index], max_selection: parseInt(e.target.value) || 1 };
+                                                    setData("slots", newSlots);
+                                                }}
                                                 className="w-full rounded-lg border border-slate-300 px-4 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 dark:border-slate-600 dark:bg-slate-700 dark:text-white"
                                                 min="1"
                                             />
@@ -461,13 +476,13 @@ export default function Form({ deal, outlets, products, activeOutlet }) {
                         Tambah Produk
                     </button>
                 </div>
-                {itemFields.length === 0 ? (
+                {data.items.length === 0 ? (
                     <p className="text-sm text-slate-500 dark:text-slate-400">
                         Belum ada produk. Klik "Tambah Produk" untuk menambahkan produk.
                     </p>
                 ) : (
                     <div className="space-y-4">
-                        {itemFields.map((item, index) => (
+                        {data.items.map((item, index) => (
                             <div
                                 key={item.id}
                                 className="rounded-lg border border-slate-200 p-4 dark:border-slate-700"
@@ -488,7 +503,7 @@ export default function Form({ deal, outlets, products, activeOutlet }) {
                                         <button
                                             type="button"
                                             onClick={() => moveItem(index, index + 1)}
-                                            disabled={index === itemFields.length - 1}
+                                            disabled={index === data.items.length - 1}
                                             className="p-1 text-slate-500 hover:text-slate-700 disabled:opacity-30 dark:text-slate-400 dark:hover:text-slate-200"
                                         >
                                             <IconArrowDown size={16} />
@@ -508,13 +523,12 @@ export default function Form({ deal, outlets, products, activeOutlet }) {
                                             Produk *
                                         </label>
                                         <select
-                                            value={data.items[index]?.product_id || ""}
-                                            onChange={(e) =>
-                                                setData(
-                                                    `items.${index}.product_id`,
-                                                    e.target.value
-                                                )
-                                            }
+                                            value={item.product_id || ""}
+                                            onChange={(e) => {
+                                                const newItems = [...data.items];
+                                                newItems[index] = { ...newItems[index], product_id: e.target.value };
+                                                setData("items", newItems);
+                                            }}
                                             className="w-full rounded-lg border border-slate-300 px-4 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 dark:border-slate-600 dark:bg-slate-700 dark:text-white"
                                         >
                                             <option value="">Pilih Produk</option>
@@ -532,20 +546,19 @@ export default function Form({ deal, outlets, products, activeOutlet }) {
                                                 Slot
                                             </label>
                                             <select
-                                                value={data.items[index]?.restaurant_deal_slot_id || ""}
-                                                onChange={(e) =>
-                                                    setData(
-                                                        `items.${index}.restaurant_deal_slot_id`,
-                                                        e.target.value
-                                                    )
-                                                }
+                                                value={item.restaurant_deal_slot_id || ""}
+                                                onChange={(e) => {
+                                                    const newItems = [...data.items];
+                                                    newItems[index] = { ...newItems[index], restaurant_deal_slot_id: e.target.value };
+                                                    setData("items", newItems);
+                                                }}
                                                 className="w-full rounded-lg border border-slate-300 px-4 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 dark:border-slate-600 dark:bg-slate-700 dark:text-white"
                                             >
                                                 <option value="">Pilih Slot</option>
-                                                {slotFields.map((slot, slotIndex) => (
+                                                {data.slots.map((slot, slotIndex) => (
                                                     <option key={slot.id} value={slot.id}>
                                                         Slot {slotIndex + 1} -{" "}
-                                                        {data.slots[slotIndex]?.name}
+                                                        {slot.name}
                                                     </option>
                                                 ))}
                                             </select>
@@ -557,13 +570,12 @@ export default function Form({ deal, outlets, products, activeOutlet }) {
                                         </label>
                                         <input
                                             type="number"
-                                            value={data.items[index]?.min_qty || 1}
-                                            onChange={(e) =>
-                                                setData(
-                                                    `items.${index}.min_qty`,
-                                                    parseInt(e.target.value) || 1
-                                                )
-                                            }
+                                            value={item.min_qty || 1}
+                                            onChange={(e) => {
+                                                const newItems = [...data.items];
+                                                newItems[index] = { ...newItems[index], min_qty: parseInt(e.target.value) || 1 };
+                                                setData("items", newItems);
+                                            }}
                                             className="w-full rounded-lg border border-slate-300 px-4 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 dark:border-slate-600 dark:bg-slate-700 dark:text-white"
                                             min="1"
                                         />
@@ -574,13 +586,12 @@ export default function Form({ deal, outlets, products, activeOutlet }) {
                                         </label>
                                         <input
                                             type="number"
-                                            value={data.items[index]?.max_qty || 1}
-                                            onChange={(e) =>
-                                                setData(
-                                                    `items.${index}.max_qty`,
-                                                    parseInt(e.target.value) || 1
-                                                )
-                                            }
+                                            value={item.max_qty || 1}
+                                            onChange={(e) => {
+                                                const newItems = [...data.items];
+                                                newItems[index] = { ...newItems[index], max_qty: parseInt(e.target.value) || 1 };
+                                                setData("items", newItems);
+                                            }}
                                             className="w-full rounded-lg border border-slate-300 px-4 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 dark:border-slate-600 dark:bg-slate-700 dark:text-white"
                                             min="1"
                                         />
@@ -589,13 +600,12 @@ export default function Form({ deal, outlets, products, activeOutlet }) {
                                         <input
                                             type="checkbox"
                                             id={`required-${index}`}
-                                            checked={data.items[index]?.is_required || false}
-                                            onChange={(e) =>
-                                                setData(
-                                                    `items.${index}.is_required`,
-                                                    e.target.checked
-                                                )
-                                            }
+                                            checked={item.is_required || false}
+                                            onChange={(e) => {
+                                                const newItems = [...data.items];
+                                                newItems[index] = { ...newItems[index], is_required: e.target.checked };
+                                                setData("items", newItems);
+                                            }}
                                             className="h-4 w-4 rounded border-slate-300 text-primary-600 focus:ring-primary-500"
                                         />
                                         <label
