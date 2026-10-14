@@ -225,6 +225,13 @@ export default function Menu() {
                     permissions: hasAnyPermission(["pricing-rules-access"]),
                 },
                 {
+                    title: t("sidebar.items.restaurantDeals"),
+                    href: route("restaurant-deals.index"),
+                    active: url.startsWith("/dashboard/restaurant-deals"),
+                    icon: <IconGift size={20} strokeWidth={1.5} />,
+                    permissions: hasAnyPermission(["restaurant-deals-access"]),
+                },
+                {
                     title: t("sidebar.items.customerVouchers"),
                     href: route("customer-vouchers.index"),
                     active: url.startsWith("/dashboard/customer-vouchers"),

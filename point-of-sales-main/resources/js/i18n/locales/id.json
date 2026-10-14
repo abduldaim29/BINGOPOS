@@ -279,6 +279,7 @@
             "supplierPayables": "Hutang Supplier",
             "members": "Member",
             "pricePromos": "Promo Harga",
+            "restaurantDeals": "Restaurant Deals",
             "customerVouchers": "Voucher Customer",
             "customerSegments": "Segment Customer",
             "crmCampaigns": "Campaign CRM",

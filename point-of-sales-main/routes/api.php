@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\CustomerController;
 use App\Http\Controllers\Api\PaymentWebhookController;
 use App\Http\Controllers\Api\PosApiController;
 use App\Http\Controllers\Api\ProductController;
+use App\Http\Controllers\Api\RestaurantDealController;
 use App\Http\Controllers\Api\SupplierController;
 use App\Http\Controllers\Api\WarehouseController;
 use Illuminate\Support\Facades\Route;
@@ -104,6 +105,19 @@ Route::prefix('v1')->group(function () {
                 'show' => 'api.suppliers.show',
                 'update' => 'api.suppliers.update',
                 'destroy' => 'api.suppliers.destroy',
+            ]);
+
+        Route::apiResource('restaurant-deals', RestaurantDealController::class)
+            ->middlewareFor(['index', 'show'], 'abilities:restaurant-deals-access')
+            ->middlewareFor('store', 'abilities:restaurant-deals-create')
+            ->middlewareFor('update', 'abilities:restaurant-deals-edit')
+            ->middlewareFor('destroy', 'abilities:restaurant-deals-delete')
+            ->names([
+                'index' => 'api.restaurant-deals.index',
+                'store' => 'api.restaurant-deals.store',
+                'show' => 'api.restaurant-deals.show',
+                'update' => 'api.restaurant-deals.update',
+                'destroy' => 'api.restaurant-deals.destroy',
             ]);
 
         // POS (mobile kasir)
