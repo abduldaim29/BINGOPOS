@@ -21,6 +21,7 @@ class RestaurantDealController extends Controller
         $outlet = $outletId ? Outlet::find($outletId) : null;
 
         $deals = $this->dealService->getActiveDeals(null, $outlet);
+        $deals->load(['items.product', 'slots.items.product']);
 
         return response()->json([
             'data' => $deals->map(fn ($deal) => [
@@ -34,6 +35,7 @@ class RestaurantDealController extends Controller
                 'min_products' => $deal->min_products,
                 'max_products' => $deal->max_products,
                 'outlet_id' => $deal->outlet_id,
+                'is_active' => $deal->is_active,
                 'slots' => $deal->slots->map(fn ($slot) => [
                     'id' => $slot->id,
                     'name' => $slot->name,
@@ -42,6 +44,7 @@ class RestaurantDealController extends Controller
                     'max_selection' => $slot->max_selection,
                     'products' => $slot->items->map(fn ($item) => [
                         'product_id' => $item->product_id,
+                        'product' => $item->product,
                         'min_qty' => $item->min_qty,
                         'max_qty' => $item->max_qty,
                     ]),
@@ -49,6 +52,7 @@ class RestaurantDealController extends Controller
                 'items' => $deal->items->map(fn ($item) => [
                     'product_id' => $item->product_id,
                     'product' => $item->product,
+                    'restaurant_deal_slot_id' => $item->restaurant_deal_slot_id,
                     'is_required' => $item->is_required,
                     'min_qty' => $item->min_qty,
                     'max_qty' => $item->max_qty,
@@ -89,6 +93,7 @@ class RestaurantDealController extends Controller
                 'items' => $restaurantDeal->items->map(fn ($item) => [
                     'product_id' => $item->product_id,
                     'product' => $item->product,
+                    'restaurant_deal_slot_id' => $item->restaurant_deal_slot_id,
                     'is_required' => $item->is_required,
                     'min_qty' => $item->min_qty,
                     'max_qty' => $item->max_qty,

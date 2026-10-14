@@ -131,6 +131,9 @@ Route::prefix('v1')->group(function () {
             Route::get('/products', [PosApiController::class, 'products'])->name('api.pos.products');
             Route::post('/products/scan', [PosApiController::class, 'scan'])->name('api.pos.products.scan');
 
+            // Restaurant Deals (POS auth-only, no abilities)
+            Route::get('/restaurant-deals', [RestaurantDealController::class, 'index'])->name('api.pos.restaurant-deals');
+
             // Cart
             Route::get('/cart', [PosApiController::class, 'cart'])->name('api.pos.cart');
             Route::post('/cart', [PosApiController::class, 'addToCart'])->name('api.pos.cart.add');

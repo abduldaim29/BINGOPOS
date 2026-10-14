@@ -16,8 +16,10 @@ import {
     IconArrowsMaximize,
     IconArrowsMinimize,
     IconQuestionMark,
+    IconGift,
 } from "@tabler/icons-react";
 import Notification from "@/Components/Dashboard/Notification";
+import DealModal from "@/Components/POS/DealModal";
 import { useTour } from "@/Hooks/useTour";
 import i18n from "@/i18n";
 import { getPendingCount } from "@/Utils/offlineDb";
@@ -31,6 +33,7 @@ export default function POSLayout({ children }) {
     const [currentTime, setCurrentTime] = useState(new Date());
     const [showMobileMenu, setShowMobileMenu] = useState(false);
     const [isFullscreen, setIsFullscreen] = useState(false);
+    const [showDealsModal, setShowDealsModal] = useState(false);
 
     const toggleFullscreen = () => {
         if (!document.fullscreenElement) {
@@ -156,6 +159,13 @@ export default function POSLayout({ children }) {
                             <IconHome size={18} />
                             <span>Dashboard</span>
                         </Link>
+                        <button
+                            onClick={() => setShowDealsModal(true)}
+                            className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-primary-600 hover:text-primary-700 hover:bg-primary-50 dark:text-primary-400 dark:hover:bg-primary-950/50 transition-colors"
+                        >
+                            <IconGift size={18} />
+                            <span>Deals</span>
+                        </button>
                         <Link
                             href={route("transactions.history")}
                             className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100 dark:text-slate-400 dark:hover:text-white dark:hover:bg-slate-800 transition-colors"
@@ -283,6 +293,16 @@ export default function POSLayout({ children }) {
                                 <IconHome size={20} />
                                 <span className="font-medium">Dashboard</span>
                             </Link>
+                            <button
+                                onClick={() => {
+                                    setShowDealsModal(true);
+                                    setShowMobileMenu(false);
+                                }}
+                                className="flex items-center gap-3 px-4 py-3 rounded-xl text-primary-600 hover:bg-primary-50 dark:text-primary-400 dark:hover:bg-primary-950/50 transition-colors w-full"
+                            >
+                                <IconGift size={20} />
+                                <span className="font-medium">Deals</span>
+                            </button>
                             <Link
                                 href={route("transactions.history")}
                                 className="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800 transition-colors"
@@ -332,6 +352,19 @@ export default function POSLayout({ children }) {
                 />
                 {children}
             </main>
+
+            {/* Deal Modal */}
+            <DealModal
+                isOpen={showDealsModal}
+                onClose={() => setShowDealsModal(false)}
+                onAddToCart={(dealData) => {
+                    // This will be handled by the child component (Transactions/Index)
+                    // We'll pass a handler through props in a real implementation
+                    console.log("Deal added to cart:", dealData);
+                    setShowDealsModal(false);
+                }}
+                activeOutlet={activeCashierShift?.warehouse?.outlet}
+            />
         </div>
     );
 }
