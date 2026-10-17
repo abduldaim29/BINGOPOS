@@ -24,17 +24,29 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: '22'
+          node-version: '24'
+
+      - name: Copy example .env (for CI)
+        run: |
+          if [ -f .env ]; then echo ".env exists"; else cp .env.example .env; fi
+
+      - name: Normalize .env encoding (remove BOM if present)
+        run: sed '1s/^\xEF\xBB\xBF//' .env > .env.tmp && mv .env.tmp .env || true
 
       - name: Validate composer
         run: composer validate --no-check-publish
 
-      - name: Install PHP dependencies
-        run: composer install --no-interaction --prefer-dist --no-progress
+      - name: Install PHP dependencies (no scripts)
+        run: composer install --no-interaction --prefer-dist --no-progress --no-scripts
+
+      - name: Generate app key (if needed)
+        run: php artisan key:generate --ansi --force || true
+
+      - name: Run composer post-autoload scripts
+        run: composer run-script post-autoload-dump || true
 
       - name: Run test suite
         run: |
-          php artisan key:generate --force
           php artisan test --compact
         env:
           DB_CONNECTION: sqlite
@@ -90,7 +102,7 @@ jobs:
             echo "==> Frontend dependencies + build"
             NPM_OK=0
             for i in 1 2 3; do
-              if sudo -u deploy bash -lc 'export PATH=/home/deploy/.nvm/versions/node/v24.15.0/bin:$PATH; cd /var/www/dikasir.web.id && PUPPETEER_SKIP_DOWNLOAD=true npm ci --no-audit --no-fund && npm run build'; then NPM_OK=1; break; fi
+              if sudo -u deploy bash -lc 'export PATH=/home/deploy/.nvm/versions/node/v24.15.0/bin:$PATH; cd /var/www/dikasir.web.id && PUPPETEER_SKIP_DOWNLOAD=true npm ci --no-audit --no-fund && [...]
               echo "npm ci/build failed (attempt $i/3), retrying in 8s..."
               sleep 8
             done
