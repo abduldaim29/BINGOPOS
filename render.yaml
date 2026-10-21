@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: bingopos
+    env: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    autoDeploy: true
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: APP_DEBUG
+        value: false
+      - key: PORT
+        value: 10000
+      - key: PHP_VERSION
+        value: "8.4"
