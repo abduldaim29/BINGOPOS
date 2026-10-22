@@ -8,7 +8,7 @@ import toast from "react-hot-toast";
 
 const formatDateTime = (value) =>
     value
-        ? new Intl.DateTimeFormat("id-ID", { dateStyle: "medium", timeStyle: "short" }).format(new Date(value))
+        ? new Intl.DateTimeFormat("en-US", { dateStyle: "medium", timeStyle: "short" }).format(new Date(value))
         : "-";
 
 export default function Show({ campaign }) {

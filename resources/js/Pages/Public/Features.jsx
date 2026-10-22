@@ -15,169 +15,169 @@ import {
     IconApi,
 } from "@tabler/icons-react";
 
-const GITHUB_URL = "https://github.com/aryadwiputra/point-of-sales";
+const GITHUB_URL = "https://github.com/abduldaim29/BINGOPOS";
 
 const modules = [
     {
         icon: IconShoppingCart,
-        title: "POS & Transaksi",
-        desc: "Inti dari Dikasir — kasir yang cepat, fleksibel, dan bisa diandalkan setiap hari.",
+        title: "POS & Transactions",
+        desc: "The core of BINGOPOS — a fast, flexible, and reliable point-of-sale system for everyday business operations.",
         screenshot: "/screenshots/02-pos-checkout.png",
         features: [
-            "Pencarian produk via barcode / keyword",
-            "Scan barcode dengan kamera (PWA)",
-            "Cart multi-item dengan hold & resume",
-            "Checkout multi-metode: tunai, transfer, Midtrans, Xendit, pay later",
-            "Multi-satuan produk (pcs, box, kg, karton) dengan konversi stok",
-            "Promo engine: diskon, qty break, bundle, buy-x-get-y",
-            "Persetujuan diskon (approval workflow)",
-            "Cetak struk thermal 58/80mm (WebUSB)",
-            "Offline checkout — transaksi yang sudah disiapkan diantrikan dan disinkronkan saat online",
+            "Search products by barcode or keyword",
+            "Scan barcodes using the camera (PWA)",
+            "Multi-item cart with hold and resume functionality",
+            "Multiple checkout payment methods: cash, bank transfer, Midtrans, Xendit, and pay later",
+            "Multiple product units (pieces, boxes, kilograms, cartons) with stock conversion",
+            "Promotion engine: discounts, quantity breaks, bundles, and buy-X-get-Y offers",
+            "Discount approval workflow",
+            "Print 58mm and 80mm thermal receipts using WebUSB",
+            "Offline checkout — prepared transactions are queued and synchronized when the connection is restored",
         ],
     },
     {
         icon: IconBuildingWarehouse,
         title: "Inventory & Multi-Warehouse",
-        desc: "Kontrol penuh atas stok di semua gudang dan cabang.",
+        desc: "Maintain complete control over stock across all warehouses and branches.",
         screenshot: "/screenshots/07-warehouses.png",
         features: [
-            "Produk, kategori, dan barcode",
-            "Stok terpisah per gudang/cabang",
-            "Transfer stok antar warehouse (draft → send → receive)",
-            "Stock opname per warehouse",
-            "Riwayat mutasi stok lengkap",
-            "Tracking batch & expiry date (FEFO)",
-            "Composite products / kits",
-            "Reorder point + rekomendasi PO otomatis",
-            "Notifikasi stok menipis",
+            "Product, category, and barcode management",
+            "Separate stock tracking for each warehouse and branch",
+            "Inter-warehouse stock transfers (draft → send → receive)",
+            "Stocktaking for each warehouse",
+            "Complete stock movement history",
+            "Batch and expiry date tracking (FEFO)",
+            "Composite products and kits",
+            "Reorder points with automatic purchase order recommendations",
+            "Low-stock notifications",
         ],
     },
     {
         icon: IconTruckDelivery,
-        title: "Purchasing & Supplier",
-        desc: "Rantai pengadaan yang rapi dari PO sampai hutang supplier.",
+        title: "Purchasing & Suppliers",
+        desc: "Manage the entire procurement process, from purchase orders to supplier payables.",
         screenshot: "/screenshots/09-purchase-orders.png",
         features: [
-            "Purchase Order (draft → ordered → partial → completed)",
-            "Goods Receiving dengan input batch",
-            "Supplier Returns",
-            "Kelola data supplier",
-            "Hutang supplier (payables) dengan aging analysis",
+            "Purchase orders (draft → ordered → partial → completed)",
+            "Goods receiving with batch entry",
+            "Supplier returns",
+            "Supplier information management",
+            "Supplier payables with aging analysis",
         ],
     },
     {
         icon: IconReportMoney,
-        title: "Finance & Piutang",
-        desc: "Arus uang terkontrol — piutang, hutang, dan pajak dalam satu tempat.",
+        title: "Finance & Receivables",
+        desc: "Keep your finances under control with customer receivables, supplier payables, and tax management in one place.",
         screenshot: "/screenshots/12-receivables.png",
         features: [
-            "Piutang pelanggan dengan partial payment",
-            "Aging analysis + catatan penagihan",
-            "Hutang supplier & pembayaran",
-            "PPN 11% (exclusive/inclusive) & data NPWP",
-            "Customer portal: pelanggan lihat invoice & bayar online",
+            "Customer receivables with partial payments",
+            "Aging analysis and collection notes",
+            "Supplier payables and payments",
+            "VAT 11% (exclusive/inclusive) and tax identification data",
+            "Customer portal for viewing invoices and making online payments",
         ],
     },
     {
         icon: IconUsers,
         title: "CRM & Loyalty",
-        desc: "Tumbuhkan bisnis dengan pelanggan yang kembali lagi.",
+        desc: "Grow your business by encouraging customers to return and shop again.",
         screenshot: "/screenshots/19-members.png",
         features: [
-            "Manajemen customer + wilayah Indonesia",
-            "Member tiers (regular, silver, gold, platinum)",
-            "Poin loyalty (earn & redeem)",
-            "Voucher pelanggan",
-            "Segmentasi otomatis (manual & rule-based)",
-            "Campaign automation: reminder & promo",
-            "WhatsApp Gateway: struk, reminder, dan promo otomatis",
+            "Customer management with Indonesian regional data",
+            "Membership tiers (regular, silver, gold, platinum)",
+            "Loyalty points (earn and redeem)",
+            "Customer vouchers",
+            "Automated segmentation (manual and rule-based)",
+            "Campaign automation for reminders and promotions",
+            "WhatsApp Gateway for automated receipts, reminders, and promotions",
         ],
     },
     {
         icon: IconChartBar,
-        title: "Laporan & Insight",
-        desc: "Keputusan bisnis berbasis data, bukan perasaan.",
+        title: "Reports & Insights",
+        desc: "Make data-driven business decisions instead of relying on guesswork.",
         screenshot: "/screenshots/15-sales-report.png",
         features: [
-            "Laporan penjualan dengan filter & ringkasan",
-            "Laporan profit & margin analysis",
-            "Advanced insights: jam sibuk, performa kasir, repeat customer",
-            "PDF invoice, receipt (80/58mm), shipping label",
-            "PDF piutang & hutang",
-            "Export ke Excel (produk, customer, transaksi)",
+            "Sales reports with filters and summaries",
+            "Profit reports and margin analysis",
+            "Advanced insights: peak hours, cashier performance, and repeat customers",
+            "PDF invoices, receipts (80mm/58mm), and shipping labels",
+            "PDF reports for receivables and payables",
+            "Export products, customers, and transactions to Excel",
         ],
     },
     {
         icon: IconShieldLock,
-        title: "Admin & Keamanan",
-        desc: "Siapa punya akses apa, dan siapa mengubah apa — selalu jelas.",
+        title: "Administration & Security",
+        desc: "Maintain clear visibility into who has access to what and who changed what.",
         screenshot: "/screenshots/31-audit-logs.png",
         features: [
-            "RBAC penuh: users, roles, permissions",
-            "Audit log with before/after snapshot",
-            "Step-up authentication untuk aksi sensitif",
-            "Import produk & customer dari Excel",
-            "App versioning terpusat (APP_VERSION)",
-            "Manajemen shift kasir",
+            "Full role-based access control (RBAC): users, roles, and permissions",
+            "Audit logs with before-and-after snapshots",
+            "Step-up authentication for sensitive actions",
+            "Import products and customers from Excel",
+            "Centralized application versioning (APP_VERSION)",
+            "Cashier shift management",
         ],
     },
     {
         icon: IconCreditCard,
-        title: "Payment & Pengaturan",
-        desc: "Terima pembayaran apa pun yang pelanggan Anda pakai.",
+        title: "Payments & Settings",
+        desc: "Accept the payment methods your customers prefer.",
         screenshot: "/screenshots/24-payment-settings.png",
         features: [
-            "Payment gateway: Midtrans & Xendit",
-            "Bank accounts untuk transfer manual",
-            "Multi price list per kelompok pelanggan",
-            "Sales target & store profile",
-            "Pengaturan printer & pajak",
-            "Multi-bahasa: Indonesia & English",
+            "Payment gateways: Midtrans and Xendit",
+            "Bank accounts for manual bank transfers",
+            "Multiple price lists for different customer groups",
+            "Sales targets and store profiles",
+            "Printer and tax settings",
+            "Multilingual support: Indonesian and English",
         ],
     },
     {
         icon: IconQrcode,
-        title: "Dine-in QR & Self-Order",
-        desc: "Pelanggan dapat membuka menu dari QR meja, membuat pesanan, dan memantau statusnya.",
+        title: "Dine-in QR & Self-Ordering",
+        desc: "Customers can open the menu using a table QR code, place orders, and track their order status.",
         screenshot: "/screenshots/01-dashboard.png",
         features: [
-            "Area dan floor plan meja",
-            "QR code unik per meja",
-            "Menu publik dan keranjang pelanggan",
-            "Status order dengan polling",
-            "Staff dapat menerima atau menolak pesanan",
-            "Pembayaran saat ini melalui kasir",
+            "Dining areas and table floor plans",
+            "Unique QR codes for each table",
+            "Public menus and customer shopping carts",
+            "Order status tracking through polling",
+            "Staff can accept or reject orders",
+            "Payments are currently processed at the cashier",
         ],
     },
     {
         icon: IconApi,
-        title: "API & Integrasi",
-        desc: "Endpoint terautentikasi untuk integrasi aplikasi, perangkat, dan sinkronisasi POS.",
+        title: "API & Integrations",
+        desc: "Authenticated endpoints for application integrations, devices, and POS synchronization.",
         screenshot: "/screenshots/01-dashboard.png",
         features: [
-            "Auth token berbasis Sanctum",
-            "Master data produk, customer, kategori, gudang, dan supplier",
-            "Cart, shift, checkout, transaksi, dan offline sync",
-            "Proteksi ability sesuai permission pengguna",
-            "Dokumentasi API tersedia melalui Scramble",
+            "Sanctum-based authentication tokens",
+            "Master data for products, customers, categories, warehouses, and suppliers",
+            "Cart, shifts, checkout, transactions, and offline synchronization",
+            "Permission-based API ability protection",
+            "API documentation available through Scramble",
         ],
     },
 ];
 
 export default function Features() {
     return (
-        <PublicLayout active="/fitur">
-            <Head title="Fitur Lengkap — Dikasir" />
+        <PublicLayout active="/features">
+            <Head title="Complete Features — BINGOPOS" />
 
             {/* Header */}
             <section className="pt-20 pb-14 px-6 bg-gradient-to-b from-primary-50 dark:from-primary-950/40 to-transparent">
                 <div className="max-w-7xl mx-auto text-center">
                     <h1 className="text-4xl md:text-5xl font-extrabold text-slate-900 dark:text-white">
-                        Fitur Lengkap untuk Bisnis Nyata
+                        Complete Features for Real Businesses
                     </h1>
                     <p className="mt-5 text-lg text-slate-600 dark:text-slate-400 max-w-3xl mx-auto">
-                        Fitur terintegrasi dari kasir harian sampai analitik lanjutan, gratis
-                        digunakan dan open source di bawah lisensi MIT.
+                        Integrated features ranging from everyday checkout to advanced
+                        analytics, free to use and open source under the MIT License.
                     </p>
                     <div className="mt-8 flex flex-wrap justify-center gap-3">
                         {modules.map((m) => (
@@ -235,7 +235,7 @@ export default function Features() {
                                 <div className="rounded-xl overflow-hidden border border-slate-200 dark:border-slate-800 shadow-xl bg-white dark:bg-slate-900">
                                     <img
                                         src={mod.screenshot}
-                                        alt={`Screenshot ${mod.title}`}
+                                        alt={`${mod.title} screenshot`}
                                         className="w-full"
                                         loading="lazy"
                                     />
@@ -246,16 +246,16 @@ export default function Features() {
                 </div>
             </section>
 
-            {/* CTA */}
+            {/* Call to Action */}
             <section className="pb-20 px-6">
                 <div className="max-w-3xl mx-auto text-center">
                     <div className="bg-slate-900 dark:bg-slate-800 rounded-3xl p-10">
                         <h2 className="text-2xl md:text-3xl font-bold text-white mb-3">
-                            Ada fitur yang kamu butuhkan?
+                            Is There a Feature You Need?
                         </h2>
                         <p className="text-slate-400 mb-6">
-                            Karena open source, fitur baru bisa datang dari siapa saja —
-                            termasuk kamu.
+                            As an open-source project, new features can come from anyone —
+                            including you.
                         </p>
                         <a
                             href={`${GITHUB_URL}/issues`}
@@ -263,7 +263,7 @@ export default function Features() {
                             rel="noopener noreferrer"
                             className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-primary-500 to-primary-600 text-white font-semibold rounded-xl hover:from-primary-600 hover:to-primary-700 transition-all"
                         >
-                            Ajukan ide fitur di GitHub
+                            Suggest a Feature on GitHub
                             <IconArrowRight size={16} />
                         </a>
                     </div>

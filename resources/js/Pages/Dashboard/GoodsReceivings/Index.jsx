@@ -14,7 +14,7 @@ import {
 
 const formatDateTime = (value) =>
     value
-        ? new Intl.DateTimeFormat("id-ID", {
+        ? new Intl.DateTimeFormat("en-US", {
               dateStyle: "medium",
               timeStyle: "short",
           }).format(new Date(value))
@@ -33,14 +33,14 @@ export default function Index({ receivings, filters }) {
 
     return (
         <>
-            <Head title="Penerimaan Barang" />
+            <Head title="Goods Receipts" />
             <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                     <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
-                        Penerimaan Barang
+                        Goods Receipts
                     </h1>
                     <p className="text-sm text-slate-500 dark:text-slate-400">
-                        Catat penerimaan barang dari supplier.
+                        Record goods received from suppliers.
                     </p>
                 </div>
                 {can("goods-receivings-create") && (
@@ -49,7 +49,7 @@ export default function Index({ receivings, filters }) {
                         href={route("goods-receivings.create")}
                         icon={<IconCirclePlus size={18} />}
                         className="bg-primary-500 hover:bg-primary-600 text-white shadow-lg shadow-primary-500/30"
-                        label="Terima Barang"
+                        label="Receive Goods"
                     />
                 )}
             </div>
@@ -60,7 +60,7 @@ export default function Index({ receivings, filters }) {
                         type="text"
                         value={filters.search || ""}
                         onChange={(e) => handleFilterChange("search", e.target.value)}
-                        placeholder="Cari nomor dokumen..."
+                        placeholder="Search document number..."
                         className="h-11 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 pr-11 text-sm text-slate-800 outline-none transition focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
                     />
                     <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-4 text-slate-400">
@@ -69,16 +69,16 @@ export default function Index({ receivings, filters }) {
                 </div>
             </div>
 
-            <Table.Card title="Daftar Penerimaan Barang">
+            <Table.Card title="Goods Receipt List">
                 <Table>
                     <Table.Thead>
                         <tr>
-                            <Table.Th>Dokumen</Table.Th>
-                            <Table.Th>PO Referensi</Table.Th>
+                            <Table.Th>Document</Table.Th>
+                            <Table.Th>Reference PO</Table.Th>
                             <Table.Th>Supplier</Table.Th>
-                            <Table.Th>Tanggal Terima</Table.Th>
-                            <Table.Th>Diterima Oleh</Table.Th>
-                            <Table.Th className="w-24 text-center">Aksi</Table.Th>
+                            <Table.Th>Received Date</Table.Th>
+                            <Table.Th>Received By</Table.Th>
+                            <Table.Th className="w-24 text-center">Actions</Table.Th>
                         </tr>
                     </Table.Thead>
                     <Table.Tbody>
@@ -114,7 +114,7 @@ export default function Index({ receivings, filters }) {
                         ) : (
                             <Table.Empty colSpan={6} message={
                                 <div className="text-slate-500 dark:text-slate-400">
-                                    Belum ada penerimaan barang.
+                                    No goods receipts yet.
                                 </div>
                             }>
                                 <div className="mx-auto mb-3 flex h-16 w-16 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800">

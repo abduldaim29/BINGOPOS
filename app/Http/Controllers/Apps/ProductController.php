@@ -200,6 +200,10 @@ class ProductController extends Controller
 
             'tax_rate' => 'nullable|numeric|min:0|max:100',
 
+            'variations' => 'nullable|array',
+
+            'variation_prices' => 'nullable|array',
+
             ...$this->compositeRules(),
 
             ...$this->unitRules(),
@@ -249,6 +253,10 @@ class ProductController extends Controller
             'tax_rate' => $request->input('tax_rate', 18.00),
 
             'is_composite' => $request->boolean('is_composite'),
+
+            'variations' => $request->input('variations'),
+
+            'variation_prices' => $request->input('variation_prices'),
 
         ]);
 
@@ -420,9 +428,9 @@ class ProductController extends Controller
 
         $request->validate([
 
-            'barcode' => 'required|unique:products,barcode,'.$product->id,
+            'barcode' => 'nullable|unique:products,barcode,'.$product->id,
 
-            'sku' => 'required|unique:products,sku,'.$product->id,
+            'sku' => 'nullable|unique:products,sku,'.$product->id,
 
             'title' => 'required',
 
@@ -446,6 +454,10 @@ class ProductController extends Controller
 
             'tax_rate' => 'nullable|numeric|min:0|max:100',
 
+            'variations' => 'nullable|array',
+
+            'variation_prices' => 'nullable|array',
+
             ...$this->compositeRules(),
 
             ...$this->unitRules(),
@@ -458,7 +470,7 @@ class ProductController extends Controller
 
             $this->validateComponentProducts($request, $product);
 
-        } elseif ($product->is_composite && $product->components()->exists()) {
+        } elseif ($request->boolean('is_composite') && empty($request->input('components'))) {
 
             return back()->withErrors([
 
@@ -524,6 +536,10 @@ class ProductController extends Controller
 
                 'is_composite' => $request->boolean('is_composite'),
 
+                'variations' => $request->input('variations'),
+
+                'variation_prices' => $request->input('variation_prices'),
+
             ]);
 
 
@@ -581,6 +597,10 @@ class ProductController extends Controller
             'tax_rate' => $request->input('tax_rate', 11.00),
 
             'is_composite' => $request->boolean('is_composite'),
+
+            'variations' => $request->input('variations'),
+
+            'variation_prices' => $request->input('variation_prices'),
 
         ]);
 
@@ -678,11 +698,11 @@ class ProductController extends Controller
 
             'is_composite' => 'nullable|boolean',
 
-            'components' => 'required_if:is_composite,1,true|array|min:1',
+            'components' => 'nullable|array',
 
-            'components.*.component_product_id' => 'required|integer|distinct|exists:products,id',
+            'components.*.component_product_id' => 'required_if:is_composite,1,true|integer|distinct|exists:products,id',
 
-            'components.*.qty' => 'required|integer|min:1',
+            'components.*.qty' => 'required_if:is_composite,1,true|integer|min:1',
 
         ];
 

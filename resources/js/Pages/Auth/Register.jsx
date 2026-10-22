@@ -12,6 +12,7 @@ import {
     IconCheck,
     IconChevronDown,
 } from "@tabler/icons-react";
+import { clearAllCache } from "@/Utils/offlineDb";
 
 export default function Register({ botGuard, userRoles }) {
     const roleLabels = {
@@ -38,6 +39,10 @@ export default function Register({ botGuard, userRoles }) {
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
     useEffect(() => {
+        // Clear all cached data when visiting register page to ensure fresh data for new user
+        clearAllCache().catch((error) => {
+            console.error("Failed to clear cache:", error);
+        });
         return () => reset("password", "password_confirmation");
     }, []);
 

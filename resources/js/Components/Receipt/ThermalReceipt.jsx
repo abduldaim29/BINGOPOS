@@ -209,6 +209,12 @@ const ReceiptStoreHeader = ({
             {storeName}
         </h1>
 
+        {storePhone && (
+            <div className="receipt-store-phone">
+                Phone: {storePhone}
+            </div>
+        )}
+
         {storeAddress && (
             <div
                 className={`receipt-store-address ${
@@ -218,12 +224,6 @@ const ReceiptStoreHeader = ({
                 }`}
             >
                 {storeAddress}
-            </div>
-        )}
-
-        {storePhone && (
-            <div className="receipt-store-phone">
-                Phone: {storePhone}
             </div>
         )}
     </header>
@@ -911,6 +911,11 @@ export default function ThermalReceipt({
                                 <span>{index + 1}</span>
                                 <div className="receipt-item-name">
                                     <p>{item.product?.title || "-"}</p>
+                                    {item.variation_name && (
+                                        <p className="receipt-item-small">
+                                            {item.variation_name}
+                                        </p>
+                                    )}
                                     <p className="receipt-item-small">
                                         {receiptFormatPrice(unitPrice)} each
                                     </p>
@@ -1042,6 +1047,11 @@ export function ThermalReceipt58mm({
                             >
                                 <div className="receipt-item-name">
                                     <p>{item.product?.title || "-"}</p>
+                                    {item.variation_name && (
+                                        <p className="receipt-item-small">
+                                            {item.variation_name}
+                                        </p>
+                                    )}
                                     <p className="receipt-item-small">
                                         {receiptFormatPrice(unitPrice)} each
                                     </p>

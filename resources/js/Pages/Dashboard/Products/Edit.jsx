@@ -19,10 +19,92 @@ import {
 import { getProductImageUrl } from "@/Utils/imageUrl";
 import { formatCurrency } from "@/Utils/currency";
 
+// Universal variation options for different product types
+const variationOptions = {
+    pizza: [
+        { id: 'pizza_small', name: 'Small', size: '6-7 inch', price_multiplier: 1 },
+        { id: 'pizza_regular', name: 'Regular', size: '9-10 inch', price_multiplier: 1.5 },
+        { id: 'pizza_large', name: 'Large', size: '12-13 inch', price_multiplier: 2 },
+        { id: 'pizza_xl', name: 'XL', size: '14-15 inch', price_multiplier: 2.5 },
+        { id: 'pizza_jumbo', name: 'Jumbo', size: '16-18 inch', price_multiplier: 3 },
+    ],
+    soft_drinks: [
+        { id: 'soft_250ml', name: '250ml', size: 'Milliliter', price_multiplier: 1 },
+        { id: 'soft_330ml', name: '330ml', size: 'Milliliter', price_multiplier: 1.32 },
+        { id: 'soft_500ml_bottle', name: '500ml Bottle', size: 'Bottle', price_multiplier: 2 },
+        { id: 'soft_1l_bottle', name: '1L Bottle', size: 'Bottle', price_multiplier: 4 },
+        { id: 'soft_1.5l_bottle', name: '1.5L Bottle', size: 'Bottle', price_multiplier: 6 },
+        { id: 'soft_2l_bottle', name: '2L Bottle', size: 'Bottle', price_multiplier: 8 },
+        { id: 'soft_250ml_can', name: '250ml Can', size: 'Can', price_multiplier: 1 },
+        { id: 'soft_330ml_can', name: '330ml Can', size: 'Can', price_multiplier: 1.32 },
+        { id: 'soft_200ml_glass', name: '200ml Glass', size: 'Glass', price_multiplier: 0.8 },
+        { id: 'soft_250ml_glass', name: '250ml Glass', size: 'Glass', price_multiplier: 1 },
+    ],
+    hard_drinks: [
+        { id: 'hard_25ml', name: '25ml', size: 'Milliliter', price_multiplier: 1 },
+        { id: 'hard_30ml_shot', name: '30ml Shot', size: 'Shot', price_multiplier: 1.2 },
+        { id: 'hard_45ml_shot', name: '45ml Shot', size: 'Shot', price_multiplier: 1.8 },
+        { id: 'hard_60ml_double', name: '60ml Double', size: 'Double Shot', price_multiplier: 2.4 },
+        { id: 'hard_90ml_double', name: '90ml Double', size: 'Double Shot', price_multiplier: 3.6 },
+        { id: 'hard_375ml_bottle', name: '375ml Bottle', size: 'Bottle', price_multiplier: 15 },
+        { id: 'hard_500ml_bottle', name: '500ml Bottle', size: 'Bottle', price_multiplier: 20 },
+        { id: 'hard_700ml_bottle', name: '700ml Bottle', size: 'Bottle', price_multiplier: 28 },
+        { id: 'hard_750ml_bottle', name: '750ml Bottle', size: 'Bottle', price_multiplier: 30 },
+        { id: 'hard_1l_liter', name: '1L Liter', size: 'Liter', price_multiplier: 40 },
+    ],
+    hot_drinks: [
+        { id: 'hot_150ml_cup', name: '150ml Cup', size: 'Small Cup', price_multiplier: 1 },
+        { id: 'hot_200ml_cup', name: '200ml Cup', size: 'Regular Cup', price_multiplier: 1.33 },
+        { id: 'hot_250ml_cup', name: '250ml Cup', size: 'Large Cup', price_multiplier: 1.67 },
+        { id: 'hot_300ml_mug', name: '300ml Mug', size: 'Small Mug', price_multiplier: 2 },
+        { id: 'hot_350ml_mug', name: '350ml Mug', size: 'Large Mug', price_multiplier: 2.33 },
+        { id: 'hot_30ml_espresso', name: '30ml Espresso', size: 'Espresso Cup', price_multiplier: 0.2 },
+        { id: 'hot_60ml_double', name: '60ml Double', size: 'Double Espresso', price_multiplier: 0.4 },
+        { id: 'hot_500ml_pot', name: '500ml Pot', size: 'Tea Pot', price_multiplier: 3.33 },
+        { id: 'hot_500ml_coffee_pot', name: '500ml Pot', size: 'Coffee Pot', price_multiplier: 3.33 },
+        { id: 'hot_1l_jug', name: '1L Jug', size: 'Jug', price_multiplier: 6.67 },
+    ],
+    nuggets: [
+        { id: 'nuggets_small', name: 'Small', size: '6 pcs', price_multiplier: 1 },
+        { id: 'nuggets_regular', name: 'Regular', size: '10 pcs', price_multiplier: 1.67 },
+        { id: 'nuggets_large', name: 'Large', size: '20 pcs', price_multiplier: 3.33 },
+        { id: 'nuggets_jumbo', name: 'Jumbo', size: '30 pcs', price_multiplier: 5 },
+    ],
+    hotshots: [
+        { id: 'hotshots_small', name: 'Small', size: '4 pcs', price_multiplier: 1 },
+        { id: 'hotshots_regular', name: 'Regular', size: '8 pcs', price_multiplier: 2 },
+        { id: 'hotshots_large', name: 'Large', size: '12 pcs', price_multiplier: 3 },
+        { id: 'hotshots_jumbo', name: 'Jumbo', size: '16 pcs', price_multiplier: 4 },
+    ],
+    wings: [
+        { id: 'wings_small', name: 'Small', size: '4 pcs', price_multiplier: 1 },
+        { id: 'wings_regular', name: 'Regular', size: '8 pcs', price_multiplier: 2 },
+        { id: 'wings_large', name: 'Large', size: '12 pcs', price_multiplier: 3 },
+        { id: 'wings_bucket', name: 'Bucket', size: '20 pcs', price_multiplier: 5 },
+    ],
+    burgers: [
+        { id: 'burgers_single', name: 'Single', size: '1 burger', price_multiplier: 1 },
+        { id: 'burgers_double', name: 'Double', size: '2 burgers', price_multiplier: 2 },
+        { id: 'burgers_triple', name: 'Triple', size: '3 burgers', price_multiplier: 3 },
+        { id: 'burgers_family', name: 'Family', size: '4 burgers', price_multiplier: 4 },
+    ],
+    fries: [
+        { id: 'fries_small', name: 'Small', size: 'Regular', price_multiplier: 1 },
+        { id: 'fries_regular', name: 'Regular', size: 'Large', price_multiplier: 1.5 },
+        { id: 'fries_large', name: 'Large', size: 'Extra Large', price_multiplier: 2 },
+        { id: 'fries_family', name: 'Family', size: 'Party Size', price_multiplier: 3 },
+    ],
+    general: [
+        { id: 'general_small', name: 'Small', size: '1x', price_multiplier: 1 },
+        { id: 'general_regular', name: 'Regular', size: '2x', price_multiplier: 2 },
+        { id: 'general_large', name: 'Large', size: '3x', price_multiplier: 3 },
+    ],
+};
+
 export default function Edit({ categories, productTypes = [], subCategories = [], product, products = [], units = [] }) {
     const { errors } = usePage().props;
 
-    const { data, setData, post, processing } = useForm({
+    const { data, setData, put, processing, transform } = useForm({
         image: "",
         barcode: product.barcode,
         sku: product.sku,
@@ -46,25 +128,58 @@ export default function Edit({ categories, productTypes = [], subCategories = []
             unit_id: u.id,
             is_base: !!u.pivot?.is_base,
             conversion_factor: u.pivot?.conversion_factor ?? 1,
+            buy_price: u.pivot?.buy_price ?? "",
             sell_price: u.pivot?.sell_price ?? "",
             barcode: u.pivot?.barcode ?? "",
         })),
-        _method: "PUT",
+        variations: product.variations || [],
+        variation_prices: product.variation_prices || {},
     });
 
     const [selectedCategory, setSelectedCategory] = useState(null);
     const [selectedProductType, setSelectedProductType] = useState(null);
     const [selectedSubCategory, setSelectedSubCategory] = useState(null);
     const [availableSubCategories, setAvailableSubCategories] = useState(subCategories);
+    const [selectedVariationTemplate, setSelectedVariationTemplate] = useState(null);
     const [imagePreview, setImagePreview] = useState(
         product.image ? getProductImageUrl(product.image) : null
     );
+    const [hasVariations, setHasVariations] = useState(false);
+    const [selectedVariations, setSelectedVariations] = useState([]);
+    const [availableVariations, setAvailableVariations] = useState({});
 
     useEffect(() => {
         if (product.category_id) {
-            setSelectedCategory(
-                categories.find((cat) => cat.id === product.category_id)
-            );
+            const category = categories.find((cat) => cat.id === product.category_id);
+            setSelectedCategory(category);
+
+            // Initialize variations from product data after category is set
+            if (product.variations && product.variations.length > 0) {
+                setSelectedVariations(product.variations);
+                setHasVariations(true);
+                // Set available variations based on the product's category
+                const categoryName = category?.name?.toLowerCase() || '';
+                if (categoryName === 'pizza' || categoryName.includes('pizza')) {
+                    setAvailableVariations({ pizza: variationOptions.pizza });
+                } else if (categoryName === 'drinks' || categoryName === 'drink' || categoryName.includes('drink')) {
+                    setAvailableVariations({ soft_drinks: variationOptions.soft_drinks, hard_drinks: variationOptions.hard_drinks, hot_drinks: variationOptions.hot_drinks });
+                } else if (categoryName === 'nuggets' || categoryName.includes('nugget')) {
+                    setAvailableVariations({ nuggets: variationOptions.nuggets });
+                } else if (categoryName === 'hotshots' || categoryName.includes('hotshot')) {
+                    setAvailableVariations({ hotshots: variationOptions.hotshots });
+                } else if (categoryName === 'wings' || categoryName.includes('wing')) {
+                    setAvailableVariations({ wings: variationOptions.wings });
+                } else if (categoryName === 'burgers' || categoryName.includes('burger')) {
+                    setAvailableVariations({ burgers: variationOptions.burgers });
+                } else if (categoryName === 'fries' || categoryName.includes('fries')) {
+                    setAvailableVariations({ fries: variationOptions.fries });
+                }
+            } else {
+                // If product has no variations but has variation_prices, clear them
+                if (!product.variations || product.variations.length === 0) {
+                    setData('variation_prices', {});
+                }
+            }
         }
         if (product.product_type_id) {
             setSelectedProductType(
@@ -76,12 +191,52 @@ export default function Edit({ categories, productTypes = [], subCategories = []
                 subCategories.find((sc) => sc.id === product.sub_category_id)
             );
         }
-    }, [product.category_id, product.product_type_id, product.sub_category_id]);
+    }, [product.category_id, product.product_type_id, product.sub_category_id, product.variations]);
 
     const setSelectedCategoryHandler = async (value) => {
         setSelectedCategory(value);
         setData("category_id", value?.id || "");
         setData("sub_category_id", ""); // Reset subcategory when category changes
+        setSelectedSubCategory(null);
+        setSelectedVariationTemplate(null);
+        setData("variation_prices", {});
+
+        // Auto-enable variations based on category, but don't auto-select
+        const categoryName = value?.name?.toLowerCase() || '';
+
+        if (categoryName === 'pizza' || categoryName.includes('pizza')) {
+            setHasVariations(true);
+            setSelectedVariations([]); // Let user manually select
+            setAvailableVariations({ pizza: variationOptions.pizza });
+        } else if (categoryName === 'drinks' || categoryName === 'drink' || categoryName.includes('drink')) {
+            setHasVariations(true);
+            setSelectedVariations([]); // Let user manually select
+            setAvailableVariations({ soft_drinks: variationOptions.soft_drinks, hard_drinks: variationOptions.hard_drinks, hot_drinks: variationOptions.hot_drinks });
+        } else if (categoryName === 'nuggets' || categoryName.includes('nugget')) {
+            setHasVariations(true);
+            setSelectedVariations([]); // Let user manually select
+            setAvailableVariations({ nuggets: variationOptions.nuggets });
+        } else if (categoryName === 'hotshots' || categoryName.includes('hotshot')) {
+            setHasVariations(true);
+            setSelectedVariations([]); // Let user manually select
+            setAvailableVariations({ hotshots: variationOptions.hotshots });
+        } else if (categoryName === 'wings' || categoryName.includes('wing')) {
+            setHasVariations(true);
+            setSelectedVariations([]); // Let user manually select
+            setAvailableVariations({ wings: variationOptions.wings });
+        } else if (categoryName === 'burgers' || categoryName.includes('burger')) {
+            setHasVariations(true);
+            setSelectedVariations([]); // Let user manually select
+            setAvailableVariations({ burgers: variationOptions.burgers });
+        } else if (categoryName === 'fries' || categoryName.includes('fries')) {
+            setHasVariations(true);
+            setSelectedVariations([]); // Let user manually select
+            setAvailableVariations({ fries: variationOptions.fries });
+        } else {
+            setHasVariations(false);
+            setSelectedVariations([]);
+            setAvailableVariations({});
+        }
 
         // Load subcategories for the selected category
         if (value?.id) {
@@ -119,6 +274,7 @@ export default function Edit({ categories, productTypes = [], subCategories = []
                 unit_id: firstUnused.id,
                 is_base: data.units.length === 0,
                 conversion_factor: data.units.length === 0 ? 1 : "",
+                buy_price: "",
                 sell_price: "",
                 barcode: "",
             },
@@ -201,15 +357,33 @@ export default function Edit({ categories, productTypes = [], subCategories = []
         }
     };
 
+    // Update one variation price without losing prices entered for other variations.
+    const updateVariationPrice = (variationId, value) => {
+        setData("variation_prices", {
+            ...(data.variation_prices || {}),
+            [variationId]: value ? parseInt(value, 10) : 0,
+        });
+    };
+
     // ponytail: zero-out stock/sell_price for composite; collapse if Inertia ever accepts pre-send transforms
     const submitCompositeAware = (e) => {
         e.preventDefault();
         if (data.is_composite) {
             setData("sell_price", 0);
         }
-        post(route("products.update", product.id), {
+
+        // Include selected variations and their prices in the form data
+        if (hasVariations && selectedVariations.length > 0) {
+            setData("variations", selectedVariations);
+            setData("variation_prices", data.variation_prices || {});
+        }
+
+        put(route("products.update", product.id), {
             onSuccess: () => toast.success("Product updated successfully"),
-            onError: () => toast.error("Failed to update product"),
+            onError: (errors) => {
+                const errorMessages = Object.values(errors).join(', ');
+                toast.error(errorMessages || "Failed to update product");
+            },
         });
     };
 
@@ -310,6 +484,29 @@ export default function Edit({ categories, productTypes = [], subCategories = []
                                         setSelected={(value) => {
                                             setSelectedSubCategory(value);
                                             setData("sub_category_id", value?.id || "");
+
+                                            // Auto-select variation template based on subcategory
+                                            const subCategoryName = value?.name?.toLowerCase() || '';
+                                            console.log('Selected subcategory:', subCategoryName); // Debug log
+
+                                            let template = null;
+                                            if (subCategoryName === 'soft drinks' || subCategoryName.includes('soft drink')) {
+                                                template = 'soft_drinks';
+                                            } else if (subCategoryName === 'hard drinks' || subCategoryName.includes('hard drink')) {
+                                                template = 'hard_drinks';
+                                            } else if (subCategoryName === 'hot drinks' || subCategoryName.includes('hot drink')) {
+                                                template = 'hot_drinks';
+                                            }
+                                            setSelectedVariationTemplate(template);
+                                            setSelectedVariations([]);
+                                            setData('variation_prices', {});
+                                            if (template) {
+                                                setAvailableVariations({ [template]: variationOptions[template] });
+                                                setHasVariations(true);
+                                            } else {
+                                                setAvailableVariations({});
+                                                setHasVariations(false);
+                                            }
                                         }}
                                         placeholder="Select a subcategory (optional)"
                                         errors={errors.sub_category_id}
@@ -318,6 +515,120 @@ export default function Edit({ categories, productTypes = [], subCategories = []
                                         disabled={!selectedCategory}
                                     />
                                 </div>
+
+                                {/* Product Variations - Universal System */}
+                                <div className="md:col-span-2">
+                                    <label className="flex items-center gap-2 cursor-pointer mb-3">
+                                        <input
+                                            type="checkbox"
+                                            checked={hasVariations}
+                                            onChange={(e) => {
+                                                setHasVariations(e.target.checked);
+                                                if (!e.target.checked) {
+                                                    setSelectedVariations([]);
+                                                }
+                                            }}
+                                            className="rounded border-slate-300 text-primary-600 focus:ring-primary-500"
+                                        />
+                                        <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                                            This product has variations (sizes, portions, etc.)
+                                        </span>
+                                    </label>
+
+                                    {hasVariations && (
+                                        <div>
+                                            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                                                Select Variations (these will be available in POS)
+                                            </label>
+                                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                                                {Object.entries(availableVariations).map(([category, variations]) => (
+                                                    <div key={category} className="border border-slate-200 dark:border-slate-700 rounded-xl p-3">
+                                                        <p className="text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase mb-2">
+                                                            {category.replace('_', ' ')}
+                                                        </p>
+                                                        {variations.map((variation) => (
+                                                            <label
+                                                                key={variation.id}
+                                                                className="flex items-center gap-2 p-2 hover:bg-slate-50 dark:hover:bg-slate-800 rounded cursor-pointer mb-1"
+                                                            >
+                                                                <input
+                                                                    type="checkbox"
+                                                                    checked={selectedVariations.includes(variation.id)}
+                                                                    onChange={(e) => {
+                                                                        if (e.target.checked) {
+                                                                            setSelectedVariations([...selectedVariations, variation.id]);
+                                                                        } else {
+                                                                            setSelectedVariations(selectedVariations.filter(id => id !== variation.id));
+                                                                        }
+                                                                    }}
+                                                                    className="rounded border-slate-300 text-primary-600 focus:ring-primary-500 w-4 h-4"
+                                                                />
+                                                                <div className="flex-1">
+                                                                    <p className="text-sm font-medium text-slate-800 dark:text-white">
+                                                                        {variation.name}
+                                                                    </p>
+                                                                    <p className="text-xs text-slate-500 dark:text-slate-400">
+                                                                        {variation.size}
+                                                                    </p>
+                                                                </div>
+                                                            </label>
+                                                        ))}
+                                                    </div>
+                                                ))}
+                                            </div>
+                                            <p className="text-xs text-slate-500 dark:text-slate-400 mt-2">
+                                                Selected variations will be available in POS when adding this product to cart.
+                                            </p>
+
+                                            {/* Variation Pricing Section */}
+                                            {selectedVariations.length > 0 && (
+                                                <div className="mt-4 p-4 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">
+                                                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-3">
+                                                        Set Prices for Selected Variations
+                                                    </label>
+                                                    <div className="space-y-3">
+                                                        {selectedVariations.map(variationId => {
+                                                            // Find the variation details
+                                                            let variation = null;
+                                                            for (const [category, variations] of Object.entries(availableVariations)) {
+                                                                const found = variations.find(v => v.id === variationId);
+                                                                if (found) {
+                                                                    variation = { ...found, category };
+                                                                    break;
+                                                                }
+                                                            }
+                                                            if (!variation) return null;
+
+                                                            return (
+                                                                <div key={variationId} className="flex items-center gap-3">
+                                                                    <div className="flex-1">
+                                                                        <p className="text-sm font-medium text-slate-800 dark:text-white">
+                                                                            {variation.name} ({variation.category.replace('_', ' ')})
+                                                                        </p>
+                                                                        <p className="text-xs text-slate-500 dark:text-slate-400">
+                                                                            {variation.size}
+                                                                        </p>
+                                                                    </div>
+                                                                    <input
+                                                                        type="number"
+                                                                        placeholder="Price"
+                                                                        className="w-32"
+                                                                        value={data.variation_prices?.[variationId] ?? ""}
+                                                                        onChange={(e) => updateVariationPrice(variationId, e.target.value)}
+                                                                        min="0"
+                                                                        step="0.01"
+                                                                        inputMode="decimal"
+                                                                    />
+                                                                </div>
+                                                            );
+                                                        })}
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
+                                </div>
+
                                 <Input
                                     type="text"
                                     label="Barcode"

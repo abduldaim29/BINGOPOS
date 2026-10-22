@@ -33,7 +33,7 @@ function RoleCard({ role, onEdit, onDelete, canUpdate, canDelete }) {
                             {role.name}
                         </h3>
                         <p className="text-sm text-slate-500 dark:text-slate-400">
-                            {role.permissions.length} hak akses
+                            {role.permissions.length} permissions
                         </p>
                     </div>
                 </div>
@@ -53,7 +53,7 @@ function RoleCard({ role, onEdit, onDelete, canUpdate, canDelete }) {
                     ))}
                     {role.permissions.length > 8 && (
                         <span className="px-2 py-0.5 text-xs font-medium text-slate-500">
-                            +{role.permissions.length - 8} lainnya
+                            +{role.permissions.length - 8} more
                         </span>
                     )}
                 </div>
@@ -80,7 +80,7 @@ function RoleCard({ role, onEdit, onDelete, canUpdate, canDelete }) {
                             className="flex-1 flex items-center justify-center gap-1.5 py-3 text-danger-600 hover:bg-danger-50 dark:hover:bg-danger-950/50 text-sm font-medium transition-colors"
                         >
                             <IconTrash size={16} />
-                            <span>Hapus</span>
+                            <span>Delete</span>
                         </button>
                     )}
                 </div>
@@ -154,14 +154,14 @@ export default function Index() {
     };
 
     const handleDelete = (roleId) => {
-        if (confirm("Hapus role ini?")) {
+        if (confirm("Are you sure you want to delete this role?")) {
             destroy(route("roles.destroy", roleId));
         }
     };
 
     return (
         <>
-            <Head title="Akses Group" />
+            <Head title="Access Groups" />
 
             {/* Header */}
             <div className="mb-6">
@@ -172,11 +172,11 @@ export default function Index() {
                                 size={28}
                                 className="text-primary-500"
                             />
-                            Akses Group
+                            Access Groups
                         </h1>
                         <p className="text-sm text-slate-500 dark:text-slate-400">
-                            {roles.total || roles.data?.length || 0} group
-                            terdaftar
+                            {roles.total || roles.data?.length || 0} groups
+                            registered
                         </p>
                     </div>
                     {canCreateRoles && (
@@ -191,7 +191,7 @@ export default function Index() {
                             className={
                                 "bg-primary-500 hover:bg-primary-600 text-white shadow-lg shadow-primary-500/30"
                             }
-                            label={"Tambah Group"}
+                            label={"Add Group"}
                             onClick={() => setData("isOpen", true)}
                         />
                     )}
@@ -202,7 +202,7 @@ export default function Index() {
             <div className="mb-4 w-full sm:w-80">
                 <Search
                     url={route("roles.index")}
-                    placeholder="Cari akses group..."
+                    placeholder="Search access groups..."
                 />
             </div>
 
@@ -219,16 +219,16 @@ export default function Index() {
                     })
                 }
                 title={
-                    data.isUpdate ? "Ubah Akses Group" : "Tambah Akses Group"
+                    data.isUpdate ? "Edit Access Group" : "Add Access Group"
                 }
                 icon={<IconUserShield size={20} strokeWidth={1.5} />}
             >
                 <form onSubmit={data.isUpdate ? updateRole : saveRole}>
                     <div className="mb-4">
                         <Input
-                            label={"Nama group"}
+                            label={"Group Name"}
                             type={"text"}
-                            placeholder={"Masukan nama group"}
+                            placeholder={"Enter group name"}
                             value={data.name}
                             onChange={(e) => setData("name", e.target.value)}
                             errors={errors.name}
@@ -236,7 +236,7 @@ export default function Index() {
                     </div>
                     <div className="mb-4">
                         <ListBox
-                            label={"Pilih hak akses"}
+                            label={"Select Permissions"}
                             data={permissions}
                             selected={data.selectedPermission}
                             setSelected={setSelectedPermission}
@@ -249,7 +249,7 @@ export default function Index() {
                         className={
                             "bg-primary-500 hover:bg-primary-600 text-white w-full justify-center"
                         }
-                        label={"Simpan"}
+                        label={"Save"}
                     />
                 </form>
             </Modal>
@@ -278,10 +278,10 @@ export default function Index() {
                         />
                     </div>
                     <h3 className="text-lg font-medium text-slate-800 dark:text-slate-200 mb-1">
-                        Belum Ada Group
+                        No Groups Yet
                     </h3>
                     <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
-                        Tambahkan group akses pertama.
+                        Add your first access group.
                     </p>
                     <Button
                         type={"button"}
@@ -289,7 +289,7 @@ export default function Index() {
                         className={
                             "bg-primary-500 hover:bg-primary-600 text-white"
                         }
-                        label={"Tambah Group"}
+                        label={"Add Group"}
                         onClick={() => setData("isOpen", true)}
                     />
                 </div>

@@ -176,9 +176,12 @@ class PricingService
     {
         $items = $carts->map(function (Cart $cart) use ($customer, $outlet) {
             // Composite product sell_price is 0; unit price = stored cart price / quantity.
+            // For variations, use the stored unit price (derived from line total).
             $baseUnitPrice = $cart->product->is_composite
                 ? (int) round($cart->price / max(1, (int) $cart->qty))
-                : $this->basePriceFor($cart->product, $customer, $outlet);
+                : ($cart->variation_id
+                    ? (int) round($cart->price / max(1, (int) $cart->qty))
+                    : $this->basePriceFor($cart->product, $customer, $outlet));
 
             return [
                 'cart_id' => $cart->id,

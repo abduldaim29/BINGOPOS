@@ -29,7 +29,7 @@ export default function Create({ orders }) {
                 })
                 .map((item) => ({
                     purchase_order_item_id: item.id,
-                    product_title: item.product?.title || "Produk #" + item.product_id,
+                    product_title: item.product?.title || "Product #" + item.product_id,
                     product_sku: item.product?.sku || "-",
                     qty_ordered: item.qty_ordered,
                     qty_received_already: item.qty_received || 0,
@@ -55,52 +55,52 @@ export default function Create({ orders }) {
     const submit = (e) => {
         e.preventDefault();
         if (!data.purchase_order_id) {
-            toast.error("Pilih purchase order terlebih dahulu.");
+            toast.error("Please select a purchase order first.");
             return;
         }
         const validItems = data.items.filter((item) => item.qty_received > 0);
         if (validItems.length === 0) {
-            toast.error("Terima minimal satu item.");
+            toast.error("Receive at least one item.");
             return;
         }
         setData("items", validItems);
         post(route("goods-receivings.store"), {
-            onSuccess: () => toast.success("Penerimaan barang berhasil dicatat"),
-            onError: () => toast.error("Gagal mencatat penerimaan"),
+            onSuccess: () => toast.success("Goods receipt recorded successfully."),
+            onError: () => toast.error("Failed to record goods receipt."),
             preserveScroll: true,
         });
     };
 
     return (
         <>
-            <Head title="Terima Barang" />
+            <Head title="Receive Goods" />
             <div className="mb-6">
                 <Link
                     href={route("goods-receivings.index")}
                     className="mb-3 inline-flex items-center gap-2 text-sm text-slate-500 hover:text-primary-600"
                 >
                     <IconArrowLeft size={16} />
-                    Kembali ke daftar penerimaan
+                    Back to Goods Receipts
                 </Link>
                 <h1 className="flex items-center gap-2 text-2xl font-bold text-slate-900 dark:text-white">
                     <IconTruckDelivery size={28} className="text-primary-500" />
-                    Terima Barang
+                    Receive Goods
                 </h1>
             </div>
 
             <form onSubmit={submit} className="max-w-4xl">
                 <div className="space-y-6">
                     <div className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
-                        <h2 className="mb-4 text-lg font-semibold text-slate-900 dark:text-white">Pilih Purchase Order</h2>
+                        <h2 className="mb-4 text-lg font-semibold text-slate-900 dark:text-white">Select Purchase Order</h2>
                         <select
                             value={selectedPoId}
                             onChange={(e) => selectPO(e.target.value)}
                             className="h-11 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 text-sm text-slate-800 outline-none transition focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
                         >
-                            <option value="">Pilih PO yang sudah dipesan...</option>
+                            <option value="">Select an existing purchase order...</option>
                             {orders.map((order) => (
                                 <option key={order.id} value={order.id}>
-                                    {order.document_number} - {order.supplier?.name || "Tanpa Supplier"}
+                                    {order.document_number} - {order.supplier?.name || "No Supplier"}
                                 </option>
                             ))}
                         </select>
@@ -110,18 +110,18 @@ export default function Create({ orders }) {
                     {selectedOrder && data.items.length > 0 && (
                         <div className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
                             <h2 className="mb-4 text-lg font-semibold text-slate-900 dark:text-white">
-                                Item Diterima
+                                Items to Receive
                             </h2>
                             <div className="overflow-x-auto">
                                 <table className="w-full text-sm">
                                     <thead>
                                         <tr className="border-b border-slate-200 dark:border-slate-700">
-                                            <th className="px-3 py-2 text-left font-semibold text-slate-700 dark:text-slate-200">Produk</th>
-                                            <th className="px-3 py-2 text-right font-semibold text-slate-700 dark:text-slate-200">Qty PO</th>
-                                            <th className="px-3 py-2 text-right font-semibold text-slate-700 dark:text-slate-200">Sudah Diterima</th>
-                                            <th className="px-3 py-2 text-right font-semibold text-slate-700 dark:text-slate-200">Sisa</th>
-                                            <th className="px-3 py-2 text-right font-semibold text-slate-700 dark:text-slate-200">Qty Diterima</th>
-                                            <th className="px-3 py-2 text-right font-semibold text-slate-700 dark:text-slate-200">Catatan</th>
+                                            <th className="px-3 py-2 text-left font-semibold text-slate-700 dark:text-slate-200">Product</th>
+                                            <th className="px-3 py-2 text-right font-semibold text-slate-700 dark:text-slate-200">PO Quantity</th>
+                                            <th className="px-3 py-2 text-right font-semibold text-slate-700 dark:text-slate-200">Already Received</th>
+                                            <th className="px-3 py-2 text-right font-semibold text-slate-700 dark:text-slate-200">Remaining</th>
+                                            <th className="px-3 py-2 text-right font-semibold text-slate-700 dark:text-slate-200">Quantity Received</th>
+                                            <th className="px-3 py-2 text-right font-semibold text-slate-700 dark:text-slate-200">Notes</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -167,13 +167,13 @@ export default function Create({ orders }) {
 
                     {selectedOrder && data.items.length > 0 && (
                         <div className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
-                            <h2 className="mb-4 text-lg font-semibold text-slate-900 dark:text-white">Catatan Penerimaan</h2>
+                            <h2 className="mb-4 text-lg font-semibold text-slate-900 dark:text-white">Goods Receipt Notes</h2>
                             <textarea
                                 value={data.notes}
                                 onChange={(e) => setData("notes", e.target.value)}
                                 rows={3}
                                 className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-800 outline-none transition focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
-                                placeholder="Catatan penerimaan barang (opsional)"
+                                placeholder="Goods receipt notes (optional)"
                             />
                         </div>
                     )}
@@ -183,14 +183,14 @@ export default function Create({ orders }) {
                             href={route("goods-receivings.index")}
                             className="flex h-11 items-center rounded-xl border border-slate-200 bg-white px-6 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
                         >
-                            Batal
+                            Cancel
                         </Link>
                         {selectedOrder && data.items.length > 0 && (
                             <Button
                                 type="submit"
                                 icon={<IconTruckDelivery size={18} />}
                                 className="bg-success-500 hover:bg-success-600 text-white shadow-lg shadow-success-500/30"
-                                label={processing ? "Menyimpan..." : "Konfirmasi Penerimaan"}
+                                label={processing ? "Saving..." : "Confirm Goods Receipt"}
                                 disabled={processing}
                             />
                         )}

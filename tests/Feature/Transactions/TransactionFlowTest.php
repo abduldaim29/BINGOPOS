@@ -286,7 +286,7 @@ class TransactionFlowTest extends TestCase
             ]);
 
         $response->assertRedirect(route('transactions.index'));
-        $response->assertSessionHas('error', 'Shift kasir belum dibuka.');
+        $response->assertSessionHas('error', 'The cashier shift has not been opened.');
         $this->assertDatabaseCount('transactions', 0);
     }
 

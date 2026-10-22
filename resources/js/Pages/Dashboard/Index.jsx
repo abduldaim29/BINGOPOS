@@ -237,7 +237,7 @@ export default function Dashboard({
                 labels,
                 datasets: [
                     {
-                        label: "Pendapatan",
+                        label: "Revenue",
                         data: totals,
                         borderColor: "#6366f1",
                         backgroundColor: gradient,

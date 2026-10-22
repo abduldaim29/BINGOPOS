@@ -159,19 +159,19 @@ export default function Index({ customers }) {
                                 }}
                             />
                             <Button
-                            type={"link"}
-                            icon={
-                                <IconCirclePlus
-                                    size={18}
-                                    strokeWidth={1.5}
-                                />
-                            }
-                            className={
-                                "bg-primary-500 hover:bg-primary-600 text-white shadow-lg shadow-primary-500/30"
-                            }
-                            label={t("customers.addCustomer")}
-                            href={route("customers.create")}
-                        />
+                                type={"link"}
+                                icon={
+                                    <IconCirclePlus
+                                        size={18}
+                                        strokeWidth={1.5}
+                                    />
+                                }
+                                className={
+                                    "bg-primary-500 hover:bg-primary-600 text-white shadow-lg shadow-primary-500/30"
+                                }
+                                label={t("customers.addCustomer")}
+                                href={route("customers.create")}
+                            />
                         </div>
                     )}
                 </div>
@@ -232,11 +232,11 @@ export default function Index({ customers }) {
                         <Table>
                             <Table.Thead>
                                 <tr>
-                                    <Table.Th className="w-10">No</Table.Th>
-                                    <Table.Th>Pelanggan</Table.Th>
+                                    <Table.Th className="w-10">No.</Table.Th>
+                                    <Table.Th>Customer</Table.Th>
                                     <Table.Th>Loyalty</Table.Th>
-                                    <Table.Th>No. Telepon</Table.Th>
-                                    <Table.Th>Alamat</Table.Th>
+                                    <Table.Th>Phone Number</Table.Th>
+                                    <Table.Th>Address</Table.Th>
                                     <Table.Th></Table.Th>
                                 </tr>
                             </Table.Thead>

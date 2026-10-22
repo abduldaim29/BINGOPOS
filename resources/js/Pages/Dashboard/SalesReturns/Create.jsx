@@ -4,7 +4,7 @@ import SalesReturnForm from "./Form";
 export default function Create({ transaction }) {
     return (
         <SalesReturnForm
-            title="Buat Retur Penjualan"
+            title="Create Sales Return"
             transaction={transaction}
             submitRoute={route("sales-returns.store", transaction.id)}
             submitMethod="post"

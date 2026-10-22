@@ -23,6 +23,20 @@ export default function Units({ units = [] }) {
     const [form, setForm] = useState({ code: "", name: "", symbol: "" });
     const [errors, setErrors] = useState({});
 
+    // Restaurant-specific unit templates
+    const restaurantUnits = [
+        { code: "SLICE", name: "Slice", symbol: "slice" },
+        { code: "SMALL", name: "Small", symbol: "S" },
+        { code: "REGULAR", name: "Regular", symbol: "R" },
+        { code: "LARGE", name: "Large", symbol: "L" },
+        { code: "ML", name: "Milliliter", symbol: "ml" },
+        { code: "L", name: "Liter", symbol: "l" },
+        { code: "GLASS", name: "Glass", symbol: "glass" },
+        { code: "BOTTLE", name: "Bottle", symbol: "bottle" },
+        { code: "CUP", name: "Cup", symbol: "cup" },
+        { code: "PCS", name: "Pieces", symbol: "pcs" },
+    ];
+
     useEffect(() => {
         if (flash?.success) toast.success(flash.success);
         if (flash?.error) toast.error(flash.error);
@@ -74,62 +88,104 @@ export default function Units({ units = [] }) {
                     Units
                 </h1>
                 <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-                    Product unit master (pcs, box, carton, etc) for multi-unit sales
+                    Manage product units such as pieces, slices, sizes, milliliters, and liters for multi-unit sales.
                 </p>
             </div>
 
             <div className="max-w-4xl space-y-6">
                 <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden">
-                    <div className="p-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
-                        <h3 className="font-semibold text-slate-800 dark:text-white">
-                            Unit List ({units.length})
-                        </h3>
+                    <div className="p-4 border-b border-slate-200 dark:border-slate-800">
+                        <div className="flex items-center justify-between mb-4">
+                            <h3 className="font-semibold text-slate-800 dark:text-white">
+                                Unit List ({units.length})
+                            </h3>
+
+                            {canCreate && (
+                                <button
+                                    onClick={() => {
+                                        resetForm();
+                                        setShowForm(true);
+                                    }}
+                                    className="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-primary-500 hover:bg-primary-600 text-white text-sm font-medium transition-colors"
+                                >
+                                    <IconPlus size={18} />
+                                    Add Unit
+                                </button>
+                            )}
+                        </div>
+
                         {canCreate && (
-                            <button
-                                onClick={() => { resetForm(); setShowForm(true); }}
-                                className="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-primary-500 hover:bg-primary-600 text-white text-sm font-medium transition-colors"
-                            >
-                                <IconPlus size={18} />
-                                Add Unit
-                            </button>
+                            <div className="flex flex-wrap gap-2">
+                                <span className="text-xs text-slate-500 dark:text-slate-400">
+                                    Quick Add:
+                                </span>
+
+                                {restaurantUnits.map((unit) => (
+                                    <button
+                                        key={unit.code}
+                                        onClick={() => {
+                                            setForm(unit);
+                                            setEditing(null);
+                                            setErrors({});
+                                            setShowForm(true);
+                                        }}
+                                        className="px-2 py-1 rounded-lg text-xs font-medium bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+                                    >
+                                        {unit.name}
+                                    </button>
+                                ))}
+                            </div>
                         )}
                     </div>
 
                     {units.length > 0 ? (
                         <div className="divide-y divide-slate-200 dark:divide-slate-800">
                             {units.map((u) => (
-                                <div key={u.id} className="p-4 flex items-center gap-4">
+                                <div
+                                    key={u.id}
+                                    className="p-4 flex items-center gap-4"
+                                >
                                     <div className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
-                                        <IconRulerMeasure size={22} className="text-slate-500" />
+                                        <IconRulerMeasure
+                                            size={22}
+                                            className="text-slate-500"
+                                        />
                                     </div>
+
                                     <div className="flex-1 min-w-0">
                                         <div className="flex items-center gap-2">
                                             <p className="font-semibold text-slate-800 dark:text-white truncate">
                                                 {u.name}
                                             </p>
+
                                             <span className="px-2 py-0.5 rounded-lg text-xs font-medium bg-accent-100 text-accent-700 dark:bg-accent-900/30 dark:text-accent-400">
                                                 {u.symbol}
                                             </span>
                                         </div>
+
                                         <p className="text-sm text-slate-500 dark:text-slate-400">
                                             {u.code}
                                             {u.products_count > 0
-                                                ? ` • used by ${u.products_count} products`
+                                                ? ` • Used by ${u.products_count} products`
                                                 : ""}
                                         </p>
                                     </div>
+
                                     <div className="flex items-center gap-2 shrink-0">
                                         {canUpdate && (
                                             <button
                                                 onClick={() => openEdit(u)}
+                                                title="Edit Unit"
                                                 className="p-2 rounded-lg text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
                                             >
                                                 <IconPencil size={18} />
                                             </button>
                                         )}
+
                                         {canDelete && u.products_count === 0 && (
                                             <button
                                                 onClick={() => handleDelete(u)}
+                                                title="Delete Unit"
                                                 className="p-2 rounded-lg text-danger-500 hover:bg-danger-50 dark:hover:bg-danger-900/20 transition-colors"
                                             >
                                                 <IconTrash size={18} />
@@ -141,8 +197,13 @@ export default function Units({ units = [] }) {
                         </div>
                     ) : (
                         <div className="p-8 text-center">
-                            <IconRulerMeasure size={48} className="mx-auto text-slate-300 dark:text-slate-600 mb-3" />
-                            <p className="text-slate-500 dark:text-slate-400">No units yet</p>
+                            <IconRulerMeasure
+                                size={48}
+                                className="mx-auto text-slate-300 dark:text-slate-600 mb-3"
+                            />
+                            <p className="text-slate-500 dark:text-slate-400">
+                                No units available yet.
+                            </p>
                         </div>
                     )}
                 </div>
@@ -152,37 +213,57 @@ export default function Units({ units = [] }) {
                         <h3 className="font-semibold text-slate-800 dark:text-white">
                             {editing ? "Edit Unit" : "Add New Unit"}
                         </h3>
+
                         <form onSubmit={handleSubmit} className="space-y-4">
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                 <Input
-                                    label="Kode"
-                                    placeholder="PCS"
+                                    label="Code"
+                                    placeholder="e.g., SLICE, SMALL, ML"
                                     value={form.code}
-                                    onChange={(e) => setForm({ ...form, code: e.target.value })}
+                                    onChange={(e) =>
+                                        setForm({
+                                            ...form,
+                                            code: e.target.value,
+                                        })
+                                    }
                                     errors={errors.code}
                                 />
+
                                 <Input
                                     label="Unit Name"
-                                    placeholder="Pieces"
+                                    placeholder="e.g., Slice, Small, Milliliter"
                                     value={form.name}
-                                    onChange={(e) => setForm({ ...form, name: e.target.value })}
+                                    onChange={(e) =>
+                                        setForm({
+                                            ...form,
+                                            name: e.target.value,
+                                        })
+                                    }
                                     errors={errors.name}
                                 />
+
                                 <Input
-                                    label="Simbol"
-                                    placeholder="pcs"
+                                    label="Symbol"
+                                    placeholder="e.g., slice, S, ml"
                                     value={form.symbol}
-                                    onChange={(e) => setForm({ ...form, symbol: e.target.value })}
+                                    onChange={(e) =>
+                                        setForm({
+                                            ...form,
+                                            symbol: e.target.value,
+                                        })
+                                    }
                                     errors={errors.symbol}
                                 />
                             </div>
+
                             <div className="flex items-center gap-3">
                                 <button
                                     type="submit"
                                     className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-primary-500 hover:bg-primary-600 text-white text-sm font-semibold transition-colors"
                                 >
-                                    {editing ? "Update" : "Save"}
+                                    {editing ? "Update Unit" : "Save Unit"}
                                 </button>
+
                                 <button
                                     type="button"
                                     onClick={resetForm}

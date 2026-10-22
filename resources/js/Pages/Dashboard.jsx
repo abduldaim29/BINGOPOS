@@ -46,4 +46,4 @@ export default function Dashboard() {
     );
 }
 
-Dashboard.layout = page => <DashboardLayout children={page} />
+Dashboard.layout = page => <DashboardLayout children={page} />;

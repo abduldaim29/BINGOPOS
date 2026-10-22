@@ -10,74 +10,74 @@ import {
     IconBulb,
 } from "@tabler/icons-react";
 
-const GITHUB_URL = "https://github.com/aryadwiputra/point-of-sales";
+const GITHUB_URL = "https://github.com/abduldaim29/BINGOPOS";
 
 const releases = [
     {
         version: "v2.0",
-        tag: "Revamp besar",
+        tag: "Major Revamp",
         date: "2025",
         items: [
-            "Redesign UI modern & responsive",
-            "33 screenshot dokumentasi semua modul",
-            "Fondasi arsitektur service layer",
+            "Modern and responsive UI redesign",
+            "33 documentation screenshots covering all modules",
+            "Service-layer architecture foundation",
         ],
     },
     {
         version: "v2.1",
-        tag: "Komunikasi",
+        tag: "Communication",
         date: "2025",
         items: [
-            "WhatsApp Gateway via whatsapp-web.js",
-            "App versioning terpusat (APP_VERSION)",
-            "Notifikasi low stock & aging",
+            "WhatsApp Gateway using whatsapp-web.js",
+            "Centralized application versioning (APP_VERSION)",
+            "Low-stock and aging notifications",
         ],
     },
     {
         version: "v2.2",
-        tag: "Upgrade Stack",
+        tag: "Technology Stack Upgrade",
         date: "2026",
         items: [
-            "Upgrade Laravel 12 → 13",
+            "Upgrade from Laravel 12 to Laravel 13",
             "Inertia v3 + React 19",
-            "Multi-language (Indonesia & English)",
+            "Multilingual support (Indonesian and English)",
         ],
     },
     {
         version: "v2.3",
-        tag: "Penguatan POS",
+        tag: "POS Improvements",
         date: "2026",
         items: [
-            "Perbaikan cart & penanganan shift",
-            "Fallback stok per warehouse",
-            "Dokumentasi lengkap per modul",
+            "Cart handling and cashier shift improvements",
+            "Warehouse-level stock fallback",
+            "Complete documentation for each module",
         ],
     },
     {
         version: "v2.3.1",
         tag: "Maintenance",
-        date: "Agu 2026",
+        date: "August 2026",
         items: [
-            "Rilis pemeliharaan & penyempurnaan",
-            "CI/CD pipeline (build + auto-deploy)",
-            "Landing page & situs publik baru",
-            "Perbaikan portal customer & invoice PDF",
+            "Maintenance release and refinements",
+            "CI/CD pipeline (build and automatic deployment)",
+            "New landing page and public website",
+            "Customer portal and PDF invoice improvements",
         ],
     },
     {
         version: "v2.4.0",
         tag: "Dine-in QR",
-        date: "Sep 2026",
+        date: "September 2026",
         items: [
-            "QR menu dan self-order pelanggan",
-            "Floor plan area dan meja",
-            "Status pesanan publik dan alur accept/reject staff",
+            "QR menus and customer self-ordering",
+            "Floor plans for dining areas and tables",
+            "Public order status and staff accept/reject workflow",
         ],
     },
     {
         version: "v2.5.0",
         tag: "Onboarding",
-        date: "Sep 2026",
+        date: "September 2026",
         items: [
             "First-install setup wizard",
             "Unified local development command",
@@ -86,58 +86,58 @@ const releases = [
     {
         version: "v2.6.0",
         tag: "Guided Tour",
-        date: "Sep 2026",
-        items: ["Guided tour untuk onboarding pengguna baru"],
+        date: "September 2026",
+        items: ["Guided tour for onboarding new users"],
     },
     {
         version: "v2.7.0",
         tag: "Setup Checklist",
-        date: "Sep 2026",
-        items: ["Tour replay dan checklist setup aplikasi"],
+        date: "September 2026",
+        items: ["Tour replay and application setup checklist"],
     },
     {
         version: "v2.8.0",
         tag: "Offline & QRIS",
-        date: "Sep 2026",
-        items: ["Offline transaction sync dan dynamic QRIS"],
+        date: "September 2026",
+        items: ["Offline transaction synchronization and dynamic QRIS"],
     },
     {
         version: "v2.9.0",
         tag: "Cashier Operations",
-        date: "Sep 2026",
-        items: ["Cash movement shift, laporan X/Z, dan order types"],
+        date: "September 2026",
+        items: ["Cash movements per shift, X/Z reports, and order types"],
     },
     {
         version: "v2.10.0",
         tag: "Printing",
-        date: "Sep 2026",
-        items: ["Auto-print dan ESC/POS WebUSB"],
+        date: "September 2026",
+        items: ["Automatic printing and ESC/POS WebUSB support"],
     },
     {
         version: "v2.10.1",
         tag: "Maintenance",
-        date: "Sep 2026",
-        items: ["Perbaikan walk-in checkout dan dokumentasi"],
+        date: "September 2026",
+        items: ["Walk-in checkout and documentation fixes"],
     },
     {
         version: "v2.10.2",
         tag: "Maintenance",
-        date: "Sep 2026",
-        items: ["Perbaikan tour dan replay behavior"],
+        date: "September 2026",
+        items: ["Guided tour and replay behavior fixes"],
     },
     {
         version: "v2.10.3",
         tag: "Maintenance",
-        date: "Sep 2026",
-        items: ["Stabilisasi setup wizard dan first-run flow"],
+        date: "September 2026",
+        items: ["Setup wizard and first-run flow stabilization"],
     },
     {
         version: "v2.10.4",
-        tag: "Rilis saat ini",
-        date: "Sep 2026",
+        tag: "Current Release",
+        date: "September 2026",
         items: [
-            "Reuse warehouse seeded pada setup wizard",
-            "Perbaikan submission form setup wizard",
+            "Reuse of seeded warehouses in the setup wizard",
+            "Setup wizard form submission fixes",
         ],
     },
 ];
@@ -145,25 +145,25 @@ const releases = [
 const directions = [
     {
         icon: IconSparkles,
-        title: "Pengalaman mobile yang lebih dalam",
-        desc: "Penyempurnaan offline: conflict handling, retry queue, observability, dan dukungan master data yang lebih luas.",
+        title: "Enhanced Mobile Experience",
+        desc: "Further offline improvements, including conflict handling, retry queues, observability, and broader master data support.",
     },
     {
         icon: IconBulb,
-        title: "Integrasi ekosistem",
-        desc: "Ekspansi payment gateway & kurir pengiriman, konektor akuntansi, dan integrasi e-commerce.",
+        title: "Ecosystem Integrations",
+        desc: "Expansion of payment gateway and shipping carrier integrations, accounting connectors, and e-commerce integrations.",
     },
     {
         icon: IconRocket,
-        title: "Ekosistem pengembang",
-        desc: "Memperluas dokumentasi API yang sudah tersedia, tema/plugin, dan tooling yang memudahkan kontribusi.",
+        title: "Developer Ecosystem",
+        desc: "Expand the existing API documentation, introduce themes and plugins, and provide tools that make contributing easier.",
     },
 ];
 
 export default function Roadmap() {
     return (
         <PublicLayout active="/roadmap">
-            <Head title="Roadmap — Dikasir" />
+            <Head title="Roadmap — BINGOPOS" />
 
             {/* Header */}
             <section className="pt-20 pb-14 px-6 bg-gradient-to-b from-primary-50 dark:from-primary-950/40 to-transparent">
@@ -173,11 +173,11 @@ export default function Roadmap() {
                         Roadmap
                     </div>
                     <h1 className="text-4xl md:text-5xl font-extrabold text-slate-900 dark:text-white">
-                        Perjalanan Dikasir
+                        The BINGOPOS Journey
                     </h1>
                     <p className="mt-5 text-lg text-slate-600 dark:text-slate-400 max-w-2xl mx-auto">
-                        Dari kasir sederhana menjadi ekosistem POS lengkap — dan masih terus
-                        berkembang bersama komunitas.
+                        From a simple point-of-sale system to a complete POS ecosystem —
+                        continuously evolving alongside the community.
                     </p>
                 </div>
             </section>
@@ -214,16 +214,16 @@ export default function Roadmap() {
                 </div>
             </section>
 
-            {/* Directions */}
+            {/* Future Directions */}
             <section className="py-20 px-6 bg-white dark:bg-slate-900/50 border-y border-slate-200 dark:border-slate-800">
                 <div className="max-w-5xl mx-auto">
                     <div className="text-center mb-12">
                         <h2 className="text-3xl font-bold text-slate-900 dark:text-white">
-                            Arah ke Depan
+                            What's Next?
                         </h2>
                         <p className="mt-4 text-slate-600 dark:text-slate-400 max-w-2xl mx-auto">
-                            Prioritas dibentuk bersama komunitas — dari feedback pengguna dan
-                            kontributor.
+                            Priorities are shaped together with the community through
+                            user feedback and contributor input.
                         </p>
                     </div>
                     <div className="grid md:grid-cols-3 gap-6">
@@ -252,11 +252,11 @@ export default function Roadmap() {
                 <div className="max-w-3xl mx-auto">
                     <div className="bg-slate-900 dark:bg-slate-800 rounded-3xl p-10 text-center">
                         <h2 className="text-2xl md:text-3xl font-bold text-white mb-3">
-                            Roadmap dibentuk oleh komunitas
+                            The Roadmap Is Shaped by the Community
                         </h2>
                         <p className="text-slate-400 mb-7">
-                            Punya ide fitur? Laporkan bug? Atau ingin mengerjakan salah satu arah
-                            di atas? Semua dimulai dari GitHub.
+                            Have a feature idea? Found a bug? Want to work on one of the
+                            directions above? It all starts on GitHub.
                         </p>
                         <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
                             <a
@@ -266,13 +266,13 @@ export default function Roadmap() {
                                 className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-primary-500 to-primary-600 text-white font-semibold rounded-xl hover:from-primary-600 hover:to-primary-700 transition-all"
                             >
                                 <IconBrandGithub size={18} />
-                                Buat Issue / Ide
+                                Create an Issue or Suggest an Idea
                             </a>
                             <Link
-                                href="/kontribusi"
+                                href="/contribute"
                                 className="inline-flex items-center gap-2 px-6 py-3 text-sm font-semibold text-slate-300 border border-slate-600 rounded-xl hover:border-primary-400 hover:text-primary-400 transition-colors"
                             >
-                                Mulai berkontribusi
+                                Start Contributing
                                 <IconArrowRight size={16} />
                             </Link>
                         </div>

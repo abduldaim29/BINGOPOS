@@ -141,14 +141,14 @@ export default function Form({ mode = "create", member = null }) {
                 onSuccess: () =>
                     toast.success(
                         isEdit
-                            ? "Data member berhasil diperbarui"
-                            : "Member baru berhasil didaftarkan"
+                            ? "Member information updated successfully"
+                            : "New member registered successfully"
                     ),
                 onError: () =>
                     toast.error(
                         isEdit
-                            ? "Gagal memperbarui data member"
-                            : "Gagal mendaftarkan member"
+                            ? "Failed to update member information"
+                            : "Failed to register member"
                     ),
             }
         );
@@ -156,7 +156,7 @@ export default function Form({ mode = "create", member = null }) {
 
     return (
         <>
-            <Head title={isEdit ? "Edit Member" : "Daftar Member Baru"} />
+            <Head title={isEdit ? "Edit Member" : "Register New Member"} />
 
             <div className="w-full">
                 <div className="mb-6">
@@ -165,15 +165,15 @@ export default function Form({ mode = "create", member = null }) {
                         className="mb-3 inline-flex items-center gap-2 text-sm text-slate-500 hover:text-primary-600"
                     >
                         <IconArrowLeft size={16} />
-                        Kembali ke Member
+                        Back to Members
                     </Link>
                     <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
-                        {isEdit ? "Edit Member" : "Daftarkan Member Baru"}
+                        {isEdit ? "Edit Member" : "Register New Member"}
                     </h1>
                     <p className="text-sm text-slate-500 dark:text-slate-400">
                         {isEdit
-                            ? "Kelola status, tier, dan data dasar member tanpa memutus histori transaksi maupun reward."
-                            : "Daftarkan pelanggan sebagai member agar langsung mendapatkan poin, benefit harga member, dan voucher personal."}
+                            ? "Manage the member's status, tier, and basic information without losing transaction history or rewards."
+                            : "Register a customer as a member to provide loyalty points, member pricing benefits, and personalized vouchers."}
                     </p>
                 </div>
 
@@ -185,10 +185,10 @@ export default function Form({ mode = "create", member = null }) {
                             </div>
                             <div>
                                 <p className="text-sm font-semibold text-slate-900 dark:text-white">
-                                    Cara kerja member
+                                    How Membership Works
                                 </p>
                                 <p className="mt-1 text-xs leading-6 text-slate-600 dark:text-slate-300">
-                                    Member otomatis memakai pricing khusus member, earn/redeem poin dari loyalty settings, dan bisa menerima voucher personal di CRM.
+                                    Members automatically receive special member pricing, earn and redeem points according to loyalty settings, and can receive personalized vouchers through CRM.
                                 </p>
                             </div>
                         </div>
@@ -201,10 +201,10 @@ export default function Form({ mode = "create", member = null }) {
                             </div>
                             <div>
                                 <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
-                                    Profil Member
+                                    Member Profile
                                 </h2>
                                 <p className="text-sm text-slate-500 dark:text-slate-400">
-                                    Lengkapi identitas dasar member untuk pencarian dan histori CRM.
+                                    Complete the member's basic information for CRM searches and transaction history.
                                 </p>
                             </div>
                         </div>
@@ -212,8 +212,8 @@ export default function Form({ mode = "create", member = null }) {
                         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                             <Input
                                 type="text"
-                                label="Nama Member"
-                                placeholder="Masukkan nama lengkap"
+                                label="Member Name"
+                                placeholder="Enter full name"
                                 errors={errors.name}
                                 onChange={(event) =>
                                     setData("name", event.target.value)
@@ -222,8 +222,8 @@ export default function Form({ mode = "create", member = null }) {
                             />
                             <Input
                                 type="text"
-                                label="No. Handphone"
-                                placeholder="08xxxxxxxxxx"
+                                label="Phone Number"
+                                placeholder="Enter phone number"
                                 errors={errors.no_telp}
                                 onChange={(event) =>
                                     setData("no_telp", event.target.value)
@@ -236,10 +236,10 @@ export default function Form({ mode = "create", member = null }) {
                             <div className="flex items-center justify-between gap-4">
                                 <div>
                                     <p className="text-sm font-semibold text-slate-900 dark:text-white">
-                                        Status Member
+                                        Member Status
                                     </p>
                                     <p className="text-xs text-slate-500 dark:text-slate-400">
-                                        Nonaktifkan member jika benefit member perlu dihentikan tanpa menghapus histori.
+                                        Deactivate a member to suspend membership benefits without deleting their history.
                                     </p>
                                 </div>
                                 <label className="inline-flex items-center gap-2 text-sm font-medium text-slate-700 dark:text-slate-300">
@@ -254,13 +254,13 @@ export default function Form({ mode = "create", member = null }) {
                                         }
                                         className="h-4 w-4 rounded border-slate-300 text-primary-500"
                                     />
-                                    Aktif
+                                    Active
                                 </label>
                             </div>
 
                             <div className="mt-4">
                                 <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                                    Tier Member
+                                    Member Tier
                                 </label>
                                 <select
                                     value={data.loyalty_tier}
@@ -289,13 +289,13 @@ export default function Form({ mode = "create", member = null }) {
 
                     <div className="rounded-2xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900">
                         <h2 className="mb-4 text-lg font-semibold text-slate-900 dark:text-white">
-                            Wilayah & Alamat
+                            Region & Address
                         </h2>
 
                         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                             <div>
                                 <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                                    Provinsi
+                                    Province
                                 </label>
                                 <select
                                     value={data.province_id}
@@ -304,7 +304,7 @@ export default function Form({ mode = "create", member = null }) {
                                     }
                                     className="mt-2 h-11 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
                                 >
-                                    <option value="">Pilih Provinsi</option>
+                                    <option value="">Select Province</option>
                                     {provinces.map((province) => (
                                         <option
                                             key={province.code}
@@ -323,7 +323,7 @@ export default function Form({ mode = "create", member = null }) {
 
                             <div>
                                 <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                                    Kota/Kabupaten
+                                    City/Regency
                                 </label>
                                 <select
                                     value={data.regency_id}
@@ -333,9 +333,12 @@ export default function Form({ mode = "create", member = null }) {
                                     disabled={!data.province_id}
                                     className="mt-2 h-11 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 text-sm disabled:cursor-not-allowed disabled:opacity-60 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
                                 >
-                                    <option value="">Pilih Kota/Kabupaten</option>
+                                    <option value="">Select City/Regency</option>
                                     {regencyList.map((regency) => (
-                                        <option key={regency.code} value={regency.code}>
+                                        <option
+                                            key={regency.code}
+                                            value={regency.code}
+                                        >
                                             {regency.name}
                                         </option>
                                     ))}
@@ -351,7 +354,7 @@ export default function Form({ mode = "create", member = null }) {
                         <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
                             <div>
                                 <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                                    Kecamatan
+                                    District
                                 </label>
                                 <select
                                     value={data.district_id}
@@ -361,9 +364,12 @@ export default function Form({ mode = "create", member = null }) {
                                     disabled={!data.regency_id}
                                     className="mt-2 h-11 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 text-sm disabled:cursor-not-allowed disabled:opacity-60 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
                                 >
-                                    <option value="">Pilih Kecamatan</option>
+                                    <option value="">Select District</option>
                                     {districtList.map((district) => (
-                                        <option key={district.code} value={district.code}>
+                                        <option
+                                            key={district.code}
+                                            value={district.code}
+                                        >
                                             {district.name}
                                         </option>
                                     ))}
@@ -377,7 +383,7 @@ export default function Form({ mode = "create", member = null }) {
 
                             <div>
                                 <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                                    Kelurahan
+                                    Village
                                 </label>
                                 <select
                                     value={data.village_id}
@@ -387,9 +393,12 @@ export default function Form({ mode = "create", member = null }) {
                                     disabled={!data.district_id}
                                     className="mt-2 h-11 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 text-sm disabled:cursor-not-allowed disabled:opacity-60 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
                                 >
-                                    <option value="">Pilih Kelurahan</option>
+                                    <option value="">Select Village</option>
                                     {villageList.map((village) => (
-                                        <option key={village.code} value={village.code}>
+                                        <option
+                                            key={village.code}
+                                            value={village.code}
+                                        >
                                             {village.name}
                                         </option>
                                     ))}
@@ -404,8 +413,8 @@ export default function Form({ mode = "create", member = null }) {
 
                         <div className="mt-4">
                             <Textarea
-                                label="Alamat Detail"
-                                placeholder="Alamat lengkap member"
+                                label="Full Address"
+                                placeholder="Enter the member's full address"
                                 errors={errors.address}
                                 onChange={(event) =>
                                     setData("address", event.target.value)
@@ -421,7 +430,7 @@ export default function Form({ mode = "create", member = null }) {
                             href={route("members.index")}
                             className="rounded-xl border border-slate-200 px-5 py-2.5 font-medium text-slate-600 transition-colors hover:bg-slate-100 dark:border-slate-700 dark:text-slate-400 dark:hover:bg-slate-800"
                         >
-                            Batal
+                            Cancel
                         </Link>
                         <button
                             type="submit"
@@ -430,10 +439,10 @@ export default function Form({ mode = "create", member = null }) {
                         >
                             <IconDeviceFloppy size={18} />
                             {processing
-                                ? "Menyimpan..."
+                                ? "Saving..."
                                 : isEdit
-                                ? "Simpan Perubahan"
-                                : "Daftarkan Member"}
+                                ? "Save Changes"
+                                : "Register Member"}
                         </button>
                     </div>
                 </form>

@@ -18,6 +18,8 @@ class RestaurantDealItem extends Model
         'min_qty',
         'max_qty',
         'sort_order',
+        'deal_price',
+        'deal_variation_prices',
     ];
 
     protected $casts = [
@@ -28,6 +30,8 @@ class RestaurantDealItem extends Model
         'min_qty' => 'integer',
         'max_qty' => 'integer',
         'sort_order' => 'integer',
+        'deal_price' => 'decimal:2',
+        'deal_variation_prices' => 'array',
     ];
 
     public function deal(): BelongsTo

@@ -42,6 +42,7 @@ export default function HeldTransactions({
             {},
             {
                 preserveScroll: true,
+                only: ["carts", "carts_total", "heldCarts", "initialPricingPreview"],
                 onSuccess: () => {
                     toast.success("Transaction resumed");
                     setResumingId(null);
@@ -64,6 +65,7 @@ export default function HeldTransactions({
 
         router.delete(route("transactions.clearHold", holdId), {
             preserveScroll: true,
+            only: ["heldCarts"],
             onSuccess: () => {
                 toast.success("Transaction deleted");
                 setDeletingId(null);

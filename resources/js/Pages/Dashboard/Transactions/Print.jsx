@@ -60,7 +60,7 @@ export default function Print({ transaction }) {
     }, [showQris, transaction?.invoice, liveStatus]);
 
     const formatDateTime = (value) =>
-        new Date(value).toLocaleString("id-ID", {
+        new Date(value).toLocaleString("id-PK", {
             day: "2-digit",
             month: "short",
             year: "numeric",
@@ -257,14 +257,7 @@ export default function Print({ transaction }) {
                     };
                 }
             }
-        } else if (printMode === "invoice") {
-            // For invoice, open the PDF route
-            window.open(route("pdf.transactions.invoice", transaction.invoice), "_blank");
-        } else if (printMode === "shipping") {
-            // For shipping label, open the PDF route
-            window.open(route("pdf.transactions.shipping", transaction.invoice), "_blank");
         } else {
-            // Fallback to regular print
             window.print();
         }
     };
@@ -486,6 +479,7 @@ export default function Print({ transaction }) {
                                     <ThermalReceipt
                                         transaction={transaction}
                                         storeName={store.name}
+                                        storeLogo={store.logo}
                                         storeAddress={store.address}
                                         storePhone={store.phone}
                                         storeEmail={store.email}
@@ -495,6 +489,8 @@ export default function Print({ transaction }) {
                                     <ThermalReceipt58mm
                                         transaction={transaction}
                                         storeName={store.name}
+                                        storeLogo={store.logo}
+                                        storeAddress={store.address}
                                         storePhone={store.phone}
                                         storeEmail={store.email}
                                         storeWebsite={store.website}

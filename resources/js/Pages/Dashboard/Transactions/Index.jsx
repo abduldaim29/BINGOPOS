@@ -241,39 +241,47 @@ export default function Index({
                     grand_total: 0,
                 },
             });
+            setIsLoadingPricing(false);
 
             return;
         }
 
-        let cancelled = false;
+        const controller = new AbortController();
         setIsLoadingPricing(true);
 
-        axios
-            .post(route("transactions.pricing-preview"), {
-                customer_id: selectedCustomer?.id ?? null,
-                discount,
-                shipping_cost: shipping,
-                redeem_points: Number(redeemPointsInput || 0),
-                customer_voucher_id: selectedVoucherId || null,
-            })
-            .then((response) => {
-                if (!cancelled) {
-                    setPricingPreview(response.data?.data ?? initialPricingPreview);
-                }
-            })
-            .catch(() => {
-                if (!cancelled) {
-                    toast.error("Failed to load active promo");
-                }
-            })
-            .finally(() => {
-                if (!cancelled) {
-                    setIsLoadingPricing(false);
-                }
-            });
+        const timeoutId = window.setTimeout(() => {
+            axios
+                .post(
+                    route("transactions.pricing-preview"),
+                    {
+                        customer_id: selectedCustomer?.id ?? null,
+                        discount,
+                        shipping_cost: shipping,
+                        redeem_points: Number(redeemPointsInput || 0),
+                        customer_voucher_id: selectedVoucherId || null,
+                    },
+                    { signal: controller.signal }
+                )
+                .then((response) => {
+                    if (!controller.signal.aborted) {
+                        setPricingPreview(response.data?.data ?? initialPricingPreview);
+                    }
+                })
+                .catch(() => {
+                    if (!controller.signal.aborted) {
+                        toast.error("Failed to load active promo");
+                    }
+                })
+                .finally(() => {
+                    if (!controller.signal.aborted) {
+                        setIsLoadingPricing(false);
+                    }
+                });
+        }, 150);
 
         return () => {
-            cancelled = true;
+            window.clearTimeout(timeoutId);
+            controller.abort();
         };
     }, [
         selectedCustomer?.id,
@@ -359,23 +367,31 @@ export default function Index({
     };
 
     // Handle add product to cart
-    const handleAddToCart = async (product, unit = null) => {
+    const handleAddToCart = async (product, unit = null, variationId = null, variationName = null) => {
         if (!product?.id) return;
 
         setAddingProductId(product.id);
+
+        // Calculate correct price: variation price takes precedence over unit price
+        const finalPrice = variationId && product.variation_prices?.[variationId]
+            ? product.variation_prices[variationId]
+            : (unit ? unit.sell_price : product.sell_price);
 
         router.post(
             route("transactions.addToCart"),
             {
                 product_id: product.id,
-                sell_price: unit ? unit.sell_price : product.sell_price,
+                sell_price: finalPrice,
                 qty: 1,
                 unit_id: unit ? unit.unit_id : undefined,
+                variation_id: variationId,
+                variation_name: variationName,
             },
             {
                 preserveScroll: true,
+                only: ["carts", "carts_total", "initialPricingPreview"],
                 onSuccess: () => {
-                    toast.success(`${product.title}${unit ? ` (${unit.code})` : ""} added to cart`);
+                    toast.success(`${product.title}${variationName ? ` (${variationName})` : ""}${unit ? ` (${unit.code})` : ""} added to cart`);
                     setAddingProductId(null);
                 },
                 onError: () => {
@@ -398,6 +414,7 @@ export default function Index({
             { qty: newQty },
             {
                 preserveScroll: true,
+                only: ["carts", "carts_total", "initialPricingPreview"],
                 onSuccess: () => {
                     setUpdatingCartId(null);
                 },
@@ -438,6 +455,7 @@ export default function Index({
             { label },
             {
                 preserveScroll: true,
+                only: ["carts", "carts_total", "heldCarts", "initialPricingPreview"],
                 onSuccess: () => {
                     toast.success(t("transactions.transactionHeld"));
                     setIsHolding(false);
@@ -582,6 +600,7 @@ export default function Index({
 
         router.delete(route("transactions.destroyCart", cartId), {
             preserveScroll: true,
+            only: ["carts", "carts_total", "initialPricingPreview"],
             onSuccess: () => {
                 toast.success("Item removed from cart");
                 setRemovingItemId(null);

@@ -11,6 +11,7 @@ import {
     IconLoader2,
 } from "@tabler/icons-react";
 import { useState } from "react";
+import { clearAllCache } from "@/Utils/offlineDb";
 
 export default function Login({ status, canResetPassword, canRegister, botGuard }) {
     const { t } = useTranslation();
@@ -26,6 +27,10 @@ export default function Login({ status, canResetPassword, canRegister, botGuard 
     const [showPassword, setShowPassword] = useState(false);
 
     useEffect(() => {
+        // Clear all cached data when visiting login page to ensure fresh data for new user
+        clearAllCache().catch((error) => {
+            console.error("Failed to clear cache:", error);
+        });
         return () => reset("password");
     }, []);
 

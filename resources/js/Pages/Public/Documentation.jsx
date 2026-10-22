@@ -2,93 +2,93 @@ import { Head } from "@inertiajs/react";
 import PublicLayout from "@/Layouts/PublicLayout";
 import { IconBook2, IconArrowRight, IconBrandGithub } from "@tabler/icons-react";
 
-const GITHUB_URL = "https://github.com/aryadwiputra/point-of-sales";
+const GITHUB_URL = "https://github.com/abduldaim29/BINGOPOS";
 const DOCS_BASE = `${GITHUB_URL}/blob/main/docs`;
 const REPO_BASE = `${GITHUB_URL}/blob/main`;
 
 const categories = [
     {
-        title: "Mulai Cepat",
+        title: "Getting Started",
         docs: [
-            { file: "getting-started.md", title: "Getting Started", desc: "Panduan setup lengkap dari nol sampai bisa login & mengakses dashboard." },
-            { file: "configuration.md", title: "Konfigurasi", desc: "Environment, payment gateway, pajak, printer thermal, dan WhatsApp." },
-            { file: "architecture-overview.md", title: "Arsitektur", desc: "Struktur kode, service layer, middleware, dan Node service." },
-            { file: "feature-index.md", title: "Indeks Fitur", desc: "Daftar fitur, dokumentasi, dan status implementasinya." },
-            { file: "CHANGELOG.md", href: `${REPO_BASE}/CHANGELOG.md`, title: "Changelog", desc: "Riwayat rilis aplikasi sampai versi terbaru." },
+            { file: "getting-started.md", title: "Getting Started", desc: "Complete setup guide, from initial installation to logging in and accessing the dashboard." },
+            { file: "configuration.md", title: "Configuration", desc: "Environment settings, payment gateways, taxes, thermal printers, and WhatsApp integration." },
+            { file: "architecture-overview.md", title: "Architecture Overview", desc: "Code structure, service layer, middleware, and Node.js services." },
+            { file: "feature-index.md", title: "Feature Index", desc: "List of features, documentation, and their implementation status." },
+            { file: "CHANGELOG.md", href: `${REPO_BASE}/CHANGELOG.md`, title: "Changelog", desc: "Application release history, including the latest version." },
         ],
     },
     {
-        title: "POS & Transaksi",
+        title: "POS & Transactions",
         docs: [
-            { file: "features/pos-transactions.md", title: "Transaksi POS", desc: "Alur cart, checkout, hold/resume, dan multi-payment." },
-            { file: "features/cashier-shifts.md", title: "Shift Kasir", desc: "Buka/tutup shift dan rekap kas per shift." },
-            { file: "features/sales-returns.md", title: "Retur Penjualan", desc: "Proses retur dari transaksi yang sudah jadi." },
-            { file: "features/mobile-pos.md", title: "Mobile POS (PWA)", desc: "Gunakan kasir dari HP — installable dan offline-ready." },
-            { file: "features/offline-mode.md", title: "Offline Mode", desc: "Batasan, antrean transaksi, dan sinkronisasi offline." },
-            { file: "features/thermal-printer.md", title: "Printer Thermal", desc: "Cetak struk 58/80mm via WebUSB." },
-            { file: "features/dine-in.md", title: "Dine-in QR Menu", desc: "QR menu, self-order, floor plan, dan status pesanan." },
-            { file: "features/api-integration.md", title: "API & Integrasi", desc: "Auth, endpoint POS, master data, dan API documentation." },
+            { file: "features/pos-transactions.md", title: "POS Transactions", desc: "Cart management, checkout, hold and resume orders, and multiple payment methods." },
+            { file: "features/cashier-shifts.md", title: "Cashier Shifts", desc: "Opening and closing cashier shifts and reviewing cash summaries for each shift." },
+            { file: "features/sales-returns.md", title: "Sales Returns", desc: "Process returns for completed sales transactions." },
+            { file: "features/mobile-pos.md", title: "Mobile POS (PWA)", desc: "Use the POS on mobile devices with installable and offline-ready functionality." },
+            { file: "features/offline-mode.md", title: "Offline Mode", desc: "Offline limitations, queued transactions, and synchronization." },
+            { file: "features/thermal-printer.md", title: "Thermal Printer", desc: "Print 58mm and 80mm receipts using WebUSB." },
+            { file: "features/dine-in.md", title: "Dine-in QR Menu", desc: "QR menus, self-ordering, floor plans, and order status tracking." },
+            { file: "features/api-integration.md", title: "API & Integrations", desc: "Authentication, POS endpoints, master data, and API documentation." },
         ],
     },
     {
         title: "Inventory & Warehouse",
         docs: [
-            { file: "features/inventory-stock.md", title: "Inventory & Stok", desc: "Produk, kategori, stock opname, dan mutasi stok." },
-            { file: "features/multi-warehouse.md", title: "Multi-Warehouse", desc: "Stok per gudang dan transfer antar gudang." },
-            { file: "features/unit-conversion.md", title: "Multi-Satuan", desc: "Konversi satuan produk (pcs, box, kg, karton)." },
+            { file: "features/inventory-stock.md", title: "Inventory & Stock", desc: "Products, categories, stocktaking, and stock movements." },
+            { file: "features/multi-warehouse.md", title: "Multi-Warehouse", desc: "Manage stock by warehouse and transfer inventory between warehouses." },
+            { file: "features/unit-conversion.md", title: "Unit Conversion", desc: "Product unit conversions, including pieces, boxes, kilograms, and cartons." },
         ],
     },
     {
         title: "Purchasing & Finance",
         docs: [
-            { file: "features/purchasing-chain.md", title: "Rantai Pengadaan", desc: "Purchase order, goods receiving, dan supplier return." },
-            { file: "features/payables-suppliers.md", title: "Supplier & Payables", desc: "Kelola supplier dan hutang." },
-            { file: "features/receivables.md", title: "Receivables", desc: "Piutang pelanggan dan pembayaran parsial." },
-            { file: "features/tax-management.md", title: "Manajemen Pajak", desc: "PPN, NPWP, dan NIB." },
-            { file: "features/customer-portal.md", title: "Customer Portal", desc: "Portal self-service: lihat invoice & bayar online." },
+            { file: "features/purchasing-chain.md", title: "Procurement Workflow", desc: "Purchase orders, goods receiving, and supplier returns." },
+            { file: "features/payables-suppliers.md", title: "Suppliers & Payables", desc: "Manage suppliers and accounts payable." },
+            { file: "features/receivables.md", title: "Accounts Receivable", desc: "Manage customer receivables and partial payments." },
+            { file: "features/tax-management.md", title: "Tax Management", desc: "Manage VAT, tax identification numbers, and business registration numbers." },
+            { file: "features/customer-portal.md", title: "Customer Portal", desc: "Self-service portal for viewing invoices and making online payments." },
         ],
     },
     {
         title: "CRM & Loyalty",
         docs: [
-            { file: "features/crm-segments.md", title: "Segmen & Campaign", desc: "Segmentasi otomatis dan campaign marketing." },
-            { file: "features/member-management.md", title: "Member Management", desc: "Tier member dan poin loyalty." },
-            { file: "features/promotions-loyalty.md", title: "Promo & Loyalty", desc: "Pricing rules, voucher, dan program loyalty." },
+            { file: "features/crm-segments.md", title: "Segments & Campaigns", desc: "Automated customer segmentation and marketing campaigns." },
+            { file: "features/member-management.md", title: "Member Management", desc: "Manage membership tiers and loyalty points." },
+            { file: "features/promotions-loyalty.md", title: "Promotions & Loyalty", desc: "Pricing rules, vouchers, and customer loyalty programs." },
         ],
     },
     {
-        title: "Admin & Tools",
+        title: "Administration & Tools",
         docs: [
-            { file: "features/rbac-users-roles.md", title: "RBAC", desc: "User, role, dan permission." },
-            { file: "features/audit-logs.md", title: "Audit Log", desc: "Jejak perubahan before/after." },
-            { file: "features/settings-payments.md", title: "Payment Settings", desc: "Midtrans, Xendit, dan bank accounts." },
-            { file: "features/import-export.md", title: "Import/Export", desc: "Produk & customer via Excel." },
-            { file: "features/reports-documents.md", title: "Reports & Documents", desc: "Laporan dan dokumen PDF." },
-            { file: "features/whatsapp-gateway.md", title: "WhatsApp Gateway", desc: "Integrasi whatsapp-web.js." },
-            { file: "features/discount-approval.md", title: "Discount Approval", desc: "Approval diskon, permission, dan audit trail." },
-            { file: "features/app-versioning.md", title: "App Versioning", desc: "APP_VERSION, UI, dan kebijakan rilis." },
+            { file: "features/rbac-users-roles.md", title: "Role-Based Access Control (RBAC)", desc: "Manage users, roles, and permissions." },
+            { file: "features/audit-logs.md", title: "Audit Logs", desc: "Track changes with before-and-after records." },
+            { file: "features/settings-payments.md", title: "Payment Settings", desc: "Configure Midtrans, Xendit, and bank accounts." },
+            { file: "features/import-export.md", title: "Import & Export", desc: "Import and export products and customers using Excel." },
+            { file: "features/reports-documents.md", title: "Reports & Documents", desc: "Generate reports and PDF documents." },
+            { file: "features/whatsapp-gateway.md", title: "WhatsApp Gateway", desc: "WhatsApp integration using whatsapp-web.js." },
+            { file: "features/discount-approval.md", title: "Discount Approval", desc: "Manage discount approvals, permissions, and audit trails." },
+            { file: "features/app-versioning.md", title: "Application Versioning", desc: "Configure APP_VERSION, user interface versioning, and release policies." },
         ],
     },
 ];
 
 export default function Documentation() {
     return (
-        <PublicLayout active="/dokumentasi">
-            <Head title="Dokumentasi — Dikasir" />
+        <PublicLayout active="/documentation">
+            <Head title="Documentation — BINGOPOS" />
 
             {/* Header */}
             <section className="pt-20 pb-14 px-6 bg-gradient-to-b from-primary-50 dark:from-primary-950/40 to-transparent">
                 <div className="max-w-4xl mx-auto text-center">
                     <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary-50 dark:bg-primary-950/50 text-primary-600 dark:text-primary-400 text-sm font-medium mb-5 border border-primary-100 dark:border-primary-900">
                         <IconBook2 size={16} />
-                        Dokumentasi
+                        Documentation
                     </div>
                     <h1 className="text-4xl md:text-5xl font-extrabold text-slate-900 dark:text-white">
-                        Dokumentasi Lengkap
+                        Complete Documentation
                     </h1>
                     <p className="mt-5 text-lg text-slate-600 dark:text-slate-400 max-w-2xl mx-auto">
-                        Semua panduan tersedia di repository GitHub — selalu terbaru, ikut
-                        berkembang bersama kode.
+                        All guides are available in the GitHub repository, kept up to date
+                        and evolving alongside the codebase.
                     </p>
                 </div>
             </section>
@@ -128,16 +128,16 @@ export default function Documentation() {
                 </div>
             </section>
 
-            {/* CTA */}
+            {/* Call to Action */}
             <section className="pb-20 px-6">
                 <div className="max-w-3xl mx-auto">
                     <div className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800/60 p-8 text-center">
                         <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-2">
-                            Dokumentasi kurang jelas?
+                            Need clarification or more information?
                         </h2>
                         <p className="text-slate-600 dark:text-slate-400 mb-6">
-                            Dokumentasi juga open source — perbaiki dan buat PR, atau tanya di
-                            GitHub Discussions.
+                            The documentation is open source. Help improve it by submitting
+                            a pull request, or ask questions in GitHub Discussions.
                         </p>
                         <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
                             <a
@@ -147,7 +147,7 @@ export default function Documentation() {
                                 className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-primary-500 to-primary-600 text-white font-semibold rounded-xl hover:from-primary-600 hover:to-primary-700 transition-all"
                             >
                                 <IconBrandGithub size={18} />
-                                Lihat semua docs di GitHub
+                                Browse All Documentation
                             </a>
                             <a
                                 href={`${GITHUB_URL}/discussions`}
@@ -155,7 +155,7 @@ export default function Documentation() {
                                 rel="noopener noreferrer"
                                 className="inline-flex items-center gap-2 px-6 py-3 text-sm font-semibold text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 rounded-xl hover:border-primary-300 transition-colors"
                             >
-                                Tanya di Discussions
+                                Ask in Discussions
                             </a>
                         </div>
                     </div>

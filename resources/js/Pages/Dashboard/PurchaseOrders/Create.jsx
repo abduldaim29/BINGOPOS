@@ -13,9 +13,9 @@ import {
 import toast from "react-hot-toast";
 
 const formatCurrency = (value = 0) =>
-    new Intl.NumberFormat("id-ID", {
+    new Intl.NumberFormat("en-US", {
         style: "currency",
-        currency: "IDR",
+        currency: "PKR",
         minimumFractionDigits: 0,
     }).format(value);
 
@@ -37,7 +37,7 @@ export default function Create({ suppliers, products, warehouses = [] }) {
 
     const addItem = (product) => {
         if (data.items.some((i) => i.product_id === product.id)) {
-            toast.error("Produk sudah ada di daftar.");
+            toast.error("This product is already in the list.");
             return;
         }
         setData("items", [
@@ -61,103 +61,129 @@ export default function Create({ suppliers, products, warehouses = [] }) {
 
     const updateItem = (index, key, value) => {
         const items = [...data.items];
-        items[index] = { ...items[index], [key]: key === "qty_ordered" ? parseInt(value) || 0 : Number(value) || 0 };
+        items[index] = {
+            ...items[index],
+            [key]: key === "qty_ordered" ? parseInt(value) || 0 : Number(value) || 0,
+        };
         setData("items", items);
     };
 
     const submit = (e) => {
         e.preventDefault();
         if (data.items.length === 0) {
-            toast.error("Tambahkan minimal satu item.");
+            toast.error("Add at least one item.");
             return;
         }
         post(route("purchase-orders.store"), {
-            onError: () => toast.error("Gagal membuat purchase order"),
+            onError: () => toast.error("Failed to create purchase order."),
         });
     };
 
-    const total = data.items.reduce((sum, item) => sum + item.qty_ordered * item.unit_price, 0);
+    const total = data.items.reduce(
+        (sum, item) => sum + item.qty_ordered * item.unit_price,
+        0
+    );
 
     return (
         <>
-            <Head title="Buat Purchase Order" />
+            <Head title="Create Purchase Order" />
             <div className="mb-6">
                 <Link
                     href={route("purchase-orders.index")}
                     className="mb-3 inline-flex items-center gap-2 text-sm text-slate-500 hover:text-primary-600"
                 >
                     <IconArrowLeft size={16} />
-                    Kembali ke daftar PO
+                    Back to Purchase Orders
                 </Link>
                 <h1 className="flex items-center gap-2 text-2xl font-bold text-slate-900 dark:text-white">
                     <IconShoppingCart size={28} className="text-primary-500" />
-                    Buat Purchase Order
+                    Create Purchase Order
                 </h1>
             </div>
 
             <form onSubmit={submit} className="max-w-5xl">
                 <div className="space-y-6">
                     <div className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
-                        <h2 className="mb-4 text-lg font-semibold text-slate-900 dark:text-white">Informasi PO</h2>
+                        <h2 className="mb-4 text-lg font-semibold text-slate-900 dark:text-white">
+                            Purchase Order Information
+                        </h2>
                         <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
                             <div>
-                                <label className="mb-1 block text-sm font-semibold text-slate-700 dark:text-slate-200">Supplier</label>
+                                <label className="mb-1 block text-sm font-semibold text-slate-700 dark:text-slate-200">
+                                    Supplier
+                                </label>
                                 <select
                                     value={data.supplier_id}
                                     onChange={(e) => setData("supplier_id", e.target.value)}
                                     className="h-11 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 text-sm text-slate-800 outline-none transition focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
                                 >
-                                    <option value="">Pilih Supplier</option>
+                                    <option value="">Select Supplier</option>
                                     {suppliers.map((s) => (
-                                        <option key={s.id} value={s.id}>{s.name}</option>
+                                        <option key={s.id} value={s.id}>
+                                            {s.name}
+                                        </option>
                                     ))}
                                 </select>
                             </div>
                             <div>
-                                <label className="mb-1 block text-sm font-semibold text-slate-700 dark:text-slate-200">Tujuan Gudang</label>
+                                <label className="mb-1 block text-sm font-semibold text-slate-700 dark:text-slate-200">
+                                    Destination Warehouse
+                                </label>
                                 <select
                                     value={data.warehouse_id}
                                     onChange={(e) => setData("warehouse_id", e.target.value)}
                                     className="h-11 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 text-sm text-slate-800 outline-none transition focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
                                 >
-                                    <option value="">Pilih Gudang</option>
+                                    <option value="">Select Warehouse</option>
                                     {warehouses.map((w) => (
-                                        <option key={w.id} value={w.id}>{w.code} — {w.name}</option>
+                                        <option key={w.id} value={w.id}>
+                                            {w.code} — {w.name}
+                                        </option>
                                     ))}
                                 </select>
                             </div>
                             <div>
-                                <label className="mb-1 block text-sm font-semibold text-slate-700 dark:text-slate-200">Nomor Dokumen</label>
+                                <label className="mb-1 block text-sm font-semibold text-slate-700 dark:text-slate-200">
+                                    Document Number
+                                </label>
                                 <input
                                     type="text"
                                     value={data.document_number}
                                     onChange={(e) => setData("document_number", e.target.value)}
-                                    placeholder="Kosongkan untuk auto-generate"
+                                    placeholder="Leave blank to auto-generate"
                                     className="h-11 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 text-sm text-slate-800 outline-none transition focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
                                 />
                             </div>
                             <div>
-                                <label className="mb-1 block text-sm font-semibold text-slate-700 dark:text-slate-200">Catatan</label>
+                                <label className="mb-1 block text-sm font-semibold text-slate-700 dark:text-slate-200">
+                                    Notes
+                                </label>
                                 <input
                                     type="text"
                                     value={data.notes}
                                     onChange={(e) => setData("notes", e.target.value)}
-                                    placeholder="Catatan PO"
+                                    placeholder="Purchase order notes"
                                     className="h-11 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 text-sm text-slate-800 outline-none transition focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
                                 />
-                                {errors.notes && <p className="mt-1 text-xs text-danger-500">{errors.notes}</p>}
+                                {errors.notes && (
+                                    <p className="mt-1 text-xs text-danger-500">
+                                        {errors.notes}
+                                    </p>
+                                )}
                             </div>
                         </div>
                     </div>
 
                     <div className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
-                        <h2 className="mb-4 text-lg font-semibold text-slate-900 dark:text-white">Item Pembelian</h2>
+                        <h2 className="mb-4 text-lg font-semibold text-slate-900 dark:text-white">
+                            Purchase Items
+                        </h2>
                         <div className="mb-4 flex gap-3">
                             <input
                                 type="text"
                                 value={searchProduct}
                                 onChange={(e) => setSearchProduct(e.target.value)}
-                                placeholder="Cari produk untuk ditambahkan..."
+                                placeholder="Search for products to add..."
                                 className="h-11 flex-1 rounded-xl border border-slate-200 bg-slate-50 px-4 text-sm text-slate-800 outline-none transition focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
                             />
                         </div>
@@ -171,8 +197,12 @@ export default function Create({ suppliers, products, warehouses = [] }) {
                                         className="flex w-full items-center justify-between rounded-lg border border-slate-100 bg-slate-50 px-4 py-3 text-left text-sm transition hover:border-primary-200 hover:bg-primary-50 dark:border-slate-700 dark:bg-slate-800 dark:hover:border-primary-700 dark:hover:bg-primary-950/20"
                                     >
                                         <div>
-                                            <p className="font-medium text-slate-800 dark:text-slate-200">{product.title}</p>
-                                            <p className="text-xs text-slate-500">{product.sku || "-"} &bull; Stok: {product.stock}</p>
+                                            <p className="font-medium text-slate-800 dark:text-slate-200">
+                                                {product.title}
+                                            </p>
+                                            <p className="text-xs text-slate-500">
+                                                {product.sku || "-"} &bull; Stock: {product.stock}
+                                            </p>
                                         </div>
                                         <span className="text-xs text-slate-500 dark:text-slate-400">
                                             {formatCurrency(product.buy_price)}
@@ -186,26 +216,43 @@ export default function Create({ suppliers, products, warehouses = [] }) {
                                 <table className="w-full text-sm">
                                     <thead>
                                         <tr className="border-b border-slate-200 dark:border-slate-700">
-                                            <th className="px-3 py-2 text-left font-semibold text-slate-700 dark:text-slate-200">Produk</th>
-                                            <th className="px-3 py-2 text-right font-semibold text-slate-700 dark:text-slate-200">Qty</th>
-                                            <th className="px-3 py-2 text-right font-semibold text-slate-700 dark:text-slate-200">Harga</th>
-                                            <th className="px-3 py-2 text-right font-semibold text-slate-700 dark:text-slate-200">Subtotal</th>
+                                            <th className="px-3 py-2 text-left font-semibold text-slate-700 dark:text-slate-200">
+                                                Product
+                                            </th>
+                                            <th className="px-3 py-2 text-right font-semibold text-slate-700 dark:text-slate-200">
+                                                Quantity
+                                            </th>
+                                            <th className="px-3 py-2 text-right font-semibold text-slate-700 dark:text-slate-200">
+                                                Unit Price
+                                            </th>
+                                            <th className="px-3 py-2 text-right font-semibold text-slate-700 dark:text-slate-200">
+                                                Subtotal
+                                            </th>
                                             <th className="w-16 px-3 py-2"></th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         {data.items.map((item, index) => (
-                                            <tr key={index} className="border-b border-slate-100 dark:border-slate-800">
+                                            <tr
+                                                key={index}
+                                                className="border-b border-slate-100 dark:border-slate-800"
+                                            >
                                                 <td className="px-3 py-3">
-                                                    <p className="font-medium text-slate-800 dark:text-slate-200">{item.product_title}</p>
-                                                    <p className="text-xs text-slate-500">{item.product_sku}</p>
+                                                    <p className="font-medium text-slate-800 dark:text-slate-200">
+                                                        {item.product_title}
+                                                    </p>
+                                                    <p className="text-xs text-slate-500">
+                                                        {item.product_sku}
+                                                    </p>
                                                 </td>
                                                 <td className="px-3 py-3 text-right">
                                                     <input
                                                         type="number"
                                                         min="1"
                                                         value={item.qty_ordered}
-                                                        onChange={(e) => updateItem(index, "qty_ordered", e.target.value)}
+                                                        onChange={(e) =>
+                                                            updateItem(index, "qty_ordered", e.target.value)
+                                                        }
                                                         className="h-10 w-20 rounded-lg border border-slate-200 bg-slate-50 px-3 text-right text-sm text-slate-800 outline-none transition focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
                                                     />
                                                 </td>
@@ -215,7 +262,9 @@ export default function Create({ suppliers, products, warehouses = [] }) {
                                                         min="0"
                                                         step="100"
                                                         value={item.unit_price}
-                                                        onChange={(e) => updateItem(index, "unit_price", e.target.value)}
+                                                        onChange={(e) =>
+                                                            updateItem(index, "unit_price", e.target.value)
+                                                        }
                                                         className="h-10 w-28 rounded-lg border border-slate-200 bg-slate-50 px-3 text-right text-sm text-slate-800 outline-none transition focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
                                                     />
                                                 </td>
@@ -236,8 +285,15 @@ export default function Create({ suppliers, products, warehouses = [] }) {
                                     </tbody>
                                     <tfoot>
                                         <tr className="border-t-2 border-slate-200 dark:border-slate-700">
-                                            <td colSpan={3} className="px-3 py-3 text-right font-bold text-slate-800 dark:text-slate-200">Total</td>
-                                            <td className="px-3 py-3 text-right font-bold text-primary-600 dark:text-primary-400">{formatCurrency(total)}</td>
+                                            <td
+                                                colSpan={3}
+                                                className="px-3 py-3 text-right font-bold text-slate-800 dark:text-slate-200"
+                                            >
+                                                Total
+                                            </td>
+                                            <td className="px-3 py-3 text-right font-bold text-primary-600 dark:text-primary-400">
+                                                {formatCurrency(total)}
+                                            </td>
                                             <td></td>
                                         </tr>
                                     </tfoot>
@@ -245,8 +301,13 @@ export default function Create({ suppliers, products, warehouses = [] }) {
                             </div>
                         ) : (
                             <div className="rounded-xl border border-dashed border-slate-200 p-8 text-center dark:border-slate-700">
-                                <IconPackage size={40} className="mx-auto text-slate-300 dark:text-slate-600" />
-                                <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">Cari produk di atas untuk ditambahkan ke PO.</p>
+                                <IconPackage
+                                    size={40}
+                                    className="mx-auto text-slate-300 dark:text-slate-600"
+                                />
+                                <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
+                                    Search for products above to add them to the purchase order.
+                                </p>
                             </div>
                         )}
                     </div>
@@ -256,13 +317,13 @@ export default function Create({ suppliers, products, warehouses = [] }) {
                             href={route("purchase-orders.index")}
                             className="flex h-11 items-center rounded-xl border border-slate-200 bg-white px-6 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
                         >
-                            Batal
+                            Cancel
                         </Link>
                         <Button
                             type="submit"
                             icon={<IconPlus size={18} />}
                             className="bg-primary-500 hover:bg-primary-600 text-white shadow-lg shadow-primary-500/30"
-                            label={processing ? "Menyimpan..." : "Simpan PO"}
+                            label={processing ? "Saving..." : "Save Purchase Order"}
                             disabled={processing}
                         />
                     </div>

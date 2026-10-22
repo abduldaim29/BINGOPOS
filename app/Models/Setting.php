@@ -60,6 +60,46 @@ class Setting extends Model
         return static::get($key, $default);
     }
 
+    public static function getManyForOutlet(array $keys, ?Outlet $outlet, array $defaults = []): array
+    {
+        if ($keys === []) {
+            return [];
+        }
+
+        $hasOutletColumn = Schema::hasColumn('settings', 'outlet_id');
+        $query = static::query()->whereIn('key', $keys);
+
+        if ($hasOutletColumn) {
+            $query->where(function ($query) use ($outlet) {
+                $query->whereNull('outlet_id');
+                if ($outlet) {
+                    $query->orWhere('outlet_id', $outlet->id);
+                }
+            });
+        }
+
+        $columns = ['key', 'value'];
+        if ($hasOutletColumn) {
+            $columns[] = 'outlet_id';
+        }
+
+        $values = [];
+        foreach ($query->get($columns) as $setting) {
+            $outletId = $hasOutletColumn ? ($setting->outlet_id ?? 0) : 0;
+            $values[$outletId][$setting->key] = $setting->value;
+        }
+
+        $resolved = [];
+        foreach ($keys as $key) {
+            $resolved[$key] = ($outlet ? ($values[$outlet->id][$key] ?? null) : null)
+                ?? $values[0][$key]
+                ?? $defaults[$key]
+                ?? null;
+        }
+
+        return $resolved;
+    }
+
     public static function getBoolForOutlet(string $key, ?Outlet $outlet, bool $default = false): bool
     {
         return filter_var(static::getForOutlet($key, $outlet, $default ? '1' : '0'), FILTER_VALIDATE_BOOL);

@@ -7,7 +7,7 @@ import { IconHistory } from "@tabler/icons-react";
 
 const formatDateTime = (value) =>
     value
-        ? new Intl.DateTimeFormat("id-ID", {
+        ? new Intl.DateTimeFormat("en-US", {
               dateStyle: "medium",
               timeStyle: "short",
           }).format(new Date(value))
@@ -30,14 +30,14 @@ export default function Index({ stockMutations, products, warehouses = [], filte
 
     return (
         <>
-            <Head title="Mutasi Stok" />
+            <Head title="Stock Mutations" />
 
             <div className="mb-6">
                 <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
-                    Mutasi Stok
+                    Stock Mutations
                 </h1>
                 <p className="text-sm text-slate-500 dark:text-slate-400">
-                    Histori perubahan stok dari stock opname dan initial stock produk.
+                    History of stock changes from stock counts and initial product stock.
                 </p>
             </div>
 
@@ -49,7 +49,7 @@ export default function Index({ stockMutations, products, warehouses = [], filte
                     }
                     className="h-11 rounded-xl border border-slate-200 bg-slate-50 px-4 text-sm text-slate-800 outline-none transition focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
                 >
-                    <option value="">Semua Produk</option>
+                    <option value="">All Products</option>
                     {products.map((product) => (
                         <option key={product.id} value={product.id}>
                             {product.title}
@@ -64,7 +64,7 @@ export default function Index({ stockMutations, products, warehouses = [], filte
                     }
                     className="h-11 rounded-xl border border-slate-200 bg-slate-50 px-4 text-sm text-slate-800 outline-none transition focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
                 >
-                    <option value="">Semua Tipe</option>
+                    <option value="">All Types</option>
                     <option value="in">In</option>
                     <option value="out">Out</option>
                     <option value="adjustment">Adjustment</option>
@@ -75,7 +75,7 @@ export default function Index({ stockMutations, products, warehouses = [], filte
                     onChange={(event) => updateFilter("warehouse_id", event.target.value)}
                     className="h-11 rounded-xl border border-slate-200 bg-slate-50 px-4 text-sm text-slate-800 outline-none transition focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
                 >
-                    <option value="">Semua Gudang</option>
+                    <option value="">All Warehouses</option>
                     {warehouses.map((w) => (
                         <option key={w.id} value={w.id}>{w.code} — {w.name}</option>
                     ))}
@@ -100,18 +100,18 @@ export default function Index({ stockMutations, products, warehouses = [], filte
                 />
             </div>
 
-            <Table.Card title="Histori Mutasi Stok">
+            <Table.Card title="Stock Mutation History">
                 <Table>
                     <Table.Thead>
                         <tr>
-                            <Table.Th>Produk</Table.Th>
-                            <Table.Th>Tipe</Table.Th>
-                            <Table.Th>Qty</Table.Th>
+                            <Table.Th>Product</Table.Th>
+                            <Table.Th>Type</Table.Th>
+                            <Table.Th>Quantity</Table.Th>
                             <Table.Th>Before / After</Table.Th>
-                            <Table.Th>Gudang</Table.Th>
-                            <Table.Th>Referensi</Table.Th>
-                            <Table.Th>Dibuat Oleh</Table.Th>
-                            <Table.Th>Waktu</Table.Th>
+                            <Table.Th>Warehouse</Table.Th>
+                            <Table.Th>Reference</Table.Th>
+                            <Table.Th>Created By</Table.Th>
+                            <Table.Th>Date & Time</Table.Th>
                         </tr>
                     </Table.Thead>
                     <Table.Tbody>
@@ -156,11 +156,11 @@ export default function Index({ stockMutations, products, warehouses = [], filte
                                 </tr>
                             ))
                         ) : (
-                                <Table.Empty
-                                    colSpan={8}
+                            <Table.Empty
+                                colSpan={8}
                                 message={
                                     <div className="text-slate-500 dark:text-slate-400">
-                                        Belum ada mutasi stok.
+                                        No stock mutations available yet.
                                     </div>
                                 }
                             >

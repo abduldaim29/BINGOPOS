@@ -14,25 +14,26 @@ import {
 import { useAuthorization } from "@/Utils/authorization";
 
 const formatCurrency = (value = 0) =>
-    new Intl.NumberFormat("id-ID", {
+    new Intl.NumberFormat("en-PK", {
         style: "currency",
-        currency: "IDR",
+        currency: "PKR",
         minimumFractionDigits: 0,
+        maximumFractionDigits: 0,
     }).format(value);
 
 const dealTypeLabel = (type) => {
     const labels = {
-        fixed_price: "Harga Tetap",
-        dynamic_price: "Harga Dinamis",
-        slot_based: "Berdasarkan Slot",
-        custom: "Kustom",
+        fixed_price: "Fixed Price",
+        dynamic_price: "Dynamic Price",
+        slot_based: "Slot-Based",
+        custom: "Custom",
     };
     return labels[type] || type;
 };
 
 const discountLabel = (deal) => {
     if (deal.deal_type === "fixed_price") {
-        return `Harga ${formatCurrency(deal.fixed_price)}`;
+        return `Price ${formatCurrency(deal.fixed_price)}`;
     }
 
     if (deal.discount_type === "percentage") {
@@ -40,7 +41,7 @@ const discountLabel = (deal) => {
     }
 
     if (deal.discount_type === "fixed_amount") {
-        return `Potong ${formatCurrency(deal.discount_value)}`;
+        return `Discount ${formatCurrency(deal.discount_value)}`;
     }
 
     return formatCurrency(deal.discount_value);
@@ -55,10 +56,10 @@ const statusBadge = (status) => {
     };
 
     const labels = {
-        active: "Aktif",
-        scheduled: "Terjadwal",
-        expired: "Kadaluarsa",
-        inactive: "Nonaktif",
+        active: "Active",
+        scheduled: "Scheduled",
+        expired: "Expired",
+        inactive: "Inactive",
     };
 
     return (
@@ -81,7 +82,7 @@ export default function Index({ deals, filters, summary = {} }) {
     };
 
     const handleDelete = (id) => {
-        if (confirm("Apakah Anda yakin ingin menghapus deal ini?")) {
+        if (confirm("Are you sure you want to delete this deal?")) {
             router.delete(route("restaurant-deals.destroy", id));
         }
     };
@@ -97,7 +98,7 @@ export default function Index({ deals, filters, summary = {} }) {
                             Restaurant Deals
                         </h1>
                         <p className="text-sm text-slate-500 dark:text-slate-400">
-                            Kelola paket dan promo untuk restoran.
+                            Manage restaurant packages and promotions.
                         </p>
                     </div>
                     {can("restaurant-deals-create") && (
@@ -106,7 +107,7 @@ export default function Index({ deals, filters, summary = {} }) {
                             href={route("restaurant-deals.create")}
                             icon={<IconCirclePlus size={18} />}
                             className="bg-primary-500 text-white shadow-lg shadow-primary-500/30 hover:bg-primary-600"
-                            label="Buat Deal"
+                            label="Create Deal"
                         />
                     )}
                 </div>
@@ -132,7 +133,7 @@ export default function Index({ deals, filters, summary = {} }) {
                                 <IconChartInfographic className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
                             </div>
                             <div>
-                                <p className="text-sm text-slate-500 dark:text-slate-400">Aktif</p>
+                                <p className="text-sm text-slate-500 dark:text-slate-400">Active</p>
                                 <p className="text-2xl font-bold text-slate-900 dark:text-white">
                                     {summary.active_count || 0}
                                 </p>
@@ -145,7 +146,7 @@ export default function Index({ deals, filters, summary = {} }) {
                                 <IconChartInfographic className="h-5 w-5 text-amber-600 dark:text-amber-400" />
                             </div>
                             <div>
-                                <p className="text-sm text-slate-500 dark:text-slate-400">Sedang Berjalan</p>
+                                <p className="text-sm text-slate-500 dark:text-slate-400">Currently Running</p>
                                 <p className="text-2xl font-bold text-slate-900 dark:text-white">
                                     {summary.currently_active_count || 0}
                                 </p>
@@ -160,7 +161,7 @@ export default function Index({ deals, filters, summary = {} }) {
                         <IconSearch className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
                         <input
                             type="text"
-                            placeholder="Cari deal..."
+                            placeholder="Search deals..."
                             value={filters.search || ""}
                             onChange={(e) => handleFilterChange("search", e.target.value)}
                             className="w-full rounded-lg border border-slate-300 py-2 pl-10 pr-4 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 dark:border-slate-600 dark:bg-slate-700 dark:text-white"
@@ -171,22 +172,22 @@ export default function Index({ deals, filters, summary = {} }) {
                         onChange={(e) => handleFilterChange("status", e.target.value)}
                         className="rounded-lg border border-slate-300 px-4 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 dark:border-slate-600 dark:bg-slate-700 dark:text-white"
                     >
-                        <option value="">Semua Status</option>
-                        <option value="active">Aktif</option>
-                        <option value="scheduled">Terjadwal</option>
-                        <option value="expired">Kadaluarsa</option>
-                        <option value="inactive">Nonaktif</option>
+                        <option value="">All Statuses</option>
+                        <option value="active">Active</option>
+                        <option value="scheduled">Scheduled</option>
+                        <option value="expired">Expired</option>
+                        <option value="inactive">Inactive</option>
                     </select>
                     <select
                         value={filters.deal_type || ""}
                         onChange={(e) => handleFilterChange("deal_type", e.target.value)}
                         className="rounded-lg border border-slate-300 px-4 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 dark:border-slate-600 dark:bg-slate-700 dark:text-white"
                     >
-                        <option value="">Semua Tipe</option>
-                        <option value="fixed_price">Harga Tetap</option>
-                        <option value="dynamic_price">Harga Dinamis</option>
-                        <option value="slot_based">Berdasarkan Slot</option>
-                        <option value="custom">Kustom</option>
+                        <option value="">All Types</option>
+                        <option value="fixed_price">Fixed Price</option>
+                        <option value="dynamic_price">Dynamic Price</option>
+                        <option value="slot_based">Slot-Based</option>
+                        <option value="custom">Custom</option>
                     </select>
                 </div>
 
@@ -194,52 +195,52 @@ export default function Index({ deals, filters, summary = {} }) {
                 {hasData ? (
                     <div className="overflow-hidden rounded-lg bg-white shadow-sm dark:bg-slate-800">
                         <Table>
-                            <Table.Head>
-                                <Table.Row>
-                                    <Table.HeaderCell>Nama</Table.HeaderCell>
-                                    <Table.HeaderCell>Tipe</Table.HeaderCell>
-                                    <Table.HeaderCell>Diskon</Table.HeaderCell>
-                                    <Table.HeaderCell>Status</Table.HeaderCell>
-                                    <Table.HeaderCell>Outlet</Table.HeaderCell>
-                                    <Table.HeaderCell>Priority</Table.HeaderCell>
-                                    <Table.HeaderCell className="text-right">Aksi</Table.HeaderCell>
-                                </Table.Row>
-                            </Table.Head>
-                            <Table.Body>
+                            <Table.Thead>
+                                <tr>
+                                    <Table.Th>Name</Table.Th>
+                                    <Table.Th>Type</Table.Th>
+                                    <Table.Th>Discount</Table.Th>
+                                    <Table.Th>Status</Table.Th>
+                                    <Table.Th>Outlet</Table.Th>
+                                    <Table.Th>Priority</Table.Th>
+                                    <Table.Th className="text-right">Actions</Table.Th>
+                                </tr>
+                            </Table.Thead>
+                            <Table.Tbody>
                                 {deals.data.map((deal) => (
-                                    <Table.Row key={deal.id}>
-                                        <Table.Cell>
+                                    <tr key={deal.id}>
+                                        <Table.Td>
                                             <div>
                                                 <p className="font-medium text-slate-900 dark:text-white">
                                                     {deal.name}
                                                 </p>
                                                 <p className="text-xs text-slate-500 dark:text-slate-400">
-                                                    {deal.items_count} item, {deal.slots_count} slot
+                                                    {deal.items_count} items, {deal.slots_count} slots
                                                 </p>
                                             </div>
-                                        </Table.Cell>
-                                        <Table.Cell>
+                                        </Table.Td>
+                                        <Table.Td>
                                             <span className="text-sm text-slate-700 dark:text-slate-300">
                                                 {dealTypeLabel(deal.deal_type)}
                                             </span>
-                                        </Table.Cell>
-                                        <Table.Cell>
+                                        </Table.Td>
+                                        <Table.Td>
                                             <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
                                                 {discountLabel(deal)}
                                             </span>
-                                        </Table.Cell>
-                                        <Table.Cell>{statusBadge(deal.status_label)}</Table.Cell>
-                                        <Table.Cell>
+                                        </Table.Td>
+                                        <Table.Td>{statusBadge(deal.status_label)}</Table.Td>
+                                        <Table.Td>
                                             <span className="text-sm text-slate-700 dark:text-slate-300">
                                                 {deal.outlet?.name || "Global"}
                                             </span>
-                                        </Table.Cell>
-                                        <Table.Cell>
+                                        </Table.Td>
+                                        <Table.Td>
                                             <span className="text-sm text-slate-700 dark:text-slate-300">
                                                 {deal.priority}
                                             </span>
-                                        </Table.Cell>
-                                        <Table.Cell className="text-right">
+                                        </Table.Td>
+                                        <Table.Td className="text-right">
                                             <div className="flex justify-end gap-2">
                                                 {can("restaurant-deals-edit") && (
                                                     <Button
@@ -258,10 +259,10 @@ export default function Index({ deals, filters, summary = {} }) {
                                                     />
                                                 )}
                                             </div>
-                                        </Table.Cell>
-                                    </Table.Row>
+                                        </Table.Td>
+                                    </tr>
                                 ))}
-                            </Table.Body>
+                            </Table.Tbody>
                         </Table>
                         <Pagination pagination={deals} />
                     </div>
@@ -269,10 +270,10 @@ export default function Index({ deals, filters, summary = {} }) {
                     <div className="flex flex-col items-center justify-center rounded-lg bg-white p-12 shadow-sm dark:bg-slate-800">
                         <IconChartInfographic className="mb-4 h-16 w-16 text-slate-300 dark:text-slate-600" />
                         <h3 className="mb-2 text-lg font-medium text-slate-900 dark:text-white">
-                            Belum ada deal
+                            No deals yet
                         </h3>
                         <p className="mb-4 text-center text-sm text-slate-500 dark:text-slate-400">
-                            Mulai dengan membuat deal pertama Anda untuk restoran.
+                            Get started by creating your first restaurant deal.
                         </p>
                         {can("restaurant-deals-create") && (
                             <Button
@@ -280,7 +281,7 @@ export default function Index({ deals, filters, summary = {} }) {
                                 href={route("restaurant-deals.create")}
                                 icon={<IconCirclePlus size={18} />}
                                 className="bg-primary-500 text-white shadow-lg shadow-primary-500/30 hover:bg-primary-600"
-                                label="Buat Deal"
+                                label="Create Deal"
                             />
                         )}
                     </div>

@@ -127,7 +127,7 @@ class CartValidationTest extends TestCase
                 'qty' => 1,
                 'unit_id' => $box->id,
             ])
-            ->assertSessionHas('error', 'Satuan tidak valid untuk produk ini.');
+            ->assertSessionHas('error', 'Invalid unit for this product.');
 
         $this->assertDatabaseCount('carts', 0);
     }
@@ -188,5 +188,68 @@ class CartValidationTest extends TestCase
         $cart = $cart->fresh();
         $this->assertSame(2, (int) $cart->qty);
         $this->assertSame(1320000, (int) $cart->price);
+    }
+
+    public function test_update_cart_preserves_variation_unit_price(): void
+    {
+        $this->openShiftForCashier();
+        $product = $this->makeProduct(100);
+
+        // Set up product with variation prices
+        $product->update([
+            'variations' => ['size' => ['S', 'M', 'L']],
+            'variation_prices' => [
+                'size_S' => 75000,
+                'size_M' => 85000,
+                'size_L' => 95000,
+            ],
+        ]);
+
+        // Add variation to cart (size_M = 85000)
+        $cart = Cart::create([
+            'cashier_id' => $this->cashier->id,
+            'warehouse_id' => $this->warehouse->id,
+            'product_id' => $product->id,
+            'unit_id' => $product->baseUnit()?->id,
+            'conversion_factor' => 1,
+            'qty' => 2,
+            'price' => 170000, // 85000 * 2
+            'variation_id' => 'size_M',
+            'variation_name' => 'Size M',
+        ]);
+
+        // Update quantity - should preserve the 85000 unit price
+        $this->from(route('transactions.index'))
+            ->patch(route('transactions.updateCart', $cart->id), ['qty' => 5]);
+
+        $cart = $cart->fresh();
+        $this->assertSame(5, (int) $cart->qty);
+        $this->assertSame(425000, (int) $cart->price); // 85000 * 5
+        $this->assertSame('size_M', $cart->variation_id);
+    }
+
+    public function test_custom_combo_accepts_product_without_configured_units(): void
+    {
+        $this->openShiftForCashier();
+        $product = $this->makeProduct(10);
+
+        $this->postJson(route('transactions.customComboToCart'), [
+            'items' => [[
+                'product_id' => $product->id,
+                'quantity' => 2,
+                'unit_id' => null,
+            ]],
+        ])
+            ->assertOk()
+            ->assertJsonPath('success', true);
+
+        $this->assertDatabaseHas('carts', [
+            'cashier_id' => $this->cashier->id,
+            'warehouse_id' => $this->warehouse->id,
+            'product_id' => $product->id,
+            'unit_id' => null,
+            'qty' => 2,
+            'price' => 120000,
+        ]);
     }
 }

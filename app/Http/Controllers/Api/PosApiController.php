@@ -9,6 +9,7 @@ use App\Http\Resources\ProductResource;
 use App\Http\Resources\TransactionResource;
 use App\Http\Traits\ApiResponder;
 use App\Models\Cart;
+use App\Models\Category;
 use App\Models\Customer;
 use App\Models\CustomerVoucher;
 use App\Models\DiscountApprovalLog;
@@ -164,9 +165,13 @@ class PosApiController extends Controller
         );
 
         $warehouseId = $shift?->warehouse_id;
+        $relations = ['category', 'units', 'components'];
+        if ($warehouseId) {
+            $relations['warehouses'] = fn ($query) => $query->where('warehouses.id', $warehouseId);
+        }
 
         $products = Product::query()
-            ->with('category')
+            ->with($relations)
             ->when(
                 $warehouseId,
                 function ($q) use ($warehouseId) {
@@ -205,11 +210,14 @@ class PosApiController extends Controller
         $products->through(function (Product $product) use ($warehouseId) {
             $data = (new ProductResource($product))->resolve();
 
+            if ($product->is_composite) {
+                $data['sell_price'] = (int) $product->components->sum(
+                    fn (Product $component) => $component->sell_price * (float) $component->pivot->qty
+                );
+            }
             $data['stock'] = $warehouseId
                 ? (int) (
-                    $product->warehouses()
-                        ->where('warehouse_id', $warehouseId)
-                        ->first()?->pivot->stock ?? 0
+                    $product->warehouses->first()?->pivot->stock ?? 0
                 )
                 : (int) $product->stock;
 
@@ -217,6 +225,35 @@ class PosApiController extends Controller
         });
 
         return $this->paginated($products);
+    }
+
+    /**
+     * Get categories which have products available to the active POS shift.
+     */
+    public function productCategories(Request $request): JsonResponse
+    {
+        $shift = $this->cashierShiftService->getActiveShiftForUser(
+            $request->user()->id
+        );
+        $warehouseId = $shift?->warehouse_id;
+
+        $categories = Category::query()
+            ->whereHas('products', function ($query) use ($warehouseId) {
+                if ($warehouseId) {
+                    $query->whereHas(
+                        'warehouses',
+                        fn ($warehouse) => $warehouse
+                            ->where('product_warehouse.warehouse_id', $warehouseId)
+                            ->where('product_warehouse.stock', '>', 0)
+                    );
+                } else {
+                    $query->where('stock', '>', 0);
+                }
+            })
+            ->orderBy('name')
+            ->get(['id', 'name']);
+
+        return $this->ok($categories);
     }
 
     /**
@@ -577,14 +614,20 @@ class PosApiController extends Controller
 
         $cart->qty = $validated['qty'];
 
-        $cart->price = $product->is_composite
-            ? (int) $product->components->sum(
-                fn ($c) => $c->sell_price * (float) $c->pivot->qty
-            ) * $validated['qty']
-            : $this->unitConversionService->getSellPrice(
-                $product,
-                $cart->unit_id
-            ) * $validated['qty'];
+        // Preserve variation unit price; recalc for non-variations
+        if ($cart->variation_id) {
+            $unitPrice = (int) round($cart->price / max(1, (int) $cart->qty));
+            $cart->price = $unitPrice * $validated['qty'];
+        } else {
+            $cart->price = $product->is_composite
+                ? (int) $product->components->sum(
+                    fn ($c) => $c->sell_price * (float) $c->pivot->qty
+                ) * $validated['qty']
+                : $this->unitConversionService->getSellPrice(
+                    $product,
+                    $cart->unit_id
+                ) * $validated['qty'];
+        }
 
         $cart->save();
 

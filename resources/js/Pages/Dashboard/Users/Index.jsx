@@ -328,7 +328,7 @@ export default function Index() {
                                                 (users.current_page - 1) *
                                                     users.per_page}
                                         </Table.Td>
-                                    <Table.Td>
+                                        <Table.Td>
                                             <div className="flex items-center gap-3">
                                                 <div className="w-9 h-9 rounded-full bg-gradient-to-br from-primary-400 to-primary-600 flex items-center justify-center text-white text-sm font-bold overflow-hidden">
                                                     {user.avatar ? (
@@ -427,10 +427,10 @@ export default function Index() {
                         />
                     </div>
                     <h3 className="text-lg font-medium text-slate-800 dark:text-slate-200 mb-1">
-                        Belum Ada Pengguna
+                        No Users Yet
                     </h3>
                     <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
-                        Tambahkan pengguna pertama Anda.
+                        Add your first user.
                     </p>
                     {canCreateUsers && (
                         <Button
@@ -439,7 +439,7 @@ export default function Index() {
                             className={
                                 "bg-primary-500 hover:bg-primary-600 text-white"
                             }
-                            label={"Tambah Pengguna"}
+                            label={"Add User"}
                             href={route("users.create")}
                         />
                     )}

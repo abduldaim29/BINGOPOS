@@ -8,7 +8,7 @@ import { useAuthorization } from "@/Utils/authorization";
 
 const formatDateTime = (value) => {
     if (!value) return "-";
-    return new Intl.DateTimeFormat("id-ID", { dateStyle: "medium", timeStyle: "short" }).format(new Date(value));
+    return new Intl.DateTimeFormat("en-US", { dateStyle: "medium", timeStyle: "short" }).format(new Date(value));
 };
 
 const statusBadge = (status) => {
@@ -18,7 +18,7 @@ const statusBadge = (status) => {
         completed: "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400",
         cancelled: "bg-rose-100 text-rose-700 dark:bg-rose-950/40 dark:text-rose-400",
     };
-    const labels = { draft: "Draft", in_transit: "In Transit", completed: "Selesai", cancelled: "Batal" };
+    const labels = { draft: "Draft", in_transit: "In Transit", completed: "Completed", cancelled: "Cancelled" };
     return (
         <span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${styles[status] || styles.draft}`}>
             {labels[status] || status}
@@ -31,17 +31,17 @@ export default function Index({ transfers }) {
 
     return (
         <>
-            <Head title="Transfer Stok" />
+            <Head title="Stock Transfers" />
 
             <div className="space-y-6">
                 <div className="flex items-center justify-between">
                     <div>
                         <h1 className="flex items-center gap-2 text-2xl font-bold text-slate-900 dark:text-white">
                             <IconArrowsLeftRight size={28} className="text-primary-500" />
-                            Transfer Stok
+                            Stock Transfers
                         </h1>
                         <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-                            Kelola transfer stok antar gudang / cabang
+                            Manage stock transfers between warehouses / branches
                         </p>
                     </div>
                     {can("stock-transfers-create") && (
@@ -50,22 +50,22 @@ export default function Index({ transfers }) {
                             className="inline-flex items-center gap-2 rounded-xl bg-primary-500 px-4 py-2.5 text-sm font-medium text-white shadow-lg shadow-primary-500/30 transition-colors hover:bg-primary-600"
                         >
                             <IconPlus size={18} />
-                            Transfer Baru
+                            New Transfer
                         </Link>
                     )}
                 </div>
 
-                <Table.Card title="Daftar Transfer Stok">
+                <Table.Card title="Stock Transfer List">
                     <Table>
                         <Table.Thead>
                             <tr>
-                                <Table.Th>Dokumen</Table.Th>
-                                <Table.Th>Asal</Table.Th>
-                                <Table.Th>Tujuan</Table.Th>
+                                <Table.Th>Document</Table.Th>
+                                <Table.Th>Source</Table.Th>
+                                <Table.Th>Destination</Table.Th>
                                 <Table.Th>Status</Table.Th>
-                                <Table.Th>Item</Table.Th>
-                                <Table.Th>Dibuat</Table.Th>
-                                <Table.Th className="w-24 text-center">Aksi</Table.Th>
+                                <Table.Th>Items</Table.Th>
+                                <Table.Th>Created</Table.Th>
+                                <Table.Th className="w-24 text-center">Actions</Table.Th>
                             </tr>
                         </Table.Thead>
                         <Table.Tbody>
@@ -91,7 +91,7 @@ export default function Index({ transfers }) {
                                     </tr>
                                 ))
                             ) : (
-                                <Table.Empty colSpan={7} message={<div className="text-slate-500 dark:text-slate-400">Belum ada transfer stok.</div>} />
+                                <Table.Empty colSpan={7} message={<div className="text-slate-500 dark:text-slate-400">No stock transfers available yet.</div>} />
                             )}
                         </Table.Tbody>
                     </Table>

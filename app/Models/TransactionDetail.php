@@ -33,6 +33,8 @@ class TransactionDetail extends Model
         'restaurant_deal_id',
         'restaurant_deal_name',
         'restaurant_deal_type',
+        'variation_id',
+        'variation_name',
     ];
 
     protected $casts = [

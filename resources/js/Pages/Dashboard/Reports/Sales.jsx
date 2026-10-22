@@ -53,9 +53,9 @@ const defaultFilterState = {
 };
 
 const formatCurrency = (value = 0) =>
-    new Intl.NumberFormat("id-ID", {
+    new Intl.NumberFormat("en-US", {
         style: "currency",
-        currency: "IDR",
+        currency: "PKR",
         minimumFractionDigits: 0,
     }).format(value);
 
@@ -170,32 +170,32 @@ const Sales = ({ transactions, summary, filters, cashiers, customers, warehouses
 
     const summaryCards = [
         {
-            title: "Pendapatan Bersih",
+            title: "Net Revenue",
             value: formatCurrency(safeSummary.revenue_total),
-            description: "Total setelah diskon",
+            description: "Total after discounts",
             icon: <IconReceipt2 />,
             gradient: "from-primary-500 to-primary-700",
         },
         {
             title: "Total Profit",
             value: formatCurrency(safeSummary.profit_total),
-            description: `Rata-rata ${formatCurrency(
+            description: `Average ${formatCurrency(
                 safeSummary.average_order
             )}`,
             icon: <IconCoin />,
             gradient: "from-success-500 to-success-700",
         },
         {
-            title: "Item Terjual",
-            value: safeSummary.items_sold.toLocaleString("id-ID"),
-            description: `${safeSummary.orders_count} transaksi`,
+            title: "Items Sold",
+            value: safeSummary.items_sold.toLocaleString("en-US"),
+            description: `${safeSummary.orders_count} transactions`,
             icon: <IconShoppingBag />,
             gradient: "from-accent-500 to-accent-700",
         },
         {
-            title: "Diskon Diberikan",
+            title: "Discounts Given",
             value: formatCurrency(safeSummary.discount_total),
-            description: "Akumulasi promo",
+            description: "Total promotional discounts",
             icon: <IconDiscount2 />,
             gradient: "from-warning-500 to-warning-600",
         },
@@ -203,7 +203,7 @@ const Sales = ({ transactions, summary, filters, cashiers, customers, warehouses
 
     return (
         <>
-            <Head title="Laporan Penjualan" />
+            <Head title="Sales Report" />
 
             <div className="space-y-6">
                 {/* Header */}
@@ -217,10 +217,10 @@ const Sales = ({ transactions, summary, filters, cashiers, customers, warehouses
                                 size={28}
                                 className="text-primary-500"
                             />
-                            Laporan Penjualan
+                            Sales Report
                         </h1>
                         <p className="text-sm text-slate-500 dark:text-slate-400">
-                            Analisis dan ringkasan penjualan
+                            Sales analysis and summary
                         </p>
                     </div>
                     <button
@@ -256,7 +256,7 @@ const Sales = ({ transactions, summary, filters, cashiers, customers, warehouses
                             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
                                 <div>
                                     <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                                        Tanggal Mulai
+                                        Start Date
                                     </label>
                                     <input
                                         type="date"
@@ -272,7 +272,7 @@ const Sales = ({ transactions, summary, filters, cashiers, customers, warehouses
                                 </div>
                                 <div>
                                     <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                                        Tanggal Akhir
+                                        End Date
                                     </label>
                                     <input
                                         type="date"
@@ -304,19 +304,19 @@ const Sales = ({ transactions, summary, filters, cashiers, customers, warehouses
                                     />
                                 </div>
                                 <InputSelect
-                                    label="Kasir"
+                                    label="Cashier"
                                     data={cashiers}
                                     selected={selectedCashier}
                                     setSelected={handleSelectCashier}
-                                    placeholder="Semua kasir"
+                                    placeholder="All cashiers"
                                     searchable
                                 />
                                 <InputSelect
-                                    label="Pelanggan"
+                                    label="Customer"
                                     data={customers}
                                     selected={selectedCustomer}
                                     setSelected={handleSelectCustomer}
-                                    placeholder="Semua pelanggan"
+                                    placeholder="All customers"
                                     searchable
                                 />
                             </div>
@@ -335,7 +335,7 @@ const Sales = ({ transactions, summary, filters, cashiers, customers, warehouses
                                     className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-primary-500 hover:bg-primary-600 text-white font-medium transition-colors"
                                 >
                                     <IconSearch size={18} />
-                                    Terapkan
+                                    Apply Filters
                                 </button>
                             </div>
                         </form>
@@ -353,22 +353,22 @@ const Sales = ({ transactions, summary, filters, cashiers, customers, warehouses
                                 <thead>
                                     <tr className="border-b border-slate-100 dark:border-slate-800">
                                         <th className="px-4 py-4 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
-                                            No
+                                            No.
                                         </th>
                                         <th className="px-4 py-4 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
                                             Invoice
                                         </th>
                                         <th className="px-4 py-4 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
-                                            Tanggal
+                                            Date
                                         </th>
                                         <th className="px-4 py-4 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
-                                            Pelanggan
+                                            Customer
                                         </th>
                                         <th className="px-4 py-4 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
-                                            Kasir
+                                            Cashier
                                         </th>
                                         <th className="px-4 py-4 text-center text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
-                                            Item
+                                            Items
                                         </th>
                                         <th className="px-4 py-4 text-right text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
                                             Total
@@ -431,10 +431,10 @@ const Sales = ({ transactions, summary, filters, cashiers, customers, warehouses
                             />
                         </div>
                         <h3 className="text-lg font-medium text-slate-800 dark:text-slate-200 mb-1">
-                            Tidak Ada Data
+                            No Data Available
                         </h3>
                         <p className="text-sm text-slate-500 dark:text-slate-400">
-                            Tidak ada transaksi sesuai filter.
+                            No transactions match the selected filters.
                         </p>
                     </div>
                 )}

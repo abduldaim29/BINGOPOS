@@ -1,8 +1,14 @@
 import React, { useState, useEffect } from "react";
-import { usePage, Link } from "@inertiajs/react";
-import { Toaster } from "react-hot-toast";
+
+import { router, usePage, Link } from "@inertiajs/react";
+
+import toast, { Toaster } from "react-hot-toast";
+import axios from "axios";
+
 import { useTheme } from "@/Context/ThemeSwitcherContext";
+
 import { useOnlineStatus } from "@/Context/OnlineStatusContext";
+
 import {
     IconHome,
     IconHistory,
@@ -18,10 +24,15 @@ import {
     IconQuestionMark,
     IconGift,
 } from "@tabler/icons-react";
+
 import Notification from "@/Components/Dashboard/Notification";
+
 import DealModal from "@/Components/POS/DealModal";
+
 import { useTour } from "@/Hooks/useTour";
+
 import i18n from "@/i18n";
+
 import { getPendingCount } from "@/Utils/offlineDb";
 
 export default function POSLayout({ children }) {
@@ -34,19 +45,25 @@ export default function POSLayout({ children }) {
     const [showMobileMenu, setShowMobileMenu] = useState(false);
     const [isFullscreen, setIsFullscreen] = useState(false);
     const [showDealsModal, setShowDealsModal] = useState(false);
+    const [customComboSubmitting, setCustomComboSubmitting] = useState(false);
 
     const toggleFullscreen = () => {
         if (!document.fullscreenElement) {
-            document.documentElement.requestFullscreen().then(() => setIsFullscreen(true)).catch(() => {});
+            document.documentElement
+                .requestFullscreen()
+                .then(() => setIsFullscreen(true))
+                .catch(() => {});
         } else {
-            document.exitFullscreen().then(() => setIsFullscreen(false)).catch(() => {});
+            document.exitFullscreen()
+                .then(() => setIsFullscreen(false))
+                .catch(() => {});
         }
     };
 
     useEffect(() => {
         const handler = () => setIsFullscreen(!!document.fullscreenElement);
-        document.addEventListener('fullscreenchange', handler);
-        return () => document.removeEventListener('fullscreenchange', handler);
+        document.addEventListener("fullscreenchange", handler);
+        return () => document.removeEventListener("fullscreenchange", handler);
     }, []);
 
     // Update time every minute
@@ -68,6 +85,7 @@ export default function POSLayout({ children }) {
 
         window.addEventListener("online", refresh);
         const timer = setInterval(refresh, 15000);
+
         return () => {
             window.removeEventListener("online", refresh);
             clearInterval(timer);
@@ -75,14 +93,14 @@ export default function POSLayout({ children }) {
     }, []);
 
     const formatTime = (date) => {
-        return date.toLocaleTimeString("id-ID", {
+        return date.toLocaleTimeString("en-US", {
             hour: "2-digit",
             minute: "2-digit",
         });
     };
 
     const formatDate = (date) => {
-        return date.toLocaleDateString("id-ID", {
+        return date.toLocaleDateString("en-US", {
             weekday: "long",
             day: "numeric",
             month: "short",
@@ -129,6 +147,7 @@ export default function POSLayout({ children }) {
                                 </div>
                             )}
                         </div>
+
                         <span className="hidden sm:block text-lg font-bold text-slate-800 dark:text-white">
                             {storeProfile?.name || "KASIR"}
                         </span>
@@ -159,6 +178,7 @@ export default function POSLayout({ children }) {
                             <IconHome size={18} />
                             <span>Dashboard</span>
                         </Link>
+
                         <button
                             onClick={() => setShowDealsModal(true)}
                             className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-primary-600 hover:text-primary-700 hover:bg-primary-50 dark:text-primary-400 dark:hover:bg-primary-950/50 transition-colors"
@@ -166,12 +186,13 @@ export default function POSLayout({ children }) {
                             <IconGift size={18} />
                             <span>Deals</span>
                         </button>
+
                         <Link
                             href={route("transactions.history")}
                             className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100 dark:text-slate-400 dark:hover:text-white dark:hover:bg-slate-800 transition-colors"
                         >
                             <IconHistory size={18} />
-                            <span>Riwayat</span>
+                            <span>Transaction History</span>
                         </Link>
                     </nav>
 
@@ -202,7 +223,7 @@ export default function POSLayout({ children }) {
                     <button
                         onClick={toggleFullscreen}
                         className="p-2.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors min-w-touch min-h-touch flex items-center justify-center"
-                        title={isFullscreen ? "Keluar Fullscreen" : "Fullscreen"}
+                        title={isFullscreen ? "Exit Fullscreen" : "Fullscreen"}
                     >
                         {isFullscreen ? (
                             <IconArrowsMinimize size={20} className="text-slate-500" />
@@ -238,13 +259,14 @@ export default function POSLayout({ children }) {
                             >
                                 <IconWallet size={16} />
                                 <span>
-                                    Shift aktif •{" "}
-                                    {new Intl.NumberFormat("id-ID").format(
+                                    Active Shift •{" "}
+                                    {new Intl.NumberFormat("en-US").format(
                                         activeCashierShift.expected_cash || 0
                                     )}
                                 </span>
                             </Link>
                         )}
+
                         <p className="text-sm font-medium text-slate-700 dark:text-slate-200">
                             {auth.user.name}
                         </p>
@@ -265,13 +287,13 @@ export default function POSLayout({ children }) {
 
             {!isOnline && (
                 <div className="bg-amber-500 text-white text-center text-xs font-medium py-1 px-4">
-                    Transaksi disimpan offline — akan dikirim saat online kembali
+                    Transactions are saved offline and will be submitted when the connection is restored.
                 </div>
             )}
 
             {isOnline && pendingSyncCount > 0 && (
                 <div className="bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-200 text-center text-xs font-medium py-1 px-4">
-                    {pendingSyncCount} transaksi menunggu sinkronisasi
+                    {pendingSyncCount} transactions awaiting synchronization
                 </div>
             )}
 
@@ -293,6 +315,7 @@ export default function POSLayout({ children }) {
                                 <IconHome size={20} />
                                 <span className="font-medium">Dashboard</span>
                             </Link>
+
                             <button
                                 onClick={() => {
                                     setShowDealsModal(true);
@@ -303,23 +326,27 @@ export default function POSLayout({ children }) {
                                 <IconGift size={20} />
                                 <span className="font-medium">Deals</span>
                             </button>
+
                             <Link
                                 href={route("transactions.history")}
                                 className="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800 transition-colors"
                             >
                                 <IconHistory size={20} />
                                 <span className="font-medium">
-                                    Riwayat Transaksi
+                                    Transaction History
                                 </span>
                             </Link>
+
                             <Link
                                 href={route("profile.edit")}
                                 className="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800 transition-colors"
                             >
                                 <IconUser size={20} />
-                                <span className="font-medium">Profil</span>
+                                <span className="font-medium">Profile</span>
                             </Link>
+
                             <hr className="border-slate-200 dark:border-slate-700" />
+
                             <Link
                                 href={route("logout")}
                                 method="post"
@@ -327,7 +354,7 @@ export default function POSLayout({ children }) {
                                 className="flex items-center gap-3 px-4 py-3 rounded-xl text-danger-600 hover:bg-danger-50 dark:hover:bg-danger-950/50 transition-colors w-full"
                             >
                                 <IconLogout size={20} />
-                                <span className="font-medium">Keluar</span>
+                                <span className="font-medium">Log Out</span>
                             </Link>
                         </nav>
                     </div>
@@ -357,6 +384,37 @@ export default function POSLayout({ children }) {
             <DealModal
                 isOpen={showDealsModal}
                 onClose={() => setShowDealsModal(false)}
+                customComboSubmitting={customComboSubmitting}
+                onCustomComboSubmit={async (items) => {
+                    if (customComboSubmitting) return;
+                    setCustomComboSubmitting(true);
+                    try {
+                        await axios.post(route("transactions.customComboToCart"), { items });
+                        toast.success("Custom combo added to cart");
+                        setShowDealsModal(false);
+                        router.reload({
+                            only: ["carts", "carts_total", "initialPricingPreview"],
+                        });
+                    } catch (error) {
+                        const validationErrors = error.response?.data?.errors;
+                        const firstValidationError = validationErrors
+                            ? Object.values(validationErrors).flat()[0]
+                            : null;
+                        toast.error(
+                            firstValidationError
+                            || error.response?.data?.message
+                            || "Unable to add the custom combo. Please try again."
+                        );
+                        if (import.meta.env.DEV) {
+                            console.error("Error adding custom combo to POS cart:", {
+                                status: error.response?.status,
+                                message: error.response?.data?.message || error.message,
+                            });
+                        }
+                    } finally {
+                        setCustomComboSubmitting(false);
+                    }
+                }}
                 onAddToCart={(dealData) => {
                     // This will be handled by the child component (Transactions/Index)
                     // We'll pass a handler through props in a real implementation

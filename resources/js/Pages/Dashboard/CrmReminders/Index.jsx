@@ -17,7 +17,7 @@ export default function Index({ campaigns, filters }) {
                 <div className="mb-6">
                     <h1 className="text-2xl font-bold text-slate-900 dark:text-white">CRM Reminders</h1>
                     <p className="text-sm text-slate-500 dark:text-slate-400">
-                        Queue reminder internal untuk piutang, repeat order, invoice share, dan promo broadcast.
+                        Queue internal reminders for receivables, repeat orders, invoice sharing, and promotional broadcasts.
                     </p>
                 </div>
 
@@ -28,7 +28,7 @@ export default function Index({ campaigns, filters }) {
                             onChange={(event) => handleFilterChange("type", event.target.value)}
                             className="h-11 rounded-xl border border-slate-200 bg-slate-50 px-4 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
                         >
-                            <option value="">Semua Tipe</option>
+                            <option value="">All Types</option>
                             <option value="promo_broadcast">Promo Broadcast</option>
                             <option value="invoice_share">Invoice Share</option>
                             <option value="due_date_reminder">Due Date Reminder</option>
@@ -39,7 +39,7 @@ export default function Index({ campaigns, filters }) {
                             onChange={(event) => handleFilterChange("status", event.target.value)}
                             className="h-11 rounded-xl border border-slate-200 bg-slate-50 px-4 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
                         >
-                            <option value="">Semua Status</option>
+                            <option value="">All Statuses</option>
                             <option value="draft">Draft</option>
                             <option value="ready">Ready</option>
                             <option value="processed">Processed</option>
@@ -55,7 +55,7 @@ export default function Index({ campaigns, filters }) {
                                 <Table.Th>Campaign</Table.Th>
                                 <Table.Th>Status</Table.Th>
                                 <Table.Th>Target</Table.Th>
-                                <Table.Th>Aksi Cepat</Table.Th>
+                                <Table.Th>Quick Actions</Table.Th>
                             </tr>
                         </Table.Thead>
                         <Table.Tbody>
@@ -69,7 +69,7 @@ export default function Index({ campaigns, filters }) {
                                             <p className="text-xs text-slate-500 dark:text-slate-400">{campaign.type}</p>
                                         </Table.Td>
                                         <Table.Td>{campaign.status}</Table.Td>
-                                        <Table.Td>{campaign.logs?.length || 0} target</Table.Td>
+                                        <Table.Td>{campaign.logs?.length || 0} targets</Table.Td>
                                         <Table.Td>
                                             <div className="flex flex-wrap gap-2">
                                                 {campaign.logs?.slice(0, 2).map((log) =>
@@ -91,7 +91,7 @@ export default function Index({ campaigns, filters }) {
                                     </tr>
                                 ))
                             ) : (
-                                <Table.Empty colSpan={4} message="Belum ada reminder atau campaign queue.">
+                                <Table.Empty colSpan={4} message="No reminders or campaigns in the queue yet.">
                                     <div className="mx-auto mb-3 flex h-16 w-16 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800">
                                         <IconBellRinging size={28} className="text-slate-400" />
                                     </div>

@@ -30,6 +30,17 @@ class ProductResource extends JsonResource
             'tax_type' => $this->tax_type,
             'tax_rate' => (float) $this->tax_rate,
             'is_composite' => (bool) $this->is_composite,
+            'variations' => $this->variations ?? [],
+            'variation_prices' => $this->variation_prices ?? [],
+            'units' => $this->whenLoaded('units', fn () => $this->units->map(fn ($unit) => [
+                'unit_id' => $unit->id,
+                'name' => $unit->name,
+                'code' => $unit->code,
+                'symbol' => $unit->symbol,
+                'is_base' => (bool) $unit->pivot->is_base,
+                'conversion_factor' => (float) $unit->pivot->conversion_factor,
+                'sell_price' => (int) $unit->pivot->sell_price,
+            ])->values()),
             'created_at' => optional($this->created_at)->toISOString(),
             'updated_at' => optional($this->updated_at)->toISOString(),
         ];

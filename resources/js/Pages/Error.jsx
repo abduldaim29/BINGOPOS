@@ -12,38 +12,44 @@ import { useTheme } from "@/Context/ThemeSwitcherContext";
 
 const errorContent = {
     401: {
-        title: "Autentikasi Dibutuhkan",
-        description: "Sesi atau akses Anda tidak valid. Silakan masuk kembali untuk melanjutkan.",
+        title: "Authentication Required",
+        description:
+            "Your session or access credentials are invalid. Please sign in again to continue.",
         icon: IconLock,
     },
     403: {
-        title: "Akses Ditolak",
-        description: "Anda tidak memiliki izin untuk membuka halaman ini.",
+        title: "Access Denied",
+        description: "You do not have permission to access this page.",
         icon: IconLock,
     },
     404: {
-        title: "Halaman Tidak Ditemukan",
-        description: "Halaman yang Anda cari tidak tersedia, dipindahkan, atau URL yang dimasukkan tidak tepat.",
+        title: "Page Not Found",
+        description:
+            "The page you are looking for is unavailable, has been moved, or the URL you entered is incorrect.",
         icon: IconAlertTriangle,
     },
     419: {
-        title: "Sesi Kedaluwarsa",
-        description: "Sesi keamanan telah berakhir. Muat ulang halaman lalu coba kembali.",
+        title: "Session Expired",
+        description:
+            "Your security session has expired. Refresh the page and try again.",
         icon: IconRefresh,
     },
     429: {
-        title: "Terlalu Banyak Permintaan",
-        description: "Permintaan Anda dibatasi sementara. Tunggu sebentar sebelum mencoba lagi.",
+        title: "Too Many Requests",
+        description:
+            "Your requests have been temporarily rate-limited. Please wait a moment before trying again.",
         icon: IconAlertTriangle,
     },
     500: {
-        title: "Terjadi Kesalahan Server",
-        description: "Ada gangguan pada sistem. Silakan coba lagi dalam beberapa saat.",
+        title: "Internal Server Error",
+        description:
+            "Something went wrong on the server. Please try again in a few moments.",
         icon: IconServerOff,
     },
     503: {
-        title: "Layanan Sementara Tidak Tersedia",
-        description: "Aplikasi sedang dalam pemeliharaan atau belum siap melayani permintaan ini.",
+        title: "Service Temporarily Unavailable",
+        description:
+            "The application is undergoing maintenance or is not yet ready to handle your request.",
         icon: IconServerOff,
     },
 };
@@ -66,9 +72,10 @@ export default function Error({ status, homeUrl, homeLabel }) {
                             <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-primary-500 to-primary-600 shadow-lg shadow-primary-500/25">
                                 <IconHome2 size={22} className="text-white" />
                             </div>
+
                             <div>
                                 <p className="text-sm font-medium text-slate-500 dark:text-slate-400">
-                                    Point of Sales
+                                    BINGOPOS
                                 </p>
                                 <p className="text-lg font-semibold text-slate-900 dark:text-white">
                                     Error {status}
@@ -82,7 +89,7 @@ export default function Error({ status, homeUrl, homeLabel }) {
                             className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white/80 px-4 py-2 text-sm font-medium text-slate-600 backdrop-blur transition hover:border-primary-300 hover:text-primary-600 dark:border-slate-800 dark:bg-slate-900/80 dark:text-slate-300 dark:hover:border-primary-700 dark:hover:text-primary-400"
                         >
                             <span className="h-2.5 w-2.5 rounded-full bg-primary-500" />
-                            {darkMode ? "Mode Terang" : "Mode Gelap"}
+                            {darkMode ? "Light Mode" : "Dark Mode"}
                         </button>
                     </div>
 
@@ -118,7 +125,7 @@ export default function Error({ status, homeUrl, homeLabel }) {
                                             className="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-6 py-3 text-sm font-semibold text-slate-700 transition hover:border-primary-300 hover:text-primary-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:border-primary-700 dark:hover:text-primary-400"
                                         >
                                             <IconArrowLeft size={18} />
-                                            Kembali
+                                            Go Back
                                         </button>
                                     </div>
                                 </div>
@@ -137,8 +144,11 @@ export default function Error({ status, homeUrl, homeLabel }) {
                                             <div className="text-7xl font-black leading-none text-slate-200 dark:text-slate-800">
                                                 {status}
                                             </div>
+
                                             <div className="mt-4 rounded-2xl border border-slate-200 bg-white/80 p-4 text-sm text-slate-600 dark:border-slate-800 dark:bg-slate-950/70 dark:text-slate-400">
-                                                Pastikan URL, hak akses, atau status layanan sudah sesuai sebelum mencoba lagi.
+                                                Check the URL, access permissions,
+                                                or service status before trying
+                                                again.
                                             </div>
                                         </div>
                                     </div>

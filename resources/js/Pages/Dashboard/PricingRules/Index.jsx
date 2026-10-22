@@ -14,9 +14,9 @@ import {
 import { useAuthorization } from "@/Utils/authorization";
 
 const formatCurrency = (value = 0) =>
-    new Intl.NumberFormat("id-ID", {
+    new Intl.NumberFormat("en-US", {
         style: "currency",
-        currency: "IDR",
+        currency: "PKR",
         minimumFractionDigits: 0,
     }).format(value);
 
@@ -34,33 +34,33 @@ const discountLabel = (rule) => {
     }
 
     if (rule.discount_type === "fixed_price") {
-        return `Harga ${formatCurrency(rule.discount_value)}`;
+        return `Price ${formatCurrency(rule.discount_value)}`;
     }
 
-    return `Potong ${formatCurrency(rule.discount_value)}`;
+    return `Discount ${formatCurrency(rule.discount_value)}`;
 };
 
 const targetLabel = (rule) => {
-    if (rule.target_type === "product") return rule.product?.title || "Produk";
+    if (rule.target_type === "product") return rule.product?.title || "Product";
     if (rule.target_type === "category") {
-        return rule.category?.name || "Kategori";
+        return rule.category?.name || "Category";
     }
 
-    return "Semua Produk";
+    return "All Products";
 };
 
 const customerScopeLabel = (scope) => {
-    if (scope === "walk_in") return "Umum";
-    if (scope === "registered") return "Pelanggan";
-    if (scope === "member") return "Member";
-    return "Semua";
+    if (scope === "walk_in") return "General";
+    if (scope === "registered") return "Registered Customers";
+    if (scope === "member") return "Members";
+    return "All Customers";
 };
 
 const kindLabel = (kind) => {
-    if (kind === "qty_break") return "Grosir";
+    if (kind === "qty_break") return "Wholesale";
     if (kind === "bundle_price") return "Bundle";
     if (kind === "buy_x_get_y") return "BXGY";
-    return "Standar";
+    return "Standard";
 };
 
 export default function Index({ rules, filters, summary = {}, recentAudits = [] }) {
@@ -77,16 +77,16 @@ export default function Index({ rules, filters, summary = {}, recentAudits = [] 
 
     return (
         <>
-            <Head title="Promo Harga" />
+            <Head title="Pricing Promotions" />
 
             <div className="w-full">
                 <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                     <div>
                         <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
-                            Promo Harga
+                            Pricing Promotions
                         </h1>
                         <p className="text-sm text-slate-500 dark:text-slate-400">
-                            Atur diskon dan harga otomatis untuk POS.
+                            Manage automatic discounts and pricing for the POS.
                         </p>
                     </div>
                     {can("pricing-rules-create") && (
@@ -95,15 +95,15 @@ export default function Index({ rules, filters, summary = {}, recentAudits = [] 
                             href={route("pricing-rules.create")}
                             icon={<IconCirclePlus size={18} />}
                             className="bg-primary-500 text-white shadow-lg shadow-primary-500/30 hover:bg-primary-600"
-                            label="Buat Rule"
+                            label="Create Rule"
                         />
                     )}
                 </div>
 
                 <div className="mb-4 grid gap-3 md:grid-cols-4">
                     {[
-                        { label: "Aktif", value: summary.active || 0 },
-                        { label: "Terjadwal", value: summary.scheduled || 0 },
+                        { label: "Active", value: summary.active || 0 },
+                        { label: "Scheduled", value: summary.scheduled || 0 },
                         { label: "Expired", value: summary.expired || 0 },
                         { label: "Inactive", value: summary.inactive || 0 },
                     ].map((item) => (
@@ -130,7 +130,7 @@ export default function Index({ rules, filters, summary = {}, recentAudits = [] 
                                 onChange={(event) =>
                                     handleFilterChange("search", event.target.value)
                                 }
-                                placeholder="Cari nama rule..."
+                                placeholder="Search rule names..."
                                 className="h-11 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 pr-11 text-sm text-slate-800 outline-none transition focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
                             />
                             <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-4 text-slate-400">
@@ -144,9 +144,9 @@ export default function Index({ rules, filters, summary = {}, recentAudits = [] 
                             }
                             className="h-11 rounded-xl border border-slate-200 bg-slate-50 px-4 text-sm text-slate-800 outline-none transition focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
                         >
-                            <option value="">Semua Status</option>
-                            <option value="active">Aktif</option>
-                            <option value="inactive">Nonaktif</option>
+                            <option value="">All Statuses</option>
+                            <option value="active">Active</option>
+                            <option value="inactive">Inactive</option>
                         </select>
                         <select
                             value={filters.target_type || ""}
@@ -155,10 +155,10 @@ export default function Index({ rules, filters, summary = {}, recentAudits = [] 
                             }
                             className="h-11 rounded-xl border border-slate-200 bg-slate-50 px-4 text-sm text-slate-800 outline-none transition focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
                         >
-                            <option value="">Semua Target</option>
-                            <option value="all">Semua Produk</option>
-                            <option value="product">Produk</option>
-                            <option value="category">Kategori</option>
+                            <option value="">All Targets</option>
+                            <option value="all">All Products</option>
+                            <option value="product">Product</option>
+                            <option value="category">Category</option>
                         </select>
                         <select
                             value={filters.kind || ""}
@@ -167,27 +167,27 @@ export default function Index({ rules, filters, summary = {}, recentAudits = [] 
                             }
                             className="h-11 rounded-xl border border-slate-200 bg-slate-50 px-4 text-sm text-slate-800 outline-none transition focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
                         >
-                            <option value="">Semua Jenis</option>
-                            <option value="standard_discount">Standar</option>
-                            <option value="qty_break">Grosir</option>
+                            <option value="">All Types</option>
+                            <option value="standard_discount">Standard</option>
+                            <option value="qty_break">Wholesale</option>
                             <option value="bundle_price">Bundle</option>
                             <option value="buy_x_get_y">BXGY</option>
                         </select>
                     </div>
                 </div>
 
-                <Table.Card title="Daftar Rule Pricing">
+                <Table.Card title="Pricing Rules">
                     <Table>
                         <Table.Thead>
                             <tr>
                                 <Table.Th>Rule</Table.Th>
                                 <Table.Th>Target</Table.Th>
                                 <Table.Th>Scope</Table.Th>
-                                <Table.Th>Jenis</Table.Th>
-                                <Table.Th>Diskon</Table.Th>
+                                <Table.Th>Type</Table.Th>
+                                <Table.Th>Discount</Table.Th>
                                 <Table.Th>Priority</Table.Th>
                                 <Table.Th>Status</Table.Th>
-                                <Table.Th className="w-28 text-center">Aksi</Table.Th>
+                                <Table.Th className="w-28 text-center">Actions</Table.Th>
                             </tr>
                         </Table.Thead>
                         <Table.Tbody>
@@ -208,8 +208,10 @@ export default function Index({ rules, filters, summary = {}, recentAudits = [] 
                                                     </p>
                                                     <p className="text-xs text-slate-500 dark:text-slate-400">
                                                         {rule.starts_at
-                                                            ? new Date(rule.starts_at).toLocaleString("id-ID")
-                                                            : "Tanpa jadwal mulai"}
+                                                            ? new Date(
+                                                                  rule.starts_at
+                                                              ).toLocaleString("en-US")
+                                                            : "No start date"}
                                                     </p>
                                                 </div>
                                             </div>
@@ -242,7 +244,10 @@ export default function Index({ rules, filters, summary = {}, recentAudits = [] 
                                             <div className="flex items-center justify-center gap-2">
                                                 {can("pricing-rules-update") && (
                                                     <Link
-                                                        href={route("pricing-rules.edit", rule.id)}
+                                                        href={route(
+                                                            "pricing-rules.edit",
+                                                            rule.id
+                                                        )}
                                                         className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-amber-200 bg-amber-50 text-amber-600 hover:bg-amber-100 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-300"
                                                     >
                                                         <IconPencil size={16} />
@@ -251,7 +256,10 @@ export default function Index({ rules, filters, summary = {}, recentAudits = [] 
                                                 {can("pricing-rules-delete") && (
                                                     <Button
                                                         type="delete"
-                                                        url={route("pricing-rules.destroy", rule.id)}
+                                                        url={route(
+                                                            "pricing-rules.destroy",
+                                                            rule.id
+                                                        )}
                                                         icon={<IconTrash size={16} />}
                                                         className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-rose-200 bg-rose-50 text-rose-600 hover:bg-rose-100 dark:border-rose-800 dark:bg-rose-950/30 dark:text-rose-300"
                                                     />
@@ -263,7 +271,7 @@ export default function Index({ rules, filters, summary = {}, recentAudits = [] 
                             ) : (
                                 <Table.Empty
                                     colSpan={8}
-                                    message="Belum ada rule promo harga."
+                                    message="No pricing promotion rules found."
                                 >
                                     <div className="mx-auto mb-3 flex h-16 w-16 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800">
                                         <IconChartInfographic
@@ -282,7 +290,7 @@ export default function Index({ rules, filters, summary = {}, recentAudits = [] 
                 {recentAudits.length > 0 && (
                     <div className="mt-6 rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
                         <h2 className="text-base font-semibold text-slate-900 dark:text-white">
-                            Aktivitas Promo Terbaru
+                            Recent Promotion Activity
                         </h2>
                         <div className="mt-4 space-y-3">
                             {recentAudits.map((audit) => (
@@ -299,7 +307,9 @@ export default function Index({ rules, filters, summary = {}, recentAudits = [] 
                                         </p>
                                     </div>
                                     <span className="text-xs text-slate-500 dark:text-slate-400">
-                                        {new Date(audit.created_at).toLocaleString("id-ID")}
+                                        {new Date(
+                                            audit.created_at
+                                        ).toLocaleString("en-US")}
                                     </span>
                                 </div>
                             ))}

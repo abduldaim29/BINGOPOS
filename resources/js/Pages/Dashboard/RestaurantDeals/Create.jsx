@@ -7,7 +7,7 @@ import Form from "./Form";
 export default function Create({ outlets, products, activeOutlet }) {
     return (
         <>
-            <Head title="Buat Restaurant Deal" />
+            <Head title="Create Restaurant Deal" />
 
             <div className="w-full">
                 <div className="mb-6 flex items-center gap-4">
@@ -15,14 +15,14 @@ export default function Create({ outlets, products, activeOutlet }) {
                         type="link"
                         href={route("restaurant-deals.index")}
                         className="text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
-                        label="Kembali"
+                        label="Back"
                     />
                     <div>
                         <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
-                            Buat Restaurant Deal
+                            Create Restaurant Deal
                         </h1>
                         <p className="text-sm text-slate-500 dark:text-slate-400">
-                            Buat paket atau promo baru untuk restoran.
+                            Create a new restaurant package or promotion.
                         </p>
                     </div>
                 </div>

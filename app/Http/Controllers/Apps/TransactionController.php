@@ -19,6 +19,7 @@ use App\Services\AuditLogService;
 use App\Services\BatchService;
 use App\Services\CashierShiftService;
 use App\Services\CheckoutService;
+use App\Services\CustomComboCartService;
 use App\Services\LoyaltyService;
 use App\Services\OutletAccessService;
 use App\Services\Payments\PaymentGatewayManager;
@@ -58,12 +59,42 @@ class TransactionController extends Controller
     {
         $userId = auth()->user()->id;
         $activeShift = $this->cashierShiftService->getActiveShiftForUser($userId);
-        $activeShift?->load('warehouse.outlet');
+        if (! $activeShift) {
+            return Inertia::render('Dashboard/Transactions/Index', [
+                'carts' => [],
+                'carts_total' => 0,
+                'heldCarts' => [],
+                'customers' => [],
+                'products' => [],
+                'categories' => [],
+                'initialPricingPreview' => [
+                    'items' => [],
+                    'summary' => [
+                        'base_subtotal' => 0,
+                        'promo_discount_total' => 0,
+                        'subtotal_after_promo' => 0,
+                        'voucher_discount_total' => 0,
+                        'loyalty_discount_total' => 0,
+                        'manual_discount_total' => 0,
+                        'shipping_cost' => 0,
+                        'tax_total' => 0,
+                        'grand_total' => 0,
+                    ],
+                ],
+                'paymentGateways' => [],
+                'defaultPaymentGateway' => 'cash',
+                'bankAccounts' => [],
+                'shiftSummary' => null,
+                'loyaltyTierOptions' => [],
+            ]);
+        }
+
+        $activeShift->load('warehouse.outlet');
         $warehouseId = $activeShift?->warehouse_id;
         $outlet = $activeShift?->warehouse?->outlet;
 
         // Get active cart items (not held)
-        $carts = Cart::with('product')
+        $carts = Cart::with('product', 'unit:id,code,name,symbol')
             ->where('cashier_id', $userId)
             ->active()
             ->latest()
@@ -73,8 +104,8 @@ class TransactionController extends Controller
             $this->pricingService->previewCart($carts, null, null, $outlet)
         );
 
-        // Get held carts grouped by hold_id
-        $heldCarts = Cart::with('product:id,title,sell_price,image')
+        // Keep catalog and customer data lazy so cart-only partial reloads do not rebuild them.
+        $heldCarts = fn () => Cart::with('product:id,title,sell_price,image')
             ->where('cashier_id', $userId)
             ->held()
             ->get()
@@ -92,47 +123,55 @@ class TransactionController extends Controller
             })
             ->values();
 
-        // Get all customers (including walk-in customer)
-        $customers = Customer::latest()->get();
+        $customers = fn () => Customer::latest()->get();
 
-        // Get products with stock > 0 in active warehouse
-        $products = Product::with(['category:id,name', 'units'])
-            ->select('id', 'barcode', 'title', 'description', 'image', 'buy_price', 'sell_price', 'stock', 'category_id')
-            ->when($warehouseId, function ($q) use ($warehouseId) {
-                $q->whereHas('warehouses', fn ($w) => $w->where('product_warehouse.warehouse_id', $warehouseId)
-                    ->where('product_warehouse.stock', '>', 0));
-            }, function ($q) {
-                $q->where('stock', '>', 0);
-            })
-            ->orderBy('title')
-            ->get();
-        $pricingBadges = $this->pricingService->previewProducts($products, null);
-        $products = $products->map(function (Product $product) use ($pricingBadges) {
-            $pricing = $pricingBadges->get($product->id);
+        $products = function () use ($warehouseId) {
+            $products = Product::with(['category:id,name', 'units'])
+                ->select('id', 'barcode', 'title', 'description', 'image', 'buy_price', 'sell_price', 'stock', 'category_id', 'variations', 'variation_prices')
+                ->when($warehouseId, function ($q) use ($warehouseId) {
+                    $q->whereHas('warehouses', fn ($w) => $w->where('product_warehouse.warehouse_id', $warehouseId)
+                        ->where('product_warehouse.stock', '>', 0));
+                }, function ($q) {
+                    $q->where('stock', '>', 0);
+                })
+                ->orderBy('title')
+                ->get();
+            $pricingBadges = $this->pricingService->previewProducts($products, null);
 
-            return [
-                ...$product->toArray(),
-                'units' => $product->units->map(fn ($u) => [
-                    'unit_id' => $u->id,
-                    'code' => $u->code,
-                    'is_base' => (bool) $u->pivot->is_base,
-                    'conversion_factor' => (float) $u->pivot->conversion_factor,
-                    'sell_price' => (int) $u->pivot->sell_price,
-                    'barcode' => $u->pivot->barcode,
-                ]),
-                'pricing_badge' => $pricing && ! empty($pricing['pricing_rule']) ? [
-                    'label' => $pricing['pricing_rule']['label'],
-                    'promo_price' => $pricing['pricing_rule']['price_context']
-                        ? $pricing['effective_unit_price']
-                        : null,
-                    'base_price' => $pricing['base_unit_price'],
-                    'kind' => $pricing['pricing_rule']['kind'],
-                ] : null,
-            ];
-        });
+            return $products->map(function (Product $product) use ($pricingBadges) {
+                $pricing = $pricingBadges->get($product->id);
 
-        // Get all categories
-        $categories = Category::select('id', 'name', 'image')
+                $variationPrices = [];
+                if (is_array($product->variation_prices)) {
+                    foreach ($product->variation_prices as $key => $value) {
+                        $variationPrices[$key] = (int) $value;
+                    }
+                }
+
+                return [
+                    ...$product->toArray(),
+                    'variation_prices' => $variationPrices,
+                    'units' => $product->units->map(fn ($u) => [
+                        'unit_id' => $u->id,
+                        'code' => $u->code,
+                        'is_base' => (bool) $u->pivot->is_base,
+                        'conversion_factor' => (float) $u->pivot->conversion_factor,
+                        'sell_price' => (int) $u->pivot->sell_price,
+                        'barcode' => $u->pivot->barcode,
+                    ]),
+                    'pricing_badge' => $pricing && ! empty($pricing['pricing_rule']) ? [
+                        'label' => $pricing['pricing_rule']['label'],
+                        'promo_price' => $pricing['pricing_rule']['price_context']
+                            ? $pricing['effective_unit_price']
+                            : null,
+                        'base_price' => $pricing['base_unit_price'],
+                        'kind' => $pricing['pricing_rule']['kind'],
+                    ] : null,
+                ];
+            });
+        };
+
+        $categories = fn () => Category::select('id', 'name', 'image')
             ->orderBy('name')
             ->get();
 
@@ -253,12 +292,17 @@ class TransactionController extends Controller
             'product_id' => ['required', 'integer', 'exists:products,id'],
             'qty' => ['required', 'numeric', 'min:0.01'],
             'unit_id' => ['nullable', 'integer'],
+            'variation_id' => ['nullable', 'string'],
+            'variation_name' => ['nullable', 'string'],
         ]);
 
         $activeShift = $this->cashierShiftService->getActiveShiftForUser(auth()->user()->id);
         $warehouseId = $activeShift?->warehouse_id;
 
-        $product = Product::whereId($validated['product_id'])->first();
+        $product = Product::select('id', 'sell_price', 'buy_price', 'is_composite', 'variations', 'variation_prices')
+            ->whereId($validated['product_id'])
+            ->first();
+        $product->load('units');
 
         if (! $product) {
             return redirect()->back()->with('error', 'Product not found.');
@@ -266,50 +310,72 @@ class TransactionController extends Controller
 
         // Ponytail: composite branch skips unit logic; null unit_id is fine for composite carts
         $unitId = null;
+        $conversionFactor = 1;
+        $sellPrice = 0;
 
-        // Composite: check component stock
-        if ($product->is_composite) {
-            $product->load('components');
-            foreach ($product->components as $component) {
-                $needed = (float) $component->pivot->qty * $validated['qty'];
-                $whProduct = $component->warehouses()->where('warehouse_id', $warehouseId)->first();
-                $avail = $whProduct?->pivot->stock ?? 0;
-                if ($avail < $needed) {
-                    return redirect()->back()->with('error', "Insufficient stock for {$component->title}.");
-                }
+        // Use variation price if provided
+        $variationId = $validated['variation_id'] ?? null;
+        $variationName = $validated['variation_name'] ?? null;
+
+        if ($variationId && isset($product->variation_prices) && is_array($product->variation_prices)) {
+            $variationPrice = $product->variation_prices[$variationId] ?? null;
+            if ($variationPrice !== null && $variationPrice > 0) {
+                $sellPrice = (int) $variationPrice;
+                // For variations, use base unit
+                $unitId = (int) ($product->baseUnit()?->id ?: 1);
+                $conversionFactor = 1;
+            } else {
+                // Variation ID provided but no price found - use base price as fallback
+                $sellPrice = (int) $product->sell_price;
+                $unitId = (int) ($product->baseUnit()?->id ?: 1);
+                $conversionFactor = 1;
             }
-            // Composite price = sum component prices
-            $sellPrice = (int) $product->components->sum(fn ($c) => $c->sell_price * (float) $c->pivot->qty);
-        } else {
-            $unitId = (int) (($validated['unit_id'] ?? null) ?: $product->baseUnit()?->id ?: 1);
-
-            // Reject an explicitly provided unit that does not belong to this product
-            if (! empty($validated['unit_id'] ?? null) && ! $product->units()->whereKey($unitId)->exists()) {
-                return redirect()->back()->with('error', 'Invalid unit for this product.');
-            }
-
-            $unitConversion = app(UnitConversionService::class);
-            $baseQty = $unitConversion->toBaseUnit($product, $unitId, $validated['qty']);
-
-            $availableStock = $warehouseId
-                ? (int) ($product->warehouses()->where('warehouse_id', $warehouseId)->first()?->pivot->stock ?? 0)
-                : (int) $product->stock;
-
-            if ($availableStock < $baseQty) {
-                return redirect()->back()->with('error', 'Insufficient stock.');
-            }
-
-            $sellPrice = $unitConversion->getSellPrice($product, $unitId);
-            $pu = $product->units()->where('unit_id', $unitId)->first();
-            $conversionFactor = $pu?->pivot->conversion_factor ?? 1;
         }
-        if (! isset($conversionFactor)) {
-            $conversionFactor = 1;
+
+        // If no variation price, use normal pricing logic
+        if ($sellPrice === 0) {
+            // Composite: check component stock
+            if ($product->is_composite) {
+                $product->load('components');
+                foreach ($product->components as $component) {
+                    $needed = (float) $component->pivot->qty * $validated['qty'];
+                    $whProduct = $component->warehouses()->where('warehouse_id', $warehouseId)->first();
+                    $avail = $whProduct?->pivot->stock ?? 0;
+                    if ($avail < $needed) {
+                        return redirect()->back()->with('error', "Insufficient stock for {$component->title}.");
+                    }
+                }
+                // Composite price = sum component prices
+                $sellPrice = (int) $product->components->sum(fn ($c) => $c->sell_price * (float) $c->pivot->qty);
+            } else {
+                $unitId = (int) (($validated['unit_id'] ?? null) ?: $product->baseUnit()?->id ?: 1);
+
+                // Reject an explicitly provided unit that does not belong to this product
+                if (! empty($validated['unit_id'] ?? null) && ! $product->units()->whereKey($unitId)->exists()) {
+                    return redirect()->back()->with('error', 'Invalid unit for this product.');
+                }
+
+                $unitConversion = app(UnitConversionService::class);
+                $baseQty = $unitConversion->toBaseUnit($product, $unitId, $validated['qty']);
+
+                $availableStock = $warehouseId
+                    ? (int) ($product->warehouses()->where('warehouse_id', $warehouseId)->first()?->pivot->stock ?? 0)
+                    : (int) $product->stock;
+
+                if ($availableStock < $baseQty) {
+                    return redirect()->back()->with('error', 'Insufficient stock.');
+                }
+
+                $sellPrice = $unitConversion->getSellPrice($product, $unitId);
+                $pu = $product->units()->where('unit_id', $unitId)->first();
+                $conversionFactor = $pu?->pivot->conversion_factor ?? 1;
+            }
         }
 
         $cart = Cart::with('product')
             ->where('product_id', $validated['product_id'])
             ->where('cashier_id', auth()->user()->id)
+            ->where('variation_id', $variationId ?? null)
             ->active()
             ->first();
 
@@ -326,10 +392,34 @@ class TransactionController extends Controller
                 'conversion_factor' => $conversionFactor,
                 'qty' => $validated['qty'],
                 'price' => $sellPrice * $validated['qty'],
+                'variation_id' => $variationId,
+                'variation_name' => $variationName,
             ]);
         }
 
         return redirect()->route('transactions.index')->with('success', 'Product added successfully!');
+    }
+
+    public function addCustomComboToCart(Request $request, CustomComboCartService $customComboCartService): JsonResponse
+    {
+        $validated = $request->validate([
+            'items' => ['required', 'array', 'min:1', 'max:20'],
+            'items.*.product_id' => ['required', 'integer', 'exists:products,id'],
+            'items.*.quantity' => ['required', 'integer', 'min:1', 'max:99'],
+            'items.*.variation_id' => ['nullable', 'string', 'max:100'],
+            'items.*.unit_id' => ['nullable', 'integer', 'exists:units,id'],
+        ]);
+
+        $result = $customComboCartService->addItems(
+            $request->user(),
+            $validated['items']
+        );
+
+        return response()->json([
+            'success' => true,
+            'data' => $result,
+            'message' => 'Custom combo added to cart.',
+        ]);
     }
 
     /**
@@ -416,9 +506,17 @@ class TransactionController extends Controller
 
         // Update quantity and price (derive price from DB, not from request/global sell_price)
         $cart->qty = $request->qty;
-        $cart->price = $product->is_composite
-            ? (int) $product->components->sum(fn ($c) => $c->sell_price * (float) $c->pivot->qty) * $request->qty
-            : $unitConversion->getSellPrice($product, (int) $cart->unit_id) * $request->qty;
+
+        // Preserve variation unit price; recalc for non-variations
+        if ($cart->variation_id) {
+            $unitPrice = (int) round($cart->price / max(1, (int) $cart->qty));
+            $cart->price = $unitPrice * $request->qty;
+        } else {
+            $cart->price = $product->is_composite
+                ? (int) $product->components->sum(fn ($c) => $c->sell_price * (float) $c->pivot->qty) * $request->qty
+                : $unitConversion->getSellPrice($product, (int) $cart->unit_id) * $request->qty;
+        }
+
         $cart->save();
 
         return back()->with('success', 'Quantity updated successfully');

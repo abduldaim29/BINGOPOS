@@ -25,11 +25,21 @@ function ProductCard({ product, onAddToCart, isAdding }) {
     const [selectedUnitId, setSelectedUnitId] = React.useState(null);
     const selectedUnit =
         multiUnits.find((u) => u.unit_id === selectedUnitId) || null;
-    const displayPrice = selectedUnit
-        ? selectedUnit.sell_price
-        : showPromo
-          ? promoPrice
-          : product.sell_price;
+
+    // Variation support
+    const hasVariations = product.variations && product.variations.length > 0;
+    const [selectedVariationId, setSelectedVariationId] = React.useState(null);
+    const selectedVariationPrice = hasVariations && selectedVariationId
+        ? Number(product.variation_prices?.[selectedVariationId] || 0)
+        : 0;
+
+    const displayPrice = selectedVariationPrice > 0
+        ? selectedVariationPrice
+        : selectedUnit
+          ? selectedUnit.sell_price
+          : showPromo
+            ? promoPrice
+            : product.sell_price;
 
     return (
         <div
@@ -51,7 +61,15 @@ function ProductCard({ product, onAddToCart, isAdding }) {
             {/* Product Image Container */}
             <button
                 type="button"
-                onClick={() => hasStock && onAddToCart(product, selectedUnit)}
+                onClick={() => {
+                    if (!hasStock) return;
+                    // Get variation name if selected
+                    let variationName = null;
+                    if (selectedVariationId && product.variations) {
+                        variationName = selectedVariationId.replace(/^[a-z]+_/, '').replace(/_/g, ' ');
+                    }
+                    onAddToCart(product, selectedUnit, selectedVariationId, variationName);
+                }}
                 disabled={!hasStock || isAdding}
                 className={`relative block text-left overflow-hidden ${
                     hasStock ? "cursor-pointer" : "cursor-not-allowed"
@@ -155,9 +173,21 @@ function ProductCard({ product, onAddToCart, isAdding }) {
 
                     {/* Stock Indicator */}
                     {hasStock && (
-                        <div className="flex items-center gap-1 px-2 py-1 bg-emerald-50 dark:bg-emerald-950/30 rounded-lg">
-                            <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                            <span className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400">
+                        <div className={`flex items-center gap-1 px-2 py-1 rounded-lg ${
+                            selectedVariationId
+                                ? "bg-accent-50 dark:bg-accent-950/30"
+                                : "bg-emerald-50 dark:bg-emerald-950/30"
+                        }`}>
+                            <div className={`w-1.5 h-1.5 rounded-full animate-pulse ${
+                                selectedVariationId
+                                    ? "bg-accent-500"
+                                    : "bg-emerald-500"
+                            }`} />
+                            <span className={`text-[10px] font-semibold ${
+                                selectedVariationId
+                                    ? "text-accent-600 dark:text-accent-400"
+                                    : "text-emerald-600 dark:text-emerald-400"
+                            }`}>
                                 {product.stock}
                             </span>
                         </div>
@@ -192,6 +222,33 @@ function ProductCard({ product, onAddToCart, isAdding }) {
                                 {u.code}
                             </button>
                         ))}
+                    </div>
+                )}
+
+                {/* Variation Selection */}
+                {hasVariations && (
+                    <div className="flex flex-wrap gap-1.5 pt-1">
+                        {product.variations.map((variationId) => {
+                            // Extract variation name from ID (e.g., "pizza_small" -> "Small")
+                            const variationName = variationId.replace(/^[a-z]+_/, '').replace(/_/g, ' ');
+                            const variationPrice = product.variation_prices?.[variationId] || 0;
+                            const isSelected = selectedVariationId === variationId;
+
+                            return (
+                                <button
+                                    key={variationId}
+                                    type="button"
+                                    onClick={() => setSelectedVariationId(isSelected ? null : variationId)}
+                                    className={`px-2 py-1 rounded-lg text-[10px] font-bold border-2 transition-all duration-200 ${
+                                        isSelected
+                                            ? "bg-gradient-to-r from-accent-500 to-accent-600 text-white border-accent-500 shadow-md shadow-accent-500/20"
+                                            : "border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:border-accent-300 dark:hover:border-accent-700 hover:bg-slate-50 dark:hover:bg-slate-800"
+                                    }`}
+                                >
+                                    {variationName}
+                                </button>
+                            );
+                        })}
                     </div>
                 )}
             </div>

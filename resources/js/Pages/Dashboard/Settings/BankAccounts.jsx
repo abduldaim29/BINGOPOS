@@ -22,7 +22,7 @@ export default function BankAccounts({ bankAccounts = [] }) {
     }, [flash]);
 
     const handleDelete = (bank) => {
-        if (confirm(`Hapus rekening ${bank.bank_name}?`)) {
+        if (confirm(`Delete the bank account ${bank.bank_name}?`)) {
             router.delete(route("settings.bank-accounts.destroy", bank.id));
         }
     };
@@ -33,15 +33,15 @@ export default function BankAccounts({ bankAccounts = [] }) {
 
     return (
         <>
-            <Head title="Pengaturan Rekening Bank" />
+            <Head title="Bank Account Settings" />
 
             <div className="mb-6">
                 <h1 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
                     <IconBuildingBank size={28} className="text-primary-500" />
-                    Rekening Bank
+                    Bank Accounts
                 </h1>
                 <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-                    Kelola rekening bank untuk pembayaran transfer
+                    Manage bank accounts for bank transfer payments.
                 </p>
             </div>
 
@@ -49,15 +49,16 @@ export default function BankAccounts({ bankAccounts = [] }) {
                 <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden">
                     <div className="p-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
                         <h3 className="font-semibold text-slate-800 dark:text-white">
-                            Daftar Rekening ({bankAccounts.length})
+                            Bank Account List ({bankAccounts.length})
                         </h3>
+
                         {canUpdatePaymentSettings && (
                             <Link
                                 href={route("settings.bank-accounts.create")}
                                 className="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-primary-500 hover:bg-primary-600 text-white text-sm font-medium transition-colors"
                             >
                                 <IconPlus size={18} />
-                                Tambah Bank
+                                Add Bank Account
                             </Link>
                         )}
                     </div>
@@ -74,6 +75,7 @@ export default function BankAccounts({ bankAccounts = [] }) {
                                     <div className="text-slate-400 cursor-move">
                                         <IconGripVertical size={20} />
                                     </div>
+
                                     <div className="w-12 h-12 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center overflow-hidden">
                                         {bank.logo_url ? (
                                             <img
@@ -88,6 +90,7 @@ export default function BankAccounts({ bankAccounts = [] }) {
                                             />
                                         )}
                                     </div>
+
                                     <div className="flex-1">
                                         <p className="font-semibold text-slate-800 dark:text-white">
                                             {bank.bank_name}
@@ -96,6 +99,7 @@ export default function BankAccounts({ bankAccounts = [] }) {
                                             {bank.account_number} • {bank.account_name}
                                         </p>
                                     </div>
+
                                     <div className="flex items-center gap-2">
                                         {canUpdatePaymentSettings && (
                                             <>
@@ -107,17 +111,21 @@ export default function BankAccounts({ bankAccounts = [] }) {
                                                             : "bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400"
                                                     }`}
                                                 >
-                                                    {bank.is_active ? "Aktif" : "Nonaktif"}
+                                                    {bank.is_active ? "Active" : "Inactive"}
                                                 </button>
+
                                                 <Link
                                                     href={route("settings.bank-accounts.edit", bank.id)}
                                                     className="p-2 rounded-lg text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                                                    aria-label={`Edit ${bank.bank_name}`}
                                                 >
                                                     <IconPencil size={18} />
                                                 </Link>
+
                                                 <button
                                                     onClick={() => handleDelete(bank)}
                                                     className="p-2 rounded-lg text-danger-500 hover:bg-danger-50 dark:hover:bg-danger-900/20 transition-colors"
+                                                    aria-label={`Delete ${bank.bank_name}`}
                                                 >
                                                     <IconTrash size={18} />
                                                 </button>
@@ -134,7 +142,7 @@ export default function BankAccounts({ bankAccounts = [] }) {
                                 className="mx-auto text-slate-300 dark:text-slate-600 mb-3"
                             />
                             <p className="text-slate-500 dark:text-slate-400">
-                                Belum ada rekening bank
+                                No bank accounts have been added yet.
                             </p>
                         </div>
                     )}

@@ -1,11 +1,16 @@
 @php
     $fontFamily = "'Inter', 'Helvetica', 'Arial', sans-serif";
+    $storeName = $store['name'] === 'Toko Anda' ? 'Your Store' : $store['name'];
+    $storeAddress = $store['address'] === 'Alamat belum diisi'
+        ? 'Address not provided'
+        : $store['address'];
 @endphp
 <!DOCTYPE html>
-<html lang="id">
+<html lang="en">
 
 <head>
     <meta charset="UTF-8">
+    <title>{{ $storeName }} - Invoice {{ $transaction->invoice }}</title>
     <style>
         @font-face {
             font-family: 'Inter';
@@ -133,7 +138,7 @@
 
         tbody td {
             padding: 7px 14px 10px 14px;
-            /* atas | kanan | bawah | kiri */
+            /* top | right | bottom | left */
             font-size: 13px;
             font-weight: 600;
             border: none
@@ -168,20 +173,20 @@
             <div class="store">
                 <div class="logo" style="width:60px;height:60px;">
                     @if ($store['logo_data'])
-                        <img src="{{ $store['logo_data'] }}" alt="{{ $store['name'] }}">
+                        <img src="{{ $store['logo_data'] }}" alt="{{ $storeName }}">
                     @elseif($store['logo'])
-                        <img src="{{ $store['logo'] }}" alt="{{ $store['name'] }}">
+                        <img src="{{ $store['logo'] }}" alt="{{ $storeName }}">
                     @else
-                        <strong>{{ substr($store['name'], 0, 2) }}</strong>
+                        <strong>{{ substr($storeName, 0, 2) }}</strong>
                     @endif
                 </div>
                 <div>
-                    <h2 style="margin:0;">{{ $store['name'] }}</h2>
-                    @if ($store['address'])
-                        <div style="font-size:12px;color:#475569; margin-top:2px;">{{ $store['address'] }}</div>
+                    <h2 style="margin:0;">{{ $storeName }}</h2>
+                    @if ($storeAddress)
+                        <div style="font-size:12px;color:#475569; margin-top:2px;">{{ $storeAddress }}</div>
                     @endif
                     <div style="font-size:12px;color:#475569; margin-top:2px;">
-                        {{ $store['phone'] ? 'Telp: ' . $store['phone'] . ' • ' : '' }}{{ $store['email'] }}
+                        {{ $store['phone'] ? 'Phone: ' . $store['phone'] . ' • ' : '' }}{{ $store['email'] }}
                     </div>
                 </div>
             </div>
@@ -198,8 +203,8 @@
     <table style="width:100%; margin-top:12px; table-layout:fixed;">
         <tr>
             <td style="width:50%; vertical-align:top; font-size:13px;">
-                <div style="color:#64748b;font-weight:600;">Pelanggan</div>
-                <div style="font-weight:700; margin-top:2px;">{{ $transaction->customer->name ?? 'Umum' }}</div>
+                <div style="color:#64748b;font-weight:600;">Customer</div>
+                <div style="font-weight:700; margin-top:2px;">{{ $transaction->customer->name ?? 'General' }}</div>
                 @if ($transaction->customer?->no_telp)
                     <div style="color:#475569; margin-top:2px;">{{ $transaction->customer->no_telp }}</div>
                 @endif
@@ -217,13 +222,13 @@
                 @endif
             </td>
             <td style="width:50%; vertical-align:top; font-size:13px; text-align:right;">
-                <div style="color:#64748b;font-weight:600;">Kasir</div>
+                <div style="color:#64748b;font-weight:600;">Cashier</div>
                 <div style="font-weight:700; margin-top:2px;">{{ $transaction->cashier->name ?? '-' }}</div>
                 <div style="margin-top:6px;">
                     <div><strong>Status:</strong> {{ $transaction->payment_status }}</div>
-                    <div><strong>Metode:</strong> {{ $transaction->payment_method }}</div>
+                    <div><strong>Method:</strong> {{ $transaction->payment_method }}</div>
                     @if ($transaction->receivable && $transaction->receivable->due_date)
-                        <div><strong>Jatuh tempo:</strong> {{ $transaction->receivable->due_date }}</div>
+                        <div><strong>Due date:</strong> {{ $transaction->receivable->due_date }}</div>
                     @endif
                 </div>
             </td>
@@ -233,9 +238,9 @@
     <table>
         <thead>
             <tr>
-                <th class="produk">Nama Produk</th>
+                <th class="produk">Product Name</th>
                 <th class="qty">Qty</th>
-                <th class="right">Harga</th>
+                <th class="right">Price</th>
                 <th class="right">Subtotal</th>
             </tr>
         </thead>
@@ -243,10 +248,10 @@
             @foreach ($transaction->details as $index => $detail)
                 <tr style="background: {{ $index % 2 === 0 ? '#f8fafc' : '#fff' }};">
                     <td>
-                        {{ $detail->product->title ?? 'Produk' }}
+                        {{ $detail->product->title ?? 'Product' }}
                         @if ($detail->discount_total > 0 && ($detail->pricing_group_label || $detail->pricing_rule_name))
                             <div style="font-size:11px;color:#e11d48; margin-top:2px;">
-                                Promo: {{ $detail->pricing_group_label ?: $detail->pricing_rule_name }}
+                                Promotion: {{ $detail->pricing_group_label ?: $detail->pricing_rule_name }}
                             </div>
                         @endif
                     </td>
@@ -254,12 +259,12 @@
                     <td class="right">
                         @if ($detail->discount_total > 0 && $detail->base_unit_price > $detail->unit_price)
                             <div style="font-size:11px;color:#94a3b8;text-decoration:line-through;">
-                                {{ number_format($detail->base_unit_price, 0, ',', '.') }}
+                                {{ number_format($detail->base_unit_price, 0, ',', ',') }}
                             </div>
                         @endif
-                        {{ number_format($detail->unit_price ?: ($detail->price / max(1, $detail->qty)), 0, ',', '.') }}
+                        {{ number_format($detail->unit_price ?: ($detail->price / max(1, $detail->qty)), 0, ',', ',') }}
                     </td>
-                    <td class="right">{{ number_format($detail->price, 0, ',', '.') }}</td>
+                    <td class="right">{{ number_format($detail->price, 0, ',', ',') }}</td>
                 </tr>
             @endforeach
         </tbody>
@@ -283,55 +288,55 @@
                     <tr>
                         <td style="color:#475569;">Subtotal</td>
                         <td class="right" style="font-weight:600;">
-                            {{ number_format($subtotal, 0, ',', '.') }}
+                            {{ number_format($subtotal, 0, ',', ',') }}
                         </td>
                     </tr>
                     <tr>
-                        <td style="color:#475569;">Promo Otomatis</td>
+                        <td style="color:#475569;">Automatic Promotion</td>
                         <td class="right" style="font-weight:600;">
-                            - {{ number_format($promoDiscount, 0, ',', '.') }}
+                            - {{ number_format($promoDiscount, 0, ',', ',') }}
                         </td>
                     </tr>
                     <tr>
-                        <td style="color:#475569;">Diskon Manual</td>
+                        <td style="color:#475569;">Manual Discount</td>
                         <td class="right" style="font-weight:600;">
-                            - {{ number_format($discount, 0, ',', '.') }}
+                            - {{ number_format($discount, 0, ',', ',') }}
                         </td>
                     </tr>
                     @if ($voucherDiscount > 0)
                         <tr>
-                            <td style="color:#475569;">Voucher Customer</td>
+                            <td style="color:#475569;">Customer Voucher</td>
                             <td class="right" style="font-weight:600;">
-                                - {{ number_format($voucherDiscount, 0, ',', '.') }}
+                                - {{ number_format($voucherDiscount, 0, ',', ',') }}
                             </td>
                         </tr>
                     @endif
                     @if ($loyaltyDiscount > 0)
                         <tr>
-                            <td style="color:#475569;">Redeem Poin</td>
+                            <td style="color:#475569;">Redeem Points</td>
                             <td class="right" style="font-weight:600;">
-                                - {{ number_format($loyaltyDiscount, 0, ',', '.') }}
+                                - {{ number_format($loyaltyDiscount, 0, ',', ',') }}
                             </td>
                         </tr>
                     @endif
                     <tr>
-                        <td style="color:#475569;">Ongkir</td>
+                        <td style="color:#475569;">Shipping</td>
                         <td class="right" style="font-weight:600;">
-                            + {{ number_format($shipping, 0, ',', '.') }}
+                            + {{ number_format($shipping, 0, ',', ',') }}
                         </td>
                     </tr>
                     @if (($transaction->tax_total ?? 0) > 0)
                         <tr>
-                            <td style="color:#475569;">PPN {{ number_format($transaction->tax_rate ?? 11, 0) }}%</td>
+                            <td style="color:#475569;">VAT {{ number_format($transaction->tax_rate ?? 11, 0) }}%</td>
                             <td class="right" style="font-weight:600;">
-                                + {{ number_format($transaction->tax_total, 0, ',', '.') }}
+                                + {{ number_format($transaction->tax_total, 0, ',', ',') }}
                             </td>
                         </tr>
                     @endif
                     <tr>
                         <td style="font-weight:700; font-size:13px;">Total</td>
                         <td class="right" style="font-weight:800; font-size:13px;">
-                            {{ number_format($grandTotal, 0, ',', '.') }}
+                            {{ number_format($grandTotal, 0, ',', ',') }}
                         </td>
                     </tr>
                 </table>
@@ -345,7 +350,7 @@
             <div style="font-size:10px;color:#475569;margin-top: 5px;">{{ $transaction->invoice }}</div>
         </div>
         <div style="font-size:11px;color:#94a3b8; text-align:center; margin-top: 20px;">
-            Terima kasih atas kepercayaan Anda.
+            Thank you for your trust.
         </div>
     </div>
 </body>

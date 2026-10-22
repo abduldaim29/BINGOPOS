@@ -15,14 +15,14 @@ export default function Edit({ deal, outlets, products, activeOutlet }) {
                         type="link"
                         href={route("restaurant-deals.index")}
                         className="text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
-                        label="Kembali"
+                        label="Back"
                     />
                     <div>
                         <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
                             Edit {deal.name}
                         </h1>
                         <p className="text-sm text-slate-500 dark:text-slate-400">
-                            Ubah konfigurasi deal ini.
+                            Update this deal's configuration.
                         </p>
                     </div>
                 </div>

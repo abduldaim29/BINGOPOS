@@ -10,8 +10,22 @@ class Cart extends Model
     use HasFactory;
 
     protected $fillable = [
-        'cashier_id', 'warehouse_id', 'product_id', 'unit_id', 'conversion_factor', 'qty', 'price', 'hold_id', 'hold_label', 'held_at',
+        'cashier_id', 'warehouse_id', 'product_id', 'unit_id', 'conversion_factor', 'qty', 'price', 'hold_id', 'hold_label', 'held_at', 'variation_id', 'variation_name',
     ];
+
+    /**
+     * Get the unit price for this cart item.
+     * For variations, derives from stored line total.
+     * For non-variations, uses UnitConversionService.
+     */
+    public function getUnitPriceAttribute(): int
+    {
+        if ($this->variation_id && $this->qty > 0) {
+            return (int) round($this->price / $this->qty);
+        }
+
+        return (int) round($this->price / max(1, (int) $this->qty));
+    }
 
     protected $casts = [
         'held_at' => 'datetime',
@@ -31,6 +45,11 @@ class Cart extends Model
     public function unit()
     {
         return $this->belongsTo(Unit::class);
+    }
+
+    public function getUnitNameAttribute()
+    {
+        return $this->unit?->name ?? null;
     }
 
     public function scopeActive($query)

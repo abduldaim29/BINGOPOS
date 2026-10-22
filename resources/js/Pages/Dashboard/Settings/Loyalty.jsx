@@ -21,14 +21,14 @@ export default function Loyalty({ settings }) {
         event.preventDefault();
         post(route("settings.loyalty.update"), {
             preserveScroll: true,
-            onSuccess: () => toast.success("Pengaturan loyalty disimpan"),
-            onError: () => toast.error("Gagal menyimpan pengaturan loyalty"),
+            onSuccess: () => toast.success("Loyalty settings saved successfully."),
+            onError: () => toast.error("Failed to save loyalty settings."),
         });
     };
 
     return (
         <>
-            <Head title="Pengaturan Loyalty" />
+            <Head title="Loyalty Settings" />
 
             <div className="space-y-6">
                 <div>
@@ -36,7 +36,7 @@ export default function Loyalty({ settings }) {
                         Loyalty Settings
                     </h1>
                     <p className="text-sm text-slate-500 dark:text-slate-400">
-                        Atur earn rate, redeem value, dan threshold tier member.
+                        Configure the earn rate, redemption value, and member tier thresholds.
                     </p>
                 </div>
 
@@ -55,7 +55,7 @@ export default function Loyalty({ settings }) {
                                         Earn & Redeem
                                     </h2>
                                     <p className="text-sm text-slate-500 dark:text-slate-400">
-                                        Kontrol perolehan dan penggunaan poin.
+                                        Control how points are earned and redeemed.
                                     </p>
                                 </div>
                             </div>
@@ -63,7 +63,7 @@ export default function Loyalty({ settings }) {
                             <div className="space-y-4">
                                 <label className="flex items-center justify-between rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm dark:border-slate-700 dark:bg-slate-800">
                                     <span className="font-medium text-slate-700 dark:text-slate-200">
-                                        Aktifkan earn points
+                                        Enable Points Earning
                                     </span>
                                     <input
                                         type="checkbox"
@@ -74,9 +74,10 @@ export default function Loyalty({ settings }) {
                                         className="h-4 w-4 rounded border-slate-300 text-primary-500"
                                     />
                                 </label>
+
                                 <label className="flex items-center justify-between rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm dark:border-slate-700 dark:bg-slate-800">
                                     <span className="font-medium text-slate-700 dark:text-slate-200">
-                                        Aktifkan redeem points
+                                        Enable Points Redemption
                                     </span>
                                     <input
                                         type="checkbox"
@@ -93,7 +94,7 @@ export default function Loyalty({ settings }) {
 
                                 <div>
                                     <label className="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-300">
-                                        Nominal belanja untuk 1 poin
+                                        Spending Amount Required to Earn 1 Point
                                     </label>
                                     <input
                                         type="number"
@@ -116,7 +117,7 @@ export default function Loyalty({ settings }) {
 
                                 <div>
                                     <label className="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-300">
-                                        Nilai rupiah per 1 poin redeem
+                                        Currency Value per Redeemed Point
                                     </label>
                                     <input
                                         type="number"
@@ -146,10 +147,10 @@ export default function Loyalty({ settings }) {
                                 </div>
                                 <div>
                                     <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
-                                        Threshold Tier
+                                        Tier Thresholds
                                     </h2>
                                     <p className="text-sm text-slate-500 dark:text-slate-400">
-                                        Threshold ini akan menentukan upgrade dan downgrade tier.
+                                        These thresholds determine when members upgrade or downgrade their tiers.
                                     </p>
                                 </div>
                             </div>
@@ -176,7 +177,9 @@ export default function Loyalty({ settings }) {
                                 ))}
                             </div>
                             {errors.tiers && (
-                                <p className="mt-3 text-xs text-rose-500">{errors.tiers}</p>
+                                <p className="mt-3 text-xs text-rose-500">
+                                    {errors.tiers}
+                                </p>
                             )}
                         </section>
                     </div>
@@ -188,7 +191,7 @@ export default function Loyalty({ settings }) {
                             className="inline-flex items-center gap-2 rounded-xl bg-primary-500 px-5 py-2.5 font-medium text-white transition-colors hover:bg-primary-600 disabled:opacity-50"
                         >
                             <IconDeviceFloppy size={18} />
-                            {processing ? "Menyimpan..." : "Simpan Pengaturan"}
+                            {processing ? "Saving..." : "Save Settings"}
                         </button>
                     </div>
                 </form>

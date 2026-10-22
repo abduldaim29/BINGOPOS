@@ -14,7 +14,7 @@ import {
 
 const formatDateTime = (value) =>
     value
-        ? new Intl.DateTimeFormat("id-ID", {
+        ? new Intl.DateTimeFormat("en-US", {
               dateStyle: "medium",
               timeStyle: "short",
           }).format(new Date(value))
@@ -29,8 +29,8 @@ const statusBadge = (status) => {
     };
     const labels = {
         draft: "Draft",
-        completed: "Selesai",
-        cancelled: "Dibatalkan",
+        completed: "Completed",
+        cancelled: "Cancelled",
     };
     return <span className={`${base} ${map[status] || map.draft}`}>{labels[status] || status}</span>;
 };
@@ -48,14 +48,14 @@ export default function Index({ returns, filters, suppliers }) {
 
     return (
         <>
-            <Head title="Retur Supplier" />
+            <Head title="Supplier Returns" />
             <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                     <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
-                        Retur Supplier
+                        Supplier Returns
                     </h1>
                     <p className="text-sm text-slate-500 dark:text-slate-400">
-                        Kelola retur barang ke supplier.
+                        Manage returns of goods to suppliers.
                     </p>
                 </div>
                 {can("supplier-returns-create") && (
@@ -64,7 +64,7 @@ export default function Index({ returns, filters, suppliers }) {
                         href={route("supplier-returns.create")}
                         icon={<IconCirclePlus size={18} />}
                         className="bg-primary-500 hover:bg-primary-600 text-white shadow-lg shadow-primary-500/30"
-                        label="Buat Retur"
+                        label="Create Return"
                     />
                 )}
             </div>
@@ -75,7 +75,7 @@ export default function Index({ returns, filters, suppliers }) {
                         type="text"
                         value={filters.search || ""}
                         onChange={(e) => handleFilterChange("search", e.target.value)}
-                        placeholder="Cari nomor dokumen..."
+                        placeholder="Search document number..."
                         className="h-11 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 pr-11 text-sm text-slate-800 outline-none transition focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
                     />
                     <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-4 text-slate-400">
@@ -87,34 +87,34 @@ export default function Index({ returns, filters, suppliers }) {
                     onChange={(e) => handleFilterChange("status", e.target.value)}
                     className="h-11 rounded-xl border border-slate-200 bg-slate-50 px-4 text-sm text-slate-800 outline-none transition focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
                 >
-                    <option value="">Semua Status</option>
+                    <option value="">All Statuses</option>
                     <option value="draft">Draft</option>
-                    <option value="completed">Selesai</option>
-                    <option value="cancelled">Dibatalkan</option>
+                    <option value="completed">Completed</option>
+                    <option value="cancelled">Cancelled</option>
                 </select>
                 <select
                     value={filters.supplier || ""}
                     onChange={(e) => handleFilterChange("supplier", e.target.value)}
                     className="h-11 rounded-xl border border-slate-200 bg-slate-50 px-4 text-sm text-slate-800 outline-none transition focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
                 >
-                    <option value="">Semua Supplier</option>
+                    <option value="">All Suppliers</option>
                     {suppliers.map((s) => (
                         <option key={s.id} value={s.id}>{s.name}</option>
                     ))}
                 </select>
             </div>
 
-            <Table.Card title="Daftar Retur Supplier">
+            <Table.Card title="Supplier Return List">
                 <Table>
                     <Table.Thead>
                         <tr>
-                            <Table.Th>Dokumen</Table.Th>
+                            <Table.Th>Document</Table.Th>
                             <Table.Th>Supplier</Table.Th>
                             <Table.Th>Status</Table.Th>
-                            <Table.Th>Item</Table.Th>
-                            <Table.Th>Tanggal</Table.Th>
-                            <Table.Th>Dibuat Oleh</Table.Th>
-                            <Table.Th className="w-24 text-center">Aksi</Table.Th>
+                            <Table.Th>Items</Table.Th>
+                            <Table.Th>Date</Table.Th>
+                            <Table.Th>Created By</Table.Th>
+                            <Table.Th className="w-24 text-center">Actions</Table.Th>
                         </tr>
                     </Table.Thead>
                     <Table.Tbody>
@@ -143,7 +143,7 @@ export default function Index({ returns, filters, suppliers }) {
                         ) : (
                             <Table.Empty colSpan={7} message={
                                 <div className="text-slate-500 dark:text-slate-400">
-                                    Belum ada data retur supplier.
+                                    No supplier return records found.
                                 </div>
                             }>
                                 <div className="mx-auto mb-3 flex h-16 w-16 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800">

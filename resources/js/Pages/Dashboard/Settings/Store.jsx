@@ -23,6 +23,7 @@ export default function Store({ settings }) {
         store_logo: null,
         store_address: settings.store_address || "",
         store_phone: settings.store_phone || "",
+        store_mobile: settings.store_mobile || "",
         store_email: settings.store_email || "",
         store_website: settings.store_website || "",
         store_city: settings.store_city || "",
@@ -31,7 +32,9 @@ export default function Store({ settings }) {
         tax_default_rate: settings.tax_default_rate || "11.00",
     });
 
-    const [logoPreview, setLogoPreview] = useState(settings.store_logo || null);
+    const [logoPreview, setLogoPreview] = useState(
+        settings.store_logo || null
+    );
 
     useEffect(() => {
         return () => {
@@ -43,15 +46,16 @@ export default function Store({ settings }) {
 
     const submit = (e) => {
         e.preventDefault();
+
         post(route("settings.store.update"), {
             preserveScroll: true,
             onSuccess: (page) => {
                 toast.success("Store profile saved successfully");
                 reset("store_logo");
 
-                // Update logo preview with the new path from server response
                 if (page.props.settings.store_logo) {
                     const logoPath = page.props.settings.store_logo;
+
                     setLogoPreview(
                         logoPath.startsWith("http") ||
                             logoPath.startsWith("/storage")
@@ -60,8 +64,9 @@ export default function Store({ settings }) {
                     );
                 }
             },
-            onError: () =>
-                toast.error("Failed to save store profile"),
+            onError: () => {
+                toast.error("Failed to save store profile");
+            },
         });
     };
 
@@ -75,7 +80,7 @@ export default function Store({ settings }) {
                         Store Settings
                     </h1>
                     <p className="text-sm text-slate-500 dark:text-slate-400">
-                        Manage the store identity displayed on receipts and reports.
+                        Manage the store information displayed on receipts and reports.
                     </p>
                 </div>
 
@@ -84,7 +89,7 @@ export default function Store({ settings }) {
                     className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 space-y-6"
                 >
                     <div className="flex flex-col lg:flex-row gap-6">
-                        {/* Logo */}
+                        {/* Store Logo */}
                         <div className="lg:w-1/3">
                             <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-3 flex items-center gap-2">
                                 <IconPhoto size={18} />
@@ -123,7 +128,9 @@ export default function Store({ settings }) {
 
                                     if (file) {
                                         setData("store_logo", file);
-                                        setLogoPreview(URL.createObjectURL(file));
+                                        setLogoPreview(
+                                            URL.createObjectURL(file)
+                                        );
                                     }
                                 }}
                             />
@@ -144,7 +151,7 @@ export default function Store({ settings }) {
                                 onChange={(e) =>
                                     setData("store_name", e.target.value)
                                 }
-                                placeholder="Store name"
+                                placeholder="Enter store name"
                             />
 
                             <Textarea
@@ -159,29 +166,41 @@ export default function Store({ settings }) {
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <Input
-                                    label="City / Regency"
+                                    label="City"
                                     value={data.store_city}
                                     errors={errors.store_city}
                                     onChange={(e) =>
                                         setData("store_city", e.target.value)
                                     }
-                                    placeholder="e.g., Surabaya"
+                                    placeholder="e.g., Lahore"
                                     icon={<IconMapPin size={16} />}
                                 />
 
                                 <Input
-                                    label="Phone Number"
+                                    label="Phone Number (Landline)"
                                     value={data.store_phone}
                                     errors={errors.store_phone}
                                     onChange={(e) =>
                                         setData("store_phone", e.target.value)
                                     }
-                                    placeholder="0812xxxxxxx"
+                                    placeholder="042-12345678"
                                     icon={<IconPhone size={16} />}
                                 />
                             </div>
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <Input
+                                    label="Mobile Number"
+                                    type="tel"
+                                    value={data.store_mobile}
+                                    errors={errors.store_mobile}
+                                    onChange={(e) =>
+                                        setData("store_mobile", e.target.value)
+                                    }
+                                    placeholder="0300-1234567"
+                                    icon={<IconPhone size={16} />}
+                                />
+
                                 <Input
                                     label="Email"
                                     type="email"
@@ -190,25 +209,25 @@ export default function Store({ settings }) {
                                     onChange={(e) =>
                                         setData("store_email", e.target.value)
                                     }
-                                    placeholder="email@store.com"
+                                    placeholder="example@store.com"
                                     icon={<IconMail size={16} />}
                                 />
-
-                                <Input
-                                    label="Website / Social Media"
-                                    value={data.store_website}
-                                    errors={errors.store_website}
-                                    onChange={(e) =>
-                                        setData("store_website", e.target.value)
-                                    }
-                                    placeholder="https://"
-                                    icon={<IconWorld size={16} />}
-                                />
                             </div>
+
+                            <Input
+                                label="Website / Social Media"
+                                value={data.store_website}
+                                errors={errors.store_website}
+                                onChange={(e) =>
+                                    setData("store_website", e.target.value)
+                                }
+                                placeholder="https://example.com"
+                                icon={<IconWorld size={16} />}
+                            />
                         </div>
                     </div>
 
-                    {/* Tax & Legal Section */}
+                    {/* Tax & Legal Information */}
                     <div className="border-t border-slate-100 dark:border-slate-800 pt-6">
                         <h2 className="text-lg font-semibold text-slate-800 dark:text-white mb-4 flex items-center gap-2">
                             <IconReceiptTax
@@ -226,7 +245,7 @@ export default function Store({ settings }) {
                                 onChange={(e) =>
                                     setData("store_npwp", e.target.value)
                                 }
-                                placeholder="XX.XXX.XXX.X-XXX.XXX"
+                                placeholder="Enter tax identification number"
                                 icon={<IconFileCertificate size={16} />}
                             />
 
@@ -237,7 +256,7 @@ export default function Store({ settings }) {
                                 onChange={(e) =>
                                     setData("store_nib", e.target.value)
                                 }
-                                placeholder="Business Identification Number"
+                                placeholder="Enter business identification number"
                             />
                         </div>
 
@@ -251,17 +270,21 @@ export default function Store({ settings }) {
                                 value={data.tax_default_rate}
                                 errors={errors.tax_default_rate}
                                 onChange={(e) =>
-                                    setData("tax_default_rate", e.target.value)
+                                    setData(
+                                        "tax_default_rate",
+                                        e.target.value
+                                    )
                                 }
                                 placeholder="11.00"
                             />
 
                             <p className="mt-1 text-xs text-slate-400">
-                                Default rate for new products. It can be changed for each product.
+                                Default tax rate for new products. You can change it for individual products.
                             </p>
                         </div>
                     </div>
 
+                    {/* Save Settings */}
                     <div className="flex justify-end pt-4 border-t border-slate-100 dark:border-slate-800">
                         <button
                             type="submit"

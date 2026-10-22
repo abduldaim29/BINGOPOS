@@ -169,7 +169,7 @@ class AdvancedSalesInsightsController extends Controller
                 p.title as product_title,
                 p.sku as product_sku,
                 c.name as category_name,
-                COALESCE(ws.current_stock, p.stock) as current_stock,
+                COALESCE(ws.current_stock, MAX(p.stock)) as current_stock,
                 SUM(td.qty) as qty_sold,
                 SUM(td.price) as revenue_total,
                 SUM((td.price - ROUND((COALESCE(t.discount, 0) * td.price) / NULLIF(tx.subtotal_after_promo, 0))) - (p.buy_price * td.qty)) as profit_total,

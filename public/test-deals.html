@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Deals API</title>
+</head>
+<body>
+    <h1>Test Deals API</h1>
+    <button onclick="testDeals()">Fetch Deals</button>
+    <pre id="result"></pre>
+
+    <script>
+        async function testDeals() {
+            const result = document.getElementById('result');
+            result.textContent = 'Loading...';
+            
+            try {
+                const response = await fetch('/api/v1/pos/restaurant-deals', {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest',
+                    },
+                    credentials: 'include'
+                });
+                
+                const data = await response.json();
+                result.textContent = JSON.stringify(data, null, 2);
+                console.log('Success:', data);
+            } catch (error) {
+                result.textContent = 'Error: ' + error.message;
+                console.error('Error:', error);
+            }
+        }
+    </script>
+</body>
+</html>

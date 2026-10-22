@@ -86,7 +86,7 @@ class WalkInCustomerTest extends TestCase
             ]);
 
         $response->assertRedirect(route('transactions.index'));
-        $response->assertSessionHas('error', 'Nota barang memerlukan pelanggan.');
+        $response->assertSessionHas('error', 'A customer is required for pay-later transactions.');
         $this->assertDatabaseCount('transactions', 0);
     }
 

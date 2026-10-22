@@ -39,7 +39,8 @@ export default function Payment({
         safepay_aggregator_id: setting?.safepay_aggregator_id ?? "",
         safepay_secret_key: "",
         safepay_webhook_secret: "",
-        safepay_aggregator_merchant_identifier: setting?.safepay_aggregator_merchant_identifier ?? "",
+        safepay_aggregator_merchant_identifier:
+            setting?.safepay_aggregator_merchant_identifier ?? "",
         safepay_production: setting?.safepay_production ?? false,
     });
 
@@ -71,7 +72,7 @@ export default function Payment({
         if (source.managed_by_environment) {
             return (
                 <p className="text-xs text-amber-600 dark:text-amber-400">
-                    Secret dikelola oleh environment dan tidak bisa diubah dari dashboard.
+                    This secret is managed through the environment and cannot be changed from the dashboard.
                 </p>
             );
         }
@@ -79,7 +80,7 @@ export default function Payment({
         if (source.configured) {
             return (
                 <p className="text-xs text-slate-500 dark:text-slate-400">
-                    Tersimpan: <span className="font-medium">{source.masked}</span>. {keepMessage}
+                    Saved: <span className="font-medium">{source.masked}</span>. {keepMessage}
                 </p>
             );
         }
@@ -109,14 +110,16 @@ export default function Payment({
                         Default Gateway
                     </h3>
                     <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
-                        Default payment gateway used by cashier when
-                        opening transaction page.
+                        Default payment gateway used by the cashier when
+                        opening the transaction page.
                     </p>
+
                     {!canUpdatePaymentSettings && (
                         <div className="mb-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-300">
-                            You only have view access. Payment settings changes require update permission and password reconfirmation.
+                            You only have view access. Updating payment settings requires update permission and password reconfirmation.
                         </div>
                     )}
+
                     <div>
                         <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                             Select Gateway
@@ -176,12 +179,12 @@ export default function Payment({
                         </label>
                     </div>
                     <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
-                        Manual payment via bank transfer. Cashier will
-                        enter transaction with pending status, then
-                        admin confirms after funds received.
+                        Manual payment via bank transfer. The cashier will
+                        create the transaction with pending status, and an
+                        administrator will confirm it after the funds are received.
                     </p>
-                        <a
-                            href={route("settings.bank-accounts.index")}
+                    <a
+                        href={route("settings.bank-accounts.index")}
                         className="inline-flex items-center gap-2 text-sm text-primary-500 hover:text-primary-600 font-medium"
                     >
                         Manage Bank Accounts →
@@ -261,7 +264,7 @@ export default function Payment({
                         </div>
                         {renderSecretHint(
                             "midtrans_server_key",
-                            "Fill again only if you want to change secret."
+                            "Enter a value only if you want to change the secret."
                         )}
                         <label className="flex items-center gap-2 cursor-pointer">
                             <Checkbox
@@ -275,7 +278,7 @@ export default function Payment({
                                 disabled={!canUpdatePaymentSettings}
                             />
                             <span className="text-sm text-slate-600 dark:text-slate-400">
-                                Mode Produksi
+                                Production Mode
                             </span>
                         </label>
                     </div>
@@ -345,7 +348,7 @@ export default function Payment({
                         </div>
                         {renderSecretHint(
                             "xendit_secret_key",
-                            "Fill again only if you want to change secret."
+                            "Enter a value only if you want to change the secret."
                         )}
                         <Input
                             label="Callback Token"
@@ -367,7 +370,7 @@ export default function Payment({
                         />
                         {renderSecretHint(
                             "xendit_callback_token",
-                            "Fill again only if you want to change token."
+                            "Enter a value only if you want to change the token."
                         )}
                         <label className="flex items-center gap-2 cursor-pointer">
                             <Checkbox
@@ -381,7 +384,7 @@ export default function Payment({
                                 disabled={!canUpdatePaymentSettings}
                             />
                             <span className="text-sm text-slate-600 dark:text-slate-400">
-                                Mode Produksi
+                                Production Mode
                             </span>
                         </label>
                     </div>
@@ -485,11 +488,11 @@ export default function Payment({
                         </div>
                         {renderSecretHint(
                             "safepay_secret_key",
-                            "Fill again only if you want to change secret."
+                            "Enter a value only if you want to change the secret."
                         )}
                         {renderSecretHint(
                             "safepay_webhook_secret",
-                            "Fill again only if you want to change secret."
+                            "Enter a value only if you want to change the secret."
                         )}
                         <label className="flex items-center gap-2 cursor-pointer">
                             <Checkbox
@@ -500,7 +503,7 @@ export default function Payment({
                                 disabled={!canUpdatePaymentSettings}
                             />
                             <span className="text-sm text-slate-600 dark:text-slate-400">
-                                Mode Produksi
+                                Production Mode
                             </span>
                         </label>
                     </div>
@@ -512,8 +515,8 @@ export default function Payment({
                         🔗 Webhook URLs
                     </h3>
                     <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
-                        Copy the following URL and paste to Midtrans/Xendit
-                        dashboard as Notification/Callback URL.
+                        Copy the following URL and paste it into the Midtrans/Xendit
+                        dashboard as the Notification/Callback URL.
                     </p>
                     {webhookWarnings.length > 0 && (
                         <div className="mb-4 space-y-2">

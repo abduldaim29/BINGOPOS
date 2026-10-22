@@ -17,6 +17,8 @@ use Inertia\Inertia;
 
 class RestaurantDealController extends Controller
 {
+    private const SELECTED_VARIATION_KEY = '__selected_variation_id';
+
     public function __construct(
         private readonly AuditLogService $auditLogService,
         private readonly RestaurantDealService $dealService,
@@ -61,10 +63,11 @@ class RestaurantDealController extends Controller
                     $q->whereNull('outlet_id')->orWhere('outlet_id', $outlet->id);
                 });
             })
+            ->orderByDesc('id')
             ->orderByDesc('is_active')
             ->orderByDesc('priority')
             ->orderBy('name')
-            ->paginate($this->perPage())
+            ->paginate(15)
             ->withQueryString()
             ->through(fn (RestaurantDeal $deal) => [
                 'id' => $deal->id,
@@ -115,7 +118,13 @@ class RestaurantDealController extends Controller
         $outlets = Outlet::active()->orderBy('name')->get(['id', 'name', 'code']);
         $products = Product::with('category:id,name')
             ->orderBy('title')
-            ->get(['id', 'title', 'sell_price', 'category_id']);
+            ->get(['id', 'title', 'sell_price', 'category_id', 'variations', 'variation_prices']);
+        $products->each(function (Product $product) {
+            $product->setAttribute(
+                'variations',
+                $this->normalizeVariationIds($product->variations ?? [])
+            );
+        });
 
         return Inertia::render('Dashboard/RestaurantDeals/Create', [
             'outlets' => $outlets,
@@ -126,18 +135,19 @@ class RestaurantDealController extends Controller
 
     public function store(Request $request)
     {
-        $validated = $request->validate([
+        try {
+            $validated = $request->validate([
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
             'deal_type' => 'required|in:fixed_price,dynamic_price,slot_based,custom',
-            'discount_type' => 'required|in:percentage,fixed_amount,fixed_price',
-            'discount_value' => 'required|numeric|min:0',
+            'discount_type' => 'nullable|in:percentage,fixed_amount,fixed_price',
+            'discount_value' => 'nullable|numeric|min:0|required_if:deal_type,dynamic_price',
             'fixed_price' => 'nullable|numeric|min:0|required_if:deal_type,fixed_price,discount_type,fixed_price',
-            'is_active' => 'boolean',
-            'priority' => 'integer|min:0',
+            'is_active' => 'required|boolean',
+            'priority' => 'required|integer|min:0',
             'outlet_id' => 'nullable|exists:outlets,id',
             'starts_at' => 'nullable|date',
-            'ends_at' => 'nullable|date|after:starts_at',
+            'ends_at' => 'nullable|date',
             'max_per_customer' => 'nullable|integer|min:1',
             'min_products' => 'nullable|integer|min:1',
             'max_products' => 'nullable|integer|min:1',
@@ -145,23 +155,32 @@ class RestaurantDealController extends Controller
             'items.*.product_id' => 'required|exists:products,id',
             'items.*.restaurant_deal_slot_id' => 'nullable|exists:restaurant_deal_slots,id',
             'items.*.is_required' => 'boolean',
-            'items.*.min_qty' => 'integer|min:1',
-            'items.*.max_qty' => 'integer|min:1',
-            'items.*.sort_order' => 'integer|min:0',
+            'items.*.min_qty' => 'required|integer|min:1',
+            'items.*.max_qty' => 'required|integer|min:1',
+            'items.*.sort_order' => 'required|integer|min:0',
+            'items.*.deal_price' => 'nullable|numeric|min:0',
+            'items.*.deal_variation_prices' => 'nullable|array',
+            'items.*.deal_variation_prices.*' => 'nullable|numeric|min:0',
+            'items.*.selected_variation_id' => 'nullable|string|max:100',
             'slots' => 'required_if:deal_type,slot_based|array',
             'slots.*.name' => 'required|string|max:255',
             'slots.*.description' => 'nullable|string',
             'slots.*.min_selection' => 'required|integer|min:1',
             'slots.*.max_selection' => 'required|integer|min:1',
-            'slots.*.sort_order' => 'integer|min:0',
+            'slots.*.sort_order' => 'required|integer|min:0',
+        ], [
+            'items.required' => 'At least one product must be added to the deal.',
+            'items.*.product_id.required' => 'Please select a product for each item.',
         ]);
+
+        $this->validateSelectedVariations($validated['items']);
 
         $deal = RestaurantDeal::create([
             'name' => $validated['name'],
             'description' => $validated['description'] ?? null,
             'deal_type' => $validated['deal_type'],
-            'discount_type' => $validated['discount_type'],
-            'discount_value' => $validated['discount_value'],
+            'discount_type' => $validated['discount_type'] ?? ($validated['deal_type'] === 'fixed_price' ? 'fixed_price' : null),
+            'discount_value' => $validated['discount_value'] ?? 0,
             'fixed_price' => $validated['fixed_price'] ?? null,
             'is_active' => $validated['is_active'] ?? true,
             'priority' => $validated['priority'] ?? 0,
@@ -175,7 +194,8 @@ class RestaurantDealController extends Controller
         ]);
 
         // Create slots first (for slot-based deals)
-        if ($deal->deal_type === RestaurantDeal::DEAL_TYPE_SLOT_BASED && isset($validated['slots'])) {
+        $slotIdMap = [];
+        if ($deal->deal_type === RestaurantDeal::DEAL_TYPE_SLOT_BASED && isset($validated['slots']) && is_array($validated['slots'])) {
             foreach ($validated['slots'] as $slotData) {
                 $slot = RestaurantDealSlot::create([
                     'restaurant_deal_id' => $deal->id,
@@ -193,7 +213,7 @@ class RestaurantDealController extends Controller
 
         // Create items
         foreach ($validated['items'] as $itemData) {
-            RestaurantDealItem::create([
+            $dealItem = RestaurantDealItem::create([
                 'restaurant_deal_id' => $deal->id,
                 'product_id' => $itemData['product_id'],
                 'restaurant_deal_slot_id' => $itemData['restaurant_deal_slot_id'] ?? null,
@@ -201,18 +221,34 @@ class RestaurantDealController extends Controller
                 'min_qty' => $itemData['min_qty'] ?? 1,
                 'max_qty' => $itemData['max_qty'] ?? 1,
                 'sort_order' => $itemData['sort_order'] ?? 0,
+                'deal_price' => $itemData['deal_price'] ?? null,
+                'deal_variation_prices' => $this->variationDataForItem($itemData),
             ]);
         }
 
         $this->auditLogService->log(
             'restaurant_deal_created',
             'Restaurant Deal',
-            $deal->id,
+            $deal,
             $deal->name
         );
 
         return redirect()->route('restaurant-deals.index')
             ->with('success', 'Restaurant deal created successfully.');
+        } catch (\Exception $e) {
+            if ($e instanceof \Illuminate\Validation\ValidationException) {
+                throw $e;
+            }
+
+            \Log::error('RestaurantDeal store failed', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'request_data' => $request->all(),
+            ]);
+            return redirect()->back()
+                ->withInput()
+                ->with('error', 'Failed to create restaurant deal: ' . $e->getMessage());
+        }
     }
 
     public function edit(Request $request, RestaurantDeal $restaurantDeal)
@@ -221,9 +257,24 @@ class RestaurantDealController extends Controller
         $outlets = Outlet::active()->orderBy('name')->get(['id', 'name', 'code']);
         $products = Product::with('category:id,name')
             ->orderBy('title')
-            ->get(['id', 'title', 'sell_price', 'category_id']);
+            ->get(['id', 'title', 'sell_price', 'category_id', 'variations', 'variation_prices']);
+        $products->each(function (Product $product) {
+            $product->setAttribute(
+                'variations',
+                $this->normalizeVariationIds($product->variations ?? [])
+            );
+        });
 
         $restaurantDeal->load(['items.product', 'slots']);
+        foreach ($restaurantDeal->items as $item) {
+            $variationData = $item->deal_variation_prices ?? [];
+            $item->setAttribute(
+                'selected_variation_id',
+                $variationData[self::SELECTED_VARIATION_KEY] ?? null
+            );
+            unset($variationData[self::SELECTED_VARIATION_KEY]);
+            $item->setAttribute('deal_variation_prices', $variationData);
+        }
 
         return Inertia::render('Dashboard/RestaurantDeals/Edit', [
             'deal' => $restaurantDeal,
@@ -239,14 +290,14 @@ class RestaurantDealController extends Controller
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
             'deal_type' => 'required|in:fixed_price,dynamic_price,slot_based,custom',
-            'discount_type' => 'required|in:percentage,fixed_amount,fixed_price',
-            'discount_value' => 'required|numeric|min:0',
+            'discount_type' => 'nullable|in:percentage,fixed_amount,fixed_price',
+            'discount_value' => 'nullable|numeric|min:0|required_if:deal_type,dynamic_price',
             'fixed_price' => 'nullable|numeric|min:0|required_if:deal_type,fixed_price,discount_type,fixed_price',
-            'is_active' => 'boolean',
-            'priority' => 'integer|min:0',
+            'is_active' => 'required|boolean',
+            'priority' => 'required|integer|min:0',
             'outlet_id' => 'nullable|exists:outlets,id',
             'starts_at' => 'nullable|date',
-            'ends_at' => 'nullable|date|after:starts_at',
+            'ends_at' => 'nullable|date',
             'max_per_customer' => 'nullable|integer|min:1',
             'min_products' => 'nullable|integer|min:1',
             'max_products' => 'nullable|integer|min:1',
@@ -255,9 +306,13 @@ class RestaurantDealController extends Controller
             'items.*.product_id' => 'required|exists:products,id',
             'items.*.restaurant_deal_slot_id' => 'nullable|exists:restaurant_deal_slots,id',
             'items.*.is_required' => 'boolean',
-            'items.*.min_qty' => 'integer|min:1',
-            'items.*.max_qty' => 'integer|min:1',
-            'items.*.sort_order' => 'integer|min:0',
+            'items.*.min_qty' => 'required|integer|min:1',
+            'items.*.max_qty' => 'required|integer|min:1',
+            'items.*.sort_order' => 'required|integer|min:0',
+            'items.*.deal_price' => 'nullable|numeric|min:0',
+            'items.*.deal_variation_prices' => 'nullable|array',
+            'items.*.deal_variation_prices.*' => 'nullable|numeric|min:0',
+            'items.*.selected_variation_id' => 'nullable|string|max:100',
             'slots' => 'required_if:deal_type,slot_based|array',
             'slots.*.id' => 'nullable|exists:restaurant_deal_slots,id',
             'slots.*.name' => 'required|string|max:255',
@@ -267,12 +322,14 @@ class RestaurantDealController extends Controller
             'slots.*.sort_order' => 'integer|min:0',
         ]);
 
+        $this->validateSelectedVariations($validated['items']);
+
         $restaurantDeal->update([
             'name' => $validated['name'],
             'description' => $validated['description'] ?? null,
             'deal_type' => $validated['deal_type'],
-            'discount_type' => $validated['discount_type'],
-            'discount_value' => $validated['discount_value'],
+            'discount_type' => $validated['discount_type'] ?? ($validated['deal_type'] === 'fixed_price' ? 'fixed_price' : null),
+            'discount_value' => $validated['discount_value'] ?? 0,
             'fixed_price' => $validated['fixed_price'] ?? null,
             'is_active' => $validated['is_active'] ?? true,
             'priority' => $validated['priority'] ?? 0,
@@ -336,7 +393,10 @@ class RestaurantDealController extends Controller
                     'min_qty' => $itemData['min_qty'] ?? 1,
                     'max_qty' => $itemData['max_qty'] ?? 1,
                     'sort_order' => $itemData['sort_order'] ?? 0,
+                    'deal_price' => $itemData['deal_price'] ?? null,
+                    'deal_variation_prices' => $this->variationDataForItem($itemData),
                 ]);
+
                 $newItemIds[] = $item->id;
             } else {
                 $item = RestaurantDealItem::create([
@@ -347,7 +407,10 @@ class RestaurantDealController extends Controller
                     'min_qty' => $itemData['min_qty'] ?? 1,
                     'max_qty' => $itemData['max_qty'] ?? 1,
                     'sort_order' => $itemData['sort_order'] ?? 0,
+                    'deal_price' => $itemData['deal_price'] ?? null,
+                    'deal_variation_prices' => $this->variationDataForItem($itemData),
                 ]);
+
                 $newItemIds[] = $item->id;
             }
         }
@@ -360,7 +423,7 @@ class RestaurantDealController extends Controller
         $this->auditLogService->log(
             'restaurant_deal_updated',
             'Restaurant Deal',
-            $restaurantDeal->id,
+            $restaurantDeal,
             $restaurantDeal->name
         );
 
@@ -375,11 +438,84 @@ class RestaurantDealController extends Controller
         $this->auditLogService->log(
             'restaurant_deal_deleted',
             'Restaurant Deal',
-            $restaurantDeal->id,
+            $restaurantDeal,
             $restaurantDeal->name
         );
 
         return redirect()->route('restaurant-deals.index')
             ->with('success', 'Restaurant deal deleted successfully.');
+    }
+
+    private function validateSelectedVariations(array $items): void
+    {
+        $products = Product::query()
+            ->whereIn('id', collect($items)->pluck('product_id')->unique())
+            ->get(['id', 'variations'])
+            ->keyBy('id');
+        $errors = [];
+
+        foreach ($items as $index => $item) {
+            $product = $products->get((int) $item['product_id']);
+            $variations = $this->normalizeVariationIds($product?->variations ?? []);
+            $selectedVariationId = $item['selected_variation_id'] ?? null;
+
+            if ($variations !== [] && ! in_array((string) $selectedVariationId, $variations, true)) {
+                $errors["items.{$index}.selected_variation_id"] = 'Select an available variation for this product.';
+            } elseif ($variations === [] && $selectedVariationId) {
+                $errors["items.{$index}.selected_variation_id"] = 'This product does not have variations.';
+            }
+
+            foreach ($item['deal_variation_prices'] ?? [] as $variationId => $price) {
+                if (! in_array((string) $variationId, $variations, true)) {
+                    $errors["items.{$index}.deal_variation_prices.{$variationId}"] = 'A price was provided for an unavailable product variation.';
+                }
+            }
+        }
+
+        if ($errors !== []) {
+            throw \Illuminate\Validation\ValidationException::withMessages($errors);
+        }
+    }
+
+    private function normalizeVariationIds(array $variations): array
+    {
+        $variationIds = [];
+
+        foreach ($variations as $category => $options) {
+            if (is_array($options)) {
+                foreach ($options as $option) {
+                    if (! is_string($option) && ! is_numeric($option)) {
+                        continue;
+                    }
+
+                    $option = (string) $option;
+                    $variationIds[] = str_starts_with($option, "{$category}_")
+                        ? $option
+                        : "{$category}_{$option}";
+                }
+
+                continue;
+            }
+
+            if (is_string($options) || is_numeric($options)) {
+                $variationIds[] = (string) $options;
+            }
+        }
+
+        return array_values(array_unique($variationIds));
+    }
+
+    private function variationDataForItem(array $itemData): ?array
+    {
+        $variationData = $itemData['deal_variation_prices'] ?? [];
+        $selectedVariationId = $itemData['selected_variation_id'] ?? null;
+
+        if ($selectedVariationId) {
+            $variationData[self::SELECTED_VARIATION_KEY] = (string) $selectedVariationId;
+        } else {
+            unset($variationData[self::SELECTED_VARIATION_KEY]);
+        }
+
+        return $variationData !== [] ? $variationData : null;
     }
 }

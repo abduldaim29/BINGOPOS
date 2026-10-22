@@ -24,7 +24,6 @@ class RestaurantDealService
             ])
             ->active()
             ->forOutlet($outlet)
-            ->validAt($at)
             ->orderByDesc('priority')
             ->orderBy('id')
             ->get();

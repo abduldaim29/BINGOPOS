@@ -85,6 +85,7 @@ class AdvancedSalesInsightsTest extends TestCase
 
             $this->assertSame('Top Product', $props['topSellingProducts'][0]['product_title']);
             $this->assertSame(5, $props['topSellingProducts'][0]['qty_sold']);
+            $this->assertSame(10, $props['topSellingProducts'][0]['current_stock']);
             $this->assertSame('Unsold Product', $props['lowPerformingProducts'][0]['product_title']);
             $this->assertSame(0, $props['lowPerformingProducts'][0]['qty_sold']);
         });

@@ -121,6 +121,13 @@ export default function Menu() {
                     permissions: hasAnyPermission(["transactions-access"]),
                 },
                 {
+                    title: t("sidebar.items.restaurantDeals"),
+                    href: route("restaurant-deals.index"),
+                    active: url.startsWith("/dashboard/restaurant-deals"),
+                    icon: <IconGift size={20} strokeWidth={1.5} />,
+                    permissions: hasAnyPermission(["restaurant-deals-access"]),
+                },
+                {
                     title: t("sidebar.items.transactionHistory"),
                     href: route("transactions.history"),
                     active: url === "/dashboard/transactions/history" ? true : false,
@@ -237,13 +244,6 @@ export default function Menu() {
                     active: url.startsWith("/dashboard/pricing-rules"),
                     icon: <IconChartInfographic size={20} strokeWidth={1.5} />,
                     permissions: hasAnyPermission(["pricing-rules-access"]),
-                },
-                {
-                    title: t("sidebar.items.restaurantDeals"),
-                    href: route("restaurant-deals.index"),
-                    active: url.startsWith("/dashboard/restaurant-deals"),
-                    icon: <IconGift size={20} strokeWidth={1.5} />,
-                    permissions: hasAnyPermission(["restaurant-deals-access"]),
                 },
                 {
                     title: t("sidebar.items.customerVouchers"),

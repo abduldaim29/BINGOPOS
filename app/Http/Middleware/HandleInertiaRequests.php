@@ -211,31 +211,59 @@ class HandleInertiaRequests extends Middleware
         }
 
         if (Schema::hasTable('settings')) {
-            $logo = Setting::getForOutlet('store_logo', $outlet);
+            $settings = Setting::getManyForOutlet([
+                'store_logo',
+                'store_name',
+                'store_address',
+                'store_phone',
+                'store_email',
+                'store_website',
+                'store_city',
+                'printer_auto_print',
+                'printer_paper_size',
+                'currency_code',
+                'currency_symbol',
+                'currency_locale',
+                'currency_decimal_places',
+            ], $outlet, [
+                'store_name' => 'Your Store',
+                'store_address' => '',
+                'store_phone' => '',
+                'store_email' => '',
+                'store_website' => '',
+                'store_city' => '',
+                'printer_auto_print' => '0',
+                'printer_paper_size' => '80mm',
+                'currency_code' => 'PKR',
+                'currency_symbol' => 'Rs',
+                'currency_locale' => 'en-PK',
+                'currency_decimal_places' => '2',
+            ]);
+            $logo = $settings['store_logo'];
             if ($logo && ! str_starts_with($logo, 'http') && ! str_starts_with($logo, '/storage')) {
                 $logo = asset('storage/'.ltrim($logo, '/'));
             }
 
             $storeProfile = [
-                'name' => Setting::getForOutlet('store_name', $outlet, 'Your Store'),
+                'name' => $settings['store_name'],
                 'logo' => $logo,
-                'address' => Setting::getForOutlet('store_address', $outlet, ''),
-                'phone' => Setting::getForOutlet('store_phone', $outlet, ''),
-                'email' => Setting::getForOutlet('store_email', $outlet, ''),
-                'website' => Setting::getForOutlet('store_website', $outlet, ''),
-                'city' => Setting::getForOutlet('store_city', $outlet, ''),
+                'address' => $settings['store_address'],
+                'phone' => $settings['store_phone'],
+                'email' => $settings['store_email'],
+                'website' => $settings['store_website'],
+                'city' => $settings['store_city'],
             ];
 
             $printerSettings = [
-                'autoPrint' => Setting::getBoolForOutlet('printer_auto_print', $outlet, false),
-                'paperSize' => Setting::getForOutlet('printer_paper_size', $outlet, '80mm'),
+                'autoPrint' => filter_var($settings['printer_auto_print'], FILTER_VALIDATE_BOOL),
+                'paperSize' => $settings['printer_paper_size'],
             ];
 
             $currencySettings = [
-                'code' => Setting::getCurrencyCode($outlet),
-                'symbol' => Setting::getCurrencySymbol($outlet),
-                'locale' => Setting::getCurrencyLocale($outlet),
-                'decimalPlaces' => Setting::getCurrencyDecimalPlaces($outlet),
+                'code' => $settings['currency_code'],
+                'symbol' => $settings['currency_symbol'],
+                'locale' => $settings['currency_locale'],
+                'decimalPlaces' => (int) $settings['currency_decimal_places'],
             ];
         } else {
             $printerSettings = [

@@ -75,3 +75,12 @@ export async function clearPendingTransactions() {
     const db = await dbPromise;
     await db.clear('pending_transactions');
 }
+
+// Clear all cached data (useful when logging out or switching users)
+export async function clearAllCache() {
+    const db = await dbPromise;
+    await db.clear('products');
+    await db.clear('customers');
+    await db.clear('pending_transactions');
+    await db.clear('pricing');
+}

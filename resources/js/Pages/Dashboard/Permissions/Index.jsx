@@ -10,7 +10,7 @@ export default function Index() {
 
     return (
         <>
-            <Head title="Hak Akses" />
+            <Head title="Permissions" />
 
             {/* Header */}
             <div className="mb-6">
@@ -18,11 +18,11 @@ export default function Index() {
                     <div>
                         <h1 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
                             <IconKey size={28} className="text-primary-500" />
-                            Hak Akses
+                            Permissions
                         </h1>
                         <p className="text-sm text-slate-500 dark:text-slate-400">
                             {permissions.total || permissions.data?.length || 0}{" "}
-                            hak akses terdaftar
+                            permissions registered
                         </p>
                     </div>
                 </div>
@@ -32,7 +32,7 @@ export default function Index() {
             <div className="mb-4 w-full sm:w-80">
                 <Search
                     url={route("permissions.index")}
-                    placeholder="Cari hak akses..."
+                    placeholder="Search permissions..."
                 />
             </div>
 
@@ -68,10 +68,10 @@ export default function Index() {
                         />
                     </div>
                     <h3 className="text-lg font-medium text-slate-800 dark:text-slate-200 mb-1">
-                        Belum Ada Hak Akses
+                        No Permissions Yet
                     </h3>
                     <p className="text-sm text-slate-500 dark:text-slate-400">
-                        Hak akses tidak ditemukan.
+                        No permissions found.
                     </p>
                 </div>
             )}

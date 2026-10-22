@@ -3,8 +3,9 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\Outlet;
 use App\Models\RestaurantDeal;
+use App\Models\RestaurantDealItem;
+use App\Services\OutletAccessService;
 use App\Services\RestaurantDealService;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
@@ -12,14 +13,13 @@ use Illuminate\Http\JsonResponse;
 class RestaurantDealController extends Controller
 {
     public function __construct(
-        private readonly RestaurantDealService $dealService
+        private readonly RestaurantDealService $dealService,
+        private readonly OutletAccessService $outletAccess
     ) {}
 
     public function index(Request $request): JsonResponse
     {
-        $outletId = $request->input('outlet_id');
-        $outlet = $outletId ? Outlet::find($outletId) : null;
-
+        $outlet = $this->outletAccess->activeOutlet($request);
         $deals = $this->dealService->getActiveDeals(null, $outlet);
         $deals->load(['items.product', 'slots.items.product']);
 
@@ -47,6 +47,7 @@ class RestaurantDealController extends Controller
                         'product' => $item->product,
                         'min_qty' => $item->min_qty,
                         'max_qty' => $item->max_qty,
+                        ...$this->variationFields($item),
                     ]),
                 ]),
                 'items' => $deal->items->map(fn ($item) => [
@@ -56,6 +57,8 @@ class RestaurantDealController extends Controller
                     'is_required' => $item->is_required,
                     'min_qty' => $item->min_qty,
                     'max_qty' => $item->max_qty,
+                    'deal_price' => $item->deal_price !== null ? (float) $item->deal_price : null,
+                    ...$this->variationFields($item),
                 ]),
             ]),
         ]);
@@ -88,6 +91,7 @@ class RestaurantDealController extends Controller
                         'product' => $item->product,
                         'min_qty' => $item->min_qty,
                         'max_qty' => $item->max_qty,
+                        ...$this->variationFields($item),
                     ]),
                 ]),
                 'items' => $restaurantDeal->items->map(fn ($item) => [
@@ -97,8 +101,22 @@ class RestaurantDealController extends Controller
                     'is_required' => $item->is_required,
                     'min_qty' => $item->min_qty,
                     'max_qty' => $item->max_qty,
+                    'deal_price' => $item->deal_price !== null ? (float) $item->deal_price : null,
+                    ...$this->variationFields($item),
                 ]),
             ],
         ]);
+    }
+
+    private function variationFields(RestaurantDealItem $item): array
+    {
+        $variationData = $item->deal_variation_prices ?? [];
+        $selectedVariationId = $variationData['__selected_variation_id'] ?? null;
+        unset($variationData['__selected_variation_id']);
+
+        return [
+            'selected_variation_id' => $selectedVariationId,
+            'deal_variation_prices' => $variationData,
+        ];
     }
 }

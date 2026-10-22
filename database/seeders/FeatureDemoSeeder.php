@@ -255,6 +255,16 @@ class FeatureDemoSeeder extends Seeder
 
     private function seedUnits(Collection $products): void
     {
+        // Restaurant-specific units
+        $slice = Unit::where('code', 'SLICE')->first() ?? Unit::create(['code' => 'SLICE', 'name' => 'Slice', 'symbol' => 'slice']);
+        $small = Unit::where('code', 'SMALL')->first() ?? Unit::create(['code' => 'SMALL', 'name' => 'Small', 'symbol' => 'S']);
+        $regular = Unit::where('code', 'REGULAR')->first() ?? Unit::create(['code' => 'REGULAR', 'name' => 'Regular', 'symbol' => 'R']);
+        $large = Unit::where('code', 'LARGE')->first() ?? Unit::create(['code' => 'LARGE', 'name' => 'Large', 'symbol' => 'L']);
+        $ml = Unit::where('code', 'ML')->first() ?? Unit::create(['code' => 'ML', 'name' => 'Milliliter', 'symbol' => 'ml']);
+        $liter = Unit::where('code', 'L')->first() ?? Unit::create(['code' => 'L', 'name' => 'Liter', 'symbol' => 'l']);
+        $glass = Unit::where('code', 'GLASS')->first() ?? Unit::create(['code' => 'GLASS', 'name' => 'Glass', 'symbol' => 'glass']);
+        $bottle = Unit::where('code', 'BOTTLE')->first() ?? Unit::create(['code' => 'BOTTLE', 'name' => 'Bottle', 'symbol' => 'bottle']);
+        $cup = Unit::where('code', 'CUP')->first() ?? Unit::create(['code' => 'CUP', 'name' => 'Cup', 'symbol' => 'cup']);
         $pcs = Unit::where('code', 'PCS')->first() ?? Unit::create(['code' => 'PCS', 'name' => 'Pieces', 'symbol' => 'pcs']);
         $box = Unit::where('code', 'BOX')->first() ?? Unit::create(['code' => 'BOX', 'name' => 'Box', 'symbol' => 'box']);
         $karton = Unit::where('code', 'KARTON')->first() ?? Unit::create(['code' => 'KARTON', 'name' => 'Karton', 'symbol' => 'krt']);
@@ -264,6 +274,14 @@ class FeatureDemoSeeder extends Seeder
             'SNK-0001' => ['base' => $pcs, 'alt' => $box, 'factor' => 12],
             'SNK-0003' => ['base' => $pcs, 'alt' => $karton, 'factor' => 40],
             'BMB-0002' => ['base' => $pcs, 'alt' => $box, 'factor' => 6],
+        ];
+
+        // Restaurant-specific unit examples (if pizza or drink products exist)
+        $restaurantTargets = [
+            // Pizza example: slice, small, regular, large
+            // 'PIZZA-001' => ['base' => $slice, 'alts' => [['unit' => $small, 'factor' => 2], ['unit' => $regular, 'factor' => 4], ['unit' => $large, 'factor' => 8]]],
+            // Drink example: ml, glass, bottle
+            // 'DRINK-001' => ['base' => $ml, 'alts' => [['unit' => $glass, 'factor' => 250], ['unit' => $bottle, 'factor' => 1000]]],
         ];
 
         foreach ($targets as $barcode => $cfg) {

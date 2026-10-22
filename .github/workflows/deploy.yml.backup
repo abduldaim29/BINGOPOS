@@ -1,0 +1,176 @@
+name: CI/CD Pipeline
+
+on:
+push:
+branches: [main]
+pull_request:
+branches: [main]
+
+permissions:
+contents: read
+
+jobs:
+ci:
+name: CI (Build)
+runs-on: ubuntu-24.04
+
+steps:
+  - name: Checkout code
+    uses: actions/checkout@v7
+
+  - name: Setup PHP
+    uses: shivammathur/setup-php@v2
+    with:
+      php-version: '8.4'
+      extensions: mbstring, pdo, pdo_mysql, pdo_sqlite, sqlite3, zip, gd, exif
+      coverage: none
+
+  - name: Setup Node
+    uses: actions/setup-node@v7
+    with:
+      node-version: '24'
+      package-manager-cache: false
+
+  - name: Prepare environment
+    run: |
+      if [ ! -f .env ]; then
+        cp .env.example .env
+      fi
+      sed '1s/^\xEF\xBB\xBF//' .env > .env.tmp
+      mv .env.tmp .env
+
+  - name: Validate Composer
+    run: composer validate --no-check-publish
+
+  - name: Install PHP dependencies
+    run: composer install --no-interaction --prefer-dist --no-progress --no-scripts
+
+  - name: Generate application key
+    run: php artisan key:generate --ansi --force
+
+  - name: Discover Laravel packages
+    run: composer run-script post-autoload-dump
+
+  - name: Install JavaScript dependencies
+    run: PUPPETEER_SKIP_DOWNLOAD=true npm ci --no-audit --no-fund
+
+  - name: Build frontend
+    run: npm run build
+
+  - name: Run test suite
+    run: php artisan test --compact
+    env:
+      DB_CONNECTION: sqlite
+      DB_DATABASE: ':memory:'
+
+  - name: Install JavaScript dependencies (post-test)
+    if: always()
+    run: PUPPETEER_SKIP_DOWNLOAD=true npm ci --no-audit --no-fund || true
+
+  - name: Build frontend (post-test)
+    if: always()
+    run: npm run build || true
+
+deploy:
+name: Deploy to VPS
+if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+runs-on: ubuntu-24.04
+needs: ci
+
+steps:
+  - name: Deploy via SSH
+    uses: appleboy/ssh-action@v1.0.3
+    with:
+      host: ${{ secrets.VPS_HOST }}
+      username: ${{ secrets.VPS_USER }}
+      key: ${{ secrets.VPS_SSH_KEY }}
+      port: 22
+      script: |
+        set -e
+        cd /var/www/dikasir.web.id
+        export GIT_SSH_COMMAND="ssh -o ConnectTimeout=20 -o BatchMode=yes"
+
+        echo "==> Fix public directory ownership"
+        sudo chown -R deploy:deploy public
+
+        echo "==> Sync code to production"
+        FETCH_OK=0
+        for i in 1 2 3 4 5; do
+          if sudo -u deploy git fetch origin; then
+            FETCH_OK=1
+            break
+          fi
+          echo "git fetch failed (attempt $i/5), retrying in 8s..."
+          sleep 8
+        done
+        [ "$FETCH_OK" = "1" ] || {
+          echo "ERROR: git fetch failed after 5 attempts"
+          exit 1
+        }
+
+        sudo -u deploy git checkout -f -B main origin/main
+        sudo -u deploy git clean -fd
+
+        echo "==> Install backend dependencies"
+        COMPOSER_OK=0
+        for i in 1 2 3; do
+          if sudo -u deploy /usr/local/bin/composer install \
+            --no-dev --optimize-autoloader \
+            --no-interaction --no-progress; then
+            COMPOSER_OK=1
+            break
+          fi
+          echo "Composer failed (attempt $i/3), retrying in 8s..."
+          sleep 8
+        done
+        [ "$COMPOSER_OK" = "1" ] || {
+          echo "ERROR: Composer install failed after 3 attempts"
+          exit 1
+        }
+
+        echo "==> Install frontend dependencies and build"
+        NPM_OK=0
+        for i in 1 2 3; do
+          if sudo -u deploy bash -lc '
+            export PATH=/home/deploy/.nvm/versions/node/v24.15.0/bin:$PATH
+            cd /var/www/dikasir.web.id &&
+            PUPPETEER_SKIP_DOWNLOAD=true npm ci --no-audit --no-fund &&
+            npm run build
+          '; then
+            NPM_OK=1
+            break
+          fi
+          echo "npm install/build failed (attempt $i/3), retrying in 8s..."
+          sleep 8
+        done
+        [ "$NPM_OK" = "1" ] || {
+          echo "ERROR: npm install/build failed after 3 attempts"
+          exit 1
+        }
+
+        echo "==> Laravel housekeeping"
+        sudo -u deploy php8.4 artisan migrate --force
+        sudo -u deploy php8.4 artisan config:clear
+        sudo -u deploy php8.4 artisan view:clear
+        sudo -u deploy php8.4 artisan route:clear
+        sudo -u deploy php8.4 artisan storage:link || true
+
+        echo "==> Set permissions"
+        sudo chown -R deploy:www-data storage bootstrap/cache
+        sudo chmod -R g+w storage bootstrap/cache
+        sudo chown -R deploy:deploy public/build
+
+        echo "==> Reload PHP-FPM"
+        sudo systemctl reload php8.4-fpm
+
+        echo "==> Verify deployment"
+        sleep 3
+        HTTP_CODE=$(curl -sS -o /dev/null -w "%{http_code}" \
+          https://dikasir.web.id/)
+
+        if [ "$HTTP_CODE" = "200" ]; then
+          echo "Deploy OK (HTTP $HTTP_CODE)"
+        else
+          echo "ERROR: Deployment check failed (HTTP $HTTP_CODE)"
+          exit 1
+        fi

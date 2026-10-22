@@ -24,7 +24,30 @@ class Product extends Model
         'min_stock' => 'integer',
         'max_stock' => 'integer',
         'is_composite' => 'boolean',
+        'variations' => 'array',
+        'variation_prices' => 'array',
     ];
+
+    /**
+     * Ensure variation_prices values are integers
+     */
+    protected function setVariationPricesAttribute($value)
+    {
+        if (is_array($value)) {
+            $this->attributes['variation_prices'] = json_encode(array_map('intval', $value));
+        } else {
+            $this->attributes['variation_prices'] = $value;
+        }
+    }
+
+    protected function getVariationPricesAttribute($value)
+    {
+        $decoded = json_decode($value, true);
+        if (is_array($decoded)) {
+            return array_map('intval', $decoded);
+        }
+        return [];
+    }
 
     protected $fillable = [
         'image',
@@ -43,6 +66,8 @@ class Product extends Model
         'min_stock',
         'max_stock',
         'is_composite',
+        'variations',
+        'variation_prices',
     ];
 
     public function category(): BelongsTo

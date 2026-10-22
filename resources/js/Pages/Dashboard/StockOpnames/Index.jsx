@@ -15,7 +15,7 @@ import {
 function formatDateTime(value) {
     if (!value) return "-";
 
-    return new Intl.DateTimeFormat("id-ID", {
+    return new Intl.DateTimeFormat("en-US", {
         dateStyle: "medium",
         timeStyle: "short",
     }).format(new Date(value));
@@ -41,15 +41,15 @@ export default function Index({ stockOpnames, filters, warehouses = [] }) {
 
     return (
         <>
-            <Head title="Stock Opname" />
+            <Head title="Stock Count" />
 
             <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                     <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
-                        Stock Opname
+                        Stock Count
                     </h1>
                     <p className="text-sm text-slate-500 dark:text-slate-400">
-                        Kelola sesi audit stok fisik dan finalisasi adjustment stok.
+                        Manage physical stock audit sessions and finalize stock adjustments.
                     </p>
                 </div>
                 {canCreateStockOpnames && (
@@ -58,7 +58,7 @@ export default function Index({ stockOpnames, filters, warehouses = [] }) {
                         href={route("stock-opnames.create")}
                         icon={<IconCirclePlus size={18} strokeWidth={1.5} />}
                         className="bg-primary-500 hover:bg-primary-600 text-white shadow-lg shadow-primary-500/30"
-                        label="Buat Sesi Opname"
+                        label="Create Stock Count Session"
                     />
                 )}
             </div>
@@ -71,7 +71,7 @@ export default function Index({ stockOpnames, filters, warehouses = [] }) {
                         onChange={(event) =>
                             handleFilterChange("search", event.target.value)
                         }
-                        placeholder="Cari kode sesi..."
+                        placeholder="Search session code..."
                         className="h-11 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 pr-11 text-sm text-slate-800 outline-none transition focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
                     />
                     <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-4 text-slate-400">
@@ -86,7 +86,7 @@ export default function Index({ stockOpnames, filters, warehouses = [] }) {
                     }
                     className="h-11 rounded-xl border border-slate-200 bg-slate-50 px-4 text-sm text-slate-800 outline-none transition focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
                 >
-                    <option value="">Semua Status</option>
+                    <option value="">All Statuses</option>
                     <option value="draft">Draft</option>
                     <option value="finalized">Finalized</option>
                 </select>
@@ -96,7 +96,7 @@ export default function Index({ stockOpnames, filters, warehouses = [] }) {
                     onChange={(event) => handleFilterChange("warehouse_id", event.target.value)}
                     className="h-11 rounded-xl border border-slate-200 bg-slate-50 px-4 text-sm text-slate-800 outline-none transition focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
                 >
-                    <option value="">Semua Gudang</option>
+                    <option value="">All Warehouses</option>
                     {warehouses.map((w) => (
                         <option key={w.id} value={w.id}>{w.code} — {w.name}</option>
                     ))}
@@ -122,16 +122,16 @@ export default function Index({ stockOpnames, filters, warehouses = [] }) {
                 </div>
             </div>
 
-            <Table.Card title="Daftar Sesi Stock Opname">
+            <Table.Card title="Stock Count Sessions">
                 <Table>
                     <Table.Thead>
                         <tr>
-                            <Table.Th>Kode</Table.Th>
+                            <Table.Th>Code</Table.Th>
                             <Table.Th>Status</Table.Th>
-                            <Table.Th>Jumlah Item</Table.Th>
-                            <Table.Th>Dibuat Oleh</Table.Th>
+                            <Table.Th>Item Count</Table.Th>
+                            <Table.Th>Created By</Table.Th>
                             <Table.Th>Finalized</Table.Th>
-                            <Table.Th className="w-24 text-center">Aksi</Table.Th>
+                            <Table.Th className="w-24 text-center">Actions</Table.Th>
                         </tr>
                     </Table.Thead>
                     <Table.Tbody>
@@ -147,7 +147,7 @@ export default function Index({ stockOpnames, filters, warehouses = [] }) {
                                                 {stockOpname.code}
                                             </p>
                                             <p className="text-xs text-slate-500 dark:text-slate-400">
-                                                {stockOpname.notes || "Tanpa catatan"}
+                                                {stockOpname.notes || "No notes"}
                                             </p>
                                         </div>
                                     </Table.Td>
@@ -186,7 +186,7 @@ export default function Index({ stockOpnames, filters, warehouses = [] }) {
                                 colSpan={6}
                                 message={
                                     <div className="text-slate-500 dark:text-slate-400">
-                                        Belum ada sesi stock opname.
+                                        No stock count sessions available yet.
                                     </div>
                                 }
                             >

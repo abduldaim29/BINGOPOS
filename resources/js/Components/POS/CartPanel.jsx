@@ -21,8 +21,8 @@ function CartItem({ item, onUpdateQty, onRemove, isRemoving }) {
     // Note: item.price from backend is already the total (sell_price * qty)
     const quantity = Number(item.qty || 0);
     const itemPrice = Number(item.price || 0);
-    const unitPrice =
-        Number(item.product?.sell_price || 0) || itemPrice / quantity || 0;
+    // Use variation price if available, otherwise use product sell price
+    const unitPrice = itemPrice / quantity || 0;
     const subtotal = itemPrice; // Already calculated total from backend
 
     // Swipe gesture handling
@@ -108,6 +108,12 @@ function CartItem({ item, onUpdateQty, onRemove, isRemoving }) {
                 <h4 className="text-sm font-semibold text-slate-800 dark:text-slate-100 truncate leading-tight">
                     {item.product?.title || "Product"}
                 </h4>
+                {/* Unit/Variation Display */}
+                {(item.variation_name || item.unit_name || item.unit?.name) && (
+                    <p className="text-xs text-primary-600 dark:text-primary-400 font-medium mt-0.5">
+                        {item.variation_name || item.unit_name || item.unit?.name}
+                    </p>
+                )}
                 <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 flex items-center gap-1">
                     <span className="bg-slate-100 dark:bg-slate-700 px-1.5 py-0.5 rounded text-[10px] font-medium">
                         {formatCurrency(unitPrice)}

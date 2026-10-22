@@ -18,6 +18,7 @@ class AuthApiTest extends TestCase
         parent::setUp();
 
         Permission::firstOrCreate(['name' => 'products-access', 'guard_name' => 'web']);
+        \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'cashier', 'guard_name' => 'web']);
     }
 
     public function test_login_returns_token_with_permissions(): void
