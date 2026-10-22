@@ -4,8 +4,8 @@ FROM node:22-bookworm-slim AS frontend
 WORKDIR /app
 
 COPY package.json package-lock.json ./
+ENV PUPPETEER_SKIP_DOWNLOAD=true
 RUN npm ci
-
 COPY . .
 RUN npm run build
 
