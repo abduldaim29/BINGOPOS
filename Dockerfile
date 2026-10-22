@@ -48,4 +48,6 @@ RUN sed -ri 's!/var/www/html!/var/www/html/public!g' \
     && chown -R www-data:www-data storage bootstrap/cache \
     && chmod -R ug+rwX storage bootstrap/cache
 
-CMD ["bash", "-lc", "PORT=${PORT:-10000}; sed -i \"s/^Listen 80$/Listen ${PORT}/\" /etc/apache2/ports.conf; sed -i \"s/<VirtualHost \\*:80>/<VirtualHost *:${PORT}>/\" /etc/apache2/sites-available/000-default.conf; exec apache2-foreground"]
+EXPOSE 10000
+
+CMD ["bash", "-lc", "PORT=${PORT:-10000}; sed -i 's/^Listen 80$/Listen 0.0.0.0:'\"$PORT\"'/' /etc/apache2/ports.conf; sed -i 's/<VirtualHost \\*:80>/<VirtualHost *:'\"$PORT\"'>/' /etc/apache2/sites-available/000-default.conf; echo 'ServerName localhost' >> /etc/apache2/apache2.conf; exec apache2-foreground"]
