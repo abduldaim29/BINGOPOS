@@ -214,7 +214,7 @@ class ProductController extends Controller
 
         $image = $request->file('image');
 
-        $image->storeAs('public/products', $image->hashName());
+        $image->storeAs('products', $image->hashName(), config('filesystems.image_disk', 'public'));
 
 
 
@@ -490,7 +490,7 @@ class ProductController extends Controller
 
             // remove old image
 
-            Storage::disk('local')->delete('public/products/'.basename($product->image));
+            Storage::disk(config('filesystems.image_disk', 'public'))->delete('products/'.basename($product->image));
 
 
 
@@ -498,7 +498,7 @@ class ProductController extends Controller
 
             $image = $request->file('image');
 
-            $image->storeAs('public/products', $image->hashName());
+            $image->storeAs('products', $image->hashName(), config('filesystems.image_disk', 'public'));
 
 
 
@@ -656,7 +656,7 @@ class ProductController extends Controller
 
         // remove image
 
-        Storage::disk('local')->delete('public/products/'.basename($product->image));
+        Storage::disk(config('filesystems.image_disk', 'public'))->delete('products/'.basename($product->image));
 
 
 

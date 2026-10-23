@@ -113,9 +113,9 @@ class SettingController extends Controller
 
         if ($request->file('store_logo')) {
             if ($logoPath) {
-                Storage::disk('public')->delete($logoPath);
+                Storage::disk(config('filesystems.image_disk', 'public'))->delete($logoPath);
             }
-            $logoPath = $request->file('store_logo')->store('store', 'public');
+            $logoPath = $request->file('store_logo')->store('store', config('filesystems.image_disk', 'public'));
             $logoChanged = true;
         }
 

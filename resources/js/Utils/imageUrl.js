@@ -1,30 +1,29 @@
 /**
- * Get proper image URL - handles both full URLs and filenames
- * @param {string} image - Image path (can be filename or full URL)
- * @param {string} folder - Storage folder (products, categories, etc)
- * @returns {string|null} - Proper image URL or null
+ * Builds image URLs for local Laravel storage or the Supabase public bucket.
+ * VITE_PUBLIC_STORAGE_URL must be the public URL prefix ending in /<bucket>.
  */
+const publicStorageBase = (import.meta.env.VITE_PUBLIC_STORAGE_URL || "").replace(/\/+$/, "");
+
 export function getImageUrl(image, folder = "products") {
     if (!image) return null;
 
-    // If already a full URL, return as-is
-    if (
-        image.startsWith("http://") ||
-        image.startsWith("https://") ||
-        image.startsWith("/storage/")
-    ) {
-        return image;
+    const value = String(image).trim();
+    if (/^(https?:\/\/|blob:|data:)/i.test(value)) return value;
+
+    // Accept both stored filenames/paths and legacy /storage/... paths.
+    let objectPath = value.replace(/^\/?storage\//i, "").replace(/^\/+/, "");
+    if (folder && objectPath !== folder && !objectPath.startsWith(folder + "/")) {
+        objectPath = folder + "/" + objectPath;
     }
 
-    // Otherwise, prepend storage path
-    return `/storage/${folder}/${image}`;
+    if (publicStorageBase) return publicStorageBase + "/" + objectPath;
+    return "/storage/" + objectPath;
 }
 
-/**
- * Get product image URL
- * @param {string} image - Product image
- * @returns {string|null}
- */
+export function getStorageUrl(path) {
+    return getImageUrl(path, "");
+}
+
 export function getProductImageUrl(image) {
     return getImageUrl(image, "products");
 }

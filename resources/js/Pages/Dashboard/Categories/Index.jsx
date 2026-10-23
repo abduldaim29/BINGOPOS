@@ -1,3 +1,4 @@
+import { getImageUrl } from "@/Utils/imageUrl";
 import React, { useState } from "react";
 import DashboardLayout from "@/Layouts/DashboardLayout";
 import { Head, usePage, Link } from "@inertiajs/react";
@@ -26,7 +27,7 @@ function CategoryCard({ category, canUpdate, canDelete }) {
             <div className="relative aspect-[3/2] bg-slate-100 dark:bg-slate-800 overflow-hidden">
                 {category.image ? (
                     <img
-                        src={category.image}
+                        src={getImageUrl(category.image, "category")}
                         alt={category.name}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                         loading="lazy"
@@ -203,7 +204,7 @@ export default function Index({ categories }) {
                                                 <div className="w-12 h-12 rounded-xl bg-slate-100 dark:bg-slate-800 overflow-hidden flex-shrink-0">
                                                     {category.image ? (
                                                         <img
-                                                            src={category.image}
+                                                            src={getImageUrl(category.image, "category")}
                                                             alt={category.name}
                                                             className="w-full h-full object-cover"
                                                             onError={(e) => {

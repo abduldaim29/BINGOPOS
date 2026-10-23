@@ -1,3 +1,4 @@
+import { getImageUrl } from "@/Utils/imageUrl";
 import React, { useState } from "react";
 import DashboardLayout from "@/Layouts/DashboardLayout";
 import { Head, useForm, usePage, Link } from "@inertiajs/react";
@@ -84,7 +85,7 @@ export default function Edit({ category }) {
                                 <div className="aspect-video rounded-xl bg-slate-100 dark:bg-slate-800 border-2 border-dashed border-slate-300 dark:border-slate-700 flex items-center justify-center overflow-hidden mb-3">
                                     {imagePreview ? (
                                         <img
-                                            src={imagePreview}
+                                            src={getImageUrl(imagePreview, "category")}
                                             alt="Preview"
                                             className="w-full h-full object-cover"
                                             onError={(e) => {

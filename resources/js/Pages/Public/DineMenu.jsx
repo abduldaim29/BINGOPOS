@@ -1,3 +1,4 @@
+import { getProductImageUrl } from "@/Utils/imageUrl";
 import React, { useState } from "react";
 import { Head, router } from "@inertiajs/react";
 import { IconShoppingCart, IconMinus, IconPlus } from "@tabler/icons-react";
@@ -195,7 +196,7 @@ export default function DineMenu({
                                 >
                                     {product.image ? (
                                         <img
-                                            src={product.image}
+                                            src={getProductImageUrl(product.image)}
                                             alt={product.title}
                                             className="w-full aspect-square object-cover"
                                             loading="lazy"

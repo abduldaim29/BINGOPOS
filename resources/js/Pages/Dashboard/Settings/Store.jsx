@@ -1,3 +1,4 @@
+import { getImageUrl } from "@/Utils/imageUrl";
 
 import DashboardLayout from "@/Layouts/DashboardLayout";
 import { Head, useForm } from "@inertiajs/react";
@@ -56,12 +57,7 @@ export default function Store({ settings }) {
                 if (page.props.settings.store_logo) {
                     const logoPath = page.props.settings.store_logo;
 
-                    setLogoPreview(
-                        logoPath.startsWith("http") ||
-                            logoPath.startsWith("/storage")
-                            ? logoPath
-                            : `/storage/${logoPath}`
-                    );
+                    setLogoPreview(getImageUrl(logoPath, ""));
                 }
             },
             onError: () => {
@@ -99,13 +95,7 @@ export default function Store({ settings }) {
                             <div className="w-32 h-32 rounded-2xl border-2 border-dashed border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 flex items-center justify-center overflow-hidden mb-3">
                                 {logoPreview ? (
                                     <img
-                                        src={
-                                            logoPreview.startsWith("blob:") ||
-                                            logoPreview.startsWith("http") ||
-                                            logoPreview.startsWith("/storage")
-                                                ? logoPreview
-                                                : `/storage/${logoPreview}`
-                                        }
+                                        src={getImageUrl(logoPreview, "")}
                                         alt="Store Logo"
                                         className="w-full h-full object-cover"
                                         onError={(e) => {
