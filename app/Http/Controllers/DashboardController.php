@@ -21,13 +21,11 @@ class DashboardController extends Controller
 {
     public function index(CashierShiftService $cashierShiftService, OutletAccessService $outletAccessService)
     {
-        $warehouseIds = $outletAccessService->warehousesFor(request()->user())->pluck('id');
+        $warehouses = $outletAccessService->warehousesFor(request()->user());
         $activeOutlet = $outletAccessService->activeOutlet(request());
-        if ($activeOutlet) {
-            $warehouseIds = $outletAccessService->warehousesFor(request()->user())
-                ->where('outlet_id', $activeOutlet->id)
-                ->pluck('id');
-        }
+        $warehouseIds = $activeOutlet
+            ? $warehouses->where('outlet_id', $activeOutlet->id)->pluck('id')
+            : $warehouses->pluck('id');
         $includeLegacy = Outlet::active()->count() <= 1;
         $scope = fn ($query, $column = 'warehouse_id') => $query->where(function ($q) use ($warehouseIds, $includeLegacy, $column) {
             $q->whereIn($column, $warehouseIds);
@@ -39,28 +37,54 @@ class DashboardController extends Controller
         $scopeProfits = fn ($query) => $query->whereHas('transaction', fn ($q) => $scope($q));
         $scopeDetails = fn ($query) => $query->whereHas('transaction', fn ($q) => $scope($q));
 
+        $today = Carbon::today();
+        $tomorrow = $today->copy()->addDay();
+        $monthStart = Carbon::now()->startOfMonth();
+        $nextMonth = $monthStart->copy()->addMonth();
+
         $totalCategories = Category::count();
         $totalProducts = Product::count();
-        $totalTransactions = $scopeTransactions(Transaction::query())->count();
         $totalCustomers = Customer::count();
-        $totalRevenue = $scopeTransactions(Transaction::query())->sum('grand_total');
-        $totalProfit = $scopeProfits(Profit::query())->sum('total');
-        $averageOrder = $scopeTransactions(Transaction::query())->avg('grand_total') ?? 0;
-        $todayTransactions = $scopeTransactions(Transaction::whereDate('created_at', Carbon::today()))->count();
+        $transactionStats = $scopeTransactions(Transaction::query())
+            ->selectRaw('COUNT(*) as total_transactions')
+            ->selectRaw('COALESCE(SUM(grand_total), 0) as total_revenue')
+            ->selectRaw('COALESCE(AVG(grand_total), 0) as average_order')
+            ->selectRaw(
+                'COALESCE(SUM(CASE WHEN created_at >= ? AND created_at < ? THEN 1 ELSE 0 END), 0) as today_transactions',
+                [$today, $tomorrow]
+            )
+            ->selectRaw(
+                'COALESCE(SUM(CASE WHEN created_at >= ? AND created_at < ? THEN grand_total ELSE 0 END), 0) as today_sales',
+                [$today, $tomorrow]
+            )
+            ->selectRaw(
+                'COALESCE(SUM(CASE WHEN created_at >= ? AND created_at < ? THEN grand_total ELSE 0 END), 0) as current_month_sales',
+                [$monthStart, $nextMonth]
+            )
+            ->first();
+        $profitStats = $scopeProfits(Profit::query())
+            ->selectRaw('COALESCE(SUM(total), 0) as total_profit')
+            ->selectRaw(
+                'COALESCE(SUM(CASE WHEN profits.created_at >= ? AND profits.created_at < ? THEN profits.total ELSE 0 END), 0) as today_profit',
+                [$today, $tomorrow]
+            )
+            ->first();
 
-        // New: Today's Sales and Profit
-        $todaySales = $scopeTransactions(Transaction::whereDate('created_at', Carbon::today()))->sum('grand_total');
-        $todayProfit = $scopeProfits(Profit::whereDate('created_at', Carbon::today()))->sum('total');
+        $totalTransactions = (int) $transactionStats->total_transactions;
+        $totalRevenue = $transactionStats->total_revenue;
+        $averageOrder = $transactionStats->average_order;
+        $todayTransactions = (int) $transactionStats->today_transactions;
+        $todaySales = $transactionStats->today_sales;
+        $totalProfit = $profitStats->total_profit;
+        $todayProfit = $profitStats->today_profit;
 
         // New: Monthly Target (from settings)
         $monthlyTarget = Setting::getForOutlet(
             'monthly_sales_target',
-            $outletAccessService->activeOutlet(request()),
+            $activeOutlet,
             0
         );
-        $currentMonthSales = $scopeTransactions(Transaction::whereMonth('created_at', Carbon::now()->month)
-            ->whereYear('created_at', Carbon::now()->year))
-            ->sum('grand_total');
+        $currentMonthSales = $transactionStats->current_month_sales;
 
         $revenueTrend = $scopeTransactions(Transaction::selectRaw('DATE(created_at) as date, SUM(grand_total) as total'))
             ->groupBy('date')
@@ -123,10 +147,6 @@ class DashboardController extends Controller
 
         // New: Slow Moving Products (no sales in 30 days)
         $thirtyDaysAgo = Carbon::now()->subDays(30);
-        $recentlySoldProductIds = $scopeDetails(TransactionDetail::where('transaction_details.created_at', '>=', $thirtyDaysAgo))
-            ->distinct()
-            ->pluck('product_id');
-
         $slowMovingProducts = Product::query()
             ->joinSub(
                 DB::table('product_warehouse')
@@ -136,7 +156,12 @@ class DashboardController extends Controller
                 'warehouse_totals',
                 fn ($join) => $join->on('warehouse_totals.product_id', '=', 'products.id')
             )
-            ->whereNotIn('products.id', $recentlySoldProductIds)
+            ->whereNotIn(
+                'products.id',
+                $scopeDetails(TransactionDetail::where('transaction_details.created_at', '>=', $thirtyDaysAgo))
+                    ->select('product_id')
+                    ->distinct()
+            )
             ->where('warehouse_totals.warehouse_stock', '>', 0)
             ->take(5)
             ->get(['products.*', 'warehouse_totals.warehouse_stock'])

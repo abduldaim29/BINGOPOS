@@ -76,14 +76,21 @@ class CashierShiftService
         $transactions = Transaction::query()
             ->where('cashier_shift_id', $shift->id);
 
+        $transactionSummary = (clone $transactions)
+            ->selectRaw('COUNT(*) as transactions_count')
+            ->selectRaw(
+                'COALESCE(SUM(CASE WHEN payment_method = ? AND payment_status = ? THEN grand_total ELSE 0 END), 0) as cash_sales_total',
+                ['cash', 'paid']
+            )
+            ->selectRaw(
+                'COALESCE(SUM(CASE WHEN payment_method != ? THEN grand_total ELSE 0 END), 0) as non_cash_sales_total',
+                ['cash']
+            )
+            ->first();
+
         $salesReturns = SalesReturn::query()
             ->where('cashier_shift_id', $shift->id)
             ->where('status', 'completed');
-
-        $cashSalesTotal = (int) (clone $transactions)
-            ->where('payment_method', 'cash')
-            ->where('payment_status', 'paid')
-            ->sum('grand_total');
 
         // Split payments: cash tender portions must count toward the drawer,
         // while the parent row's payment_method ('split') places grand_total in the non-cash bucket.
@@ -95,33 +102,39 @@ class CashierShiftService
             ->where('method', TransactionTender::METHOD_CASH)
             ->sum('cash_received');
 
-        $cashSalesTotal += $splitCashTenderTotal;
-
-        $nonCashSalesTotal = (int) (clone $transactions)
-            ->where('payment_method', '!=', 'cash')
-            ->sum('grand_total');
-
         // Split payments: the non-cash portion equals grand_total minus cash tenders.
-        $nonCashSalesTotal -= $splitCashTenderTotal;
+        $cashSalesTotal = (int) $transactionSummary->cash_sales_total + $splitCashTenderTotal;
+        $nonCashSalesTotal = (int) $transactionSummary->non_cash_sales_total - $splitCashTenderTotal;
 
-        $cashRefundTotal = (int) (clone $salesReturns)
-            ->where('return_type', 'refund_cash')
-            ->sum('refund_amount');
+        $returnSummary = (clone $salesReturns)
+            ->selectRaw('COUNT(*) as sales_returns_count')
+            ->selectRaw(
+                'COALESCE(SUM(CASE WHEN return_type = ? THEN refund_amount ELSE 0 END), 0) as cash_refund_total',
+                ['refund_cash']
+            )
+            ->selectRaw(
+                'COALESCE(SUM(CASE WHEN return_type != ? THEN COALESCE(credited_amount, 0) ELSE 0 END), 0) as non_cash_refund_total',
+                ['refund_cash']
+            )
+            ->first();
 
-        $nonCashRefundTotal = (int) (clone $salesReturns)
-            ->where('return_type', '!=', 'refund_cash')
-            ->sum(DB::raw('COALESCE(credited_amount, 0)'));
+        $cashMovementSummary = $shift->cashMovements()
+            ->selectRaw(
+                'COALESCE(SUM(CASE WHEN type = ? THEN amount ELSE 0 END), 0) as cash_in_total',
+                [ShiftCashMovement::TYPE_IN]
+            )
+            ->selectRaw(
+                'COALESCE(SUM(CASE WHEN type = ? THEN amount ELSE 0 END), 0) as cash_out_total',
+                [ShiftCashMovement::TYPE_OUT]
+            )
+            ->first();
 
-        $transactionsCount = (int) (clone $transactions)->count();
-        $salesReturnsCount = (int) (clone $salesReturns)->count();
-
-        $cashInTotal = (int) $shift->cashMovements()
-            ->where('type', ShiftCashMovement::TYPE_IN)
-            ->sum('amount');
-
-        $cashOutTotal = (int) $shift->cashMovements()
-            ->where('type', ShiftCashMovement::TYPE_OUT)
-            ->sum('amount');
+        $cashRefundTotal = (int) $returnSummary->cash_refund_total;
+        $nonCashRefundTotal = (int) $returnSummary->non_cash_refund_total;
+        $transactionsCount = (int) $transactionSummary->transactions_count;
+        $salesReturnsCount = (int) $returnSummary->sales_returns_count;
+        $cashInTotal = (int) $cashMovementSummary->cash_in_total;
+        $cashOutTotal = (int) $cashMovementSummary->cash_out_total;
 
         $expectedCash = (int) $shift->opening_cash + $cashSalesTotal - $cashRefundTotal + $cashInTotal - $cashOutTotal;
 
