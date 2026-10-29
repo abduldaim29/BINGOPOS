@@ -34,3 +34,8 @@ planning/
 bun.lock
 whatsapp-service/bun.lock
 /storage/pail
+
+# Local environment secrets
+.env
+.env.*
+!.env.example

@@ -28,7 +28,7 @@ class User extends Authenticatable implements MustVerifyEmail
     public function hasVerifiedEmail(): bool
     {
         // Skip email verification on localhost/development environments
-        if (app()->environment('local', 'testing')) {
+        if (app()->environment('local')) {
             return true;
         }
 

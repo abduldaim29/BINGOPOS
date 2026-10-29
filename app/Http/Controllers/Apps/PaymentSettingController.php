@@ -136,11 +136,11 @@ class PaymentSettingController extends Controller
 
         $resolvedSafepaySecretKey = $setting->secretManagedByEnvironment('safepay_secret_key')
             ? $setting->resolvedSecret('safepay_secret_key')
-            : ($data['safepay_secret_key'] ?: $setting->getAttributeValue('safepay_secret_key'));
+            : (($data['safepay_secret_key'] ?? null) ?: $setting->getAttributeValue('safepay_secret_key'));
 
         $resolvedSafepayWebhookSecret = $setting->secretManagedByEnvironment('safepay_webhook_secret')
             ? $setting->resolvedSecret('safepay_webhook_secret')
-            : ($data['safepay_webhook_secret'] ?: $setting->getAttributeValue('safepay_webhook_secret'));
+            : (($data['safepay_webhook_secret'] ?? null) ?: $setting->getAttributeValue('safepay_webhook_secret'));
 
         if ($midtransEnabled && (blank($resolvedMidtransServerKey) || empty($data['midtrans_client_key']))) {
             return back()->withErrors([
@@ -183,27 +183,27 @@ class PaymentSettingController extends Controller
             'midtrans_enabled' => $midtransEnabled,
             'midtrans_server_key' => $setting->secretManagedByEnvironment('midtrans_server_key')
                 ? $setting->getRawOriginal('midtrans_server_key')
-                : ($data['midtrans_server_key'] ?: $setting->getAttributeValue('midtrans_server_key')),
-            'midtrans_client_key' => $data['midtrans_client_key'],
+                : (($data['midtrans_server_key'] ?? null) ?: $setting->getAttributeValue('midtrans_server_key')),
+            'midtrans_client_key' => $data['midtrans_client_key'] ?? null,
             'midtrans_production' => (bool) ($data['midtrans_production'] ?? false),
             'xendit_enabled' => $xenditEnabled,
             'xendit_secret_key' => $setting->secretManagedByEnvironment('xendit_secret_key')
                 ? $setting->getRawOriginal('xendit_secret_key')
-                : ($data['xendit_secret_key'] ?: $setting->getAttributeValue('xendit_secret_key')),
-            'xendit_public_key' => $data['xendit_public_key'],
+                : (($data['xendit_secret_key'] ?? null) ?: $setting->getAttributeValue('xendit_secret_key')),
+            'xendit_public_key' => $data['xendit_public_key'] ?? null,
             'xendit_callback_token' => $setting->secretManagedByEnvironment('xendit_callback_token')
                 ? $setting->getRawOriginal('xendit_callback_token')
-                : ($data['xendit_callback_token'] ?: $setting->getAttributeValue('xendit_callback_token')),
+                : (($data['xendit_callback_token'] ?? null) ?: $setting->getAttributeValue('xendit_callback_token')),
             'xendit_production' => (bool) ($data['xendit_production'] ?? false),
             'safepay_enabled' => $safepayEnabled,
-            'safepay_aggregator_id' => $data['safepay_aggregator_id'],
+            'safepay_aggregator_id' => $data['safepay_aggregator_id'] ?? null,
             'safepay_secret_key' => $setting->secretManagedByEnvironment('safepay_secret_key')
                 ? $setting->getRawOriginal('safepay_secret_key')
-                : ($data['safepay_secret_key'] ?: $setting->getAttributeValue('safepay_secret_key')),
+                : (($data['safepay_secret_key'] ?? null) ?: $setting->getAttributeValue('safepay_secret_key')),
             'safepay_webhook_secret' => $setting->secretManagedByEnvironment('safepay_webhook_secret')
                 ? $setting->getRawOriginal('safepay_webhook_secret')
-                : ($data['safepay_webhook_secret'] ?: $setting->getAttributeValue('safepay_webhook_secret')),
-            'safepay_aggregator_merchant_identifier' => $data['safepay_aggregator_merchant_identifier'],
+                : (($data['safepay_webhook_secret'] ?? null) ?: $setting->getAttributeValue('safepay_webhook_secret')),
+            'safepay_aggregator_merchant_identifier' => $data['safepay_aggregator_merchant_identifier'] ?? null,
             'safepay_production' => (bool) ($data['safepay_production'] ?? false),
         ]);
 

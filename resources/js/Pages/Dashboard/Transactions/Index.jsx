@@ -33,11 +33,58 @@ import {
     IconBuildingBank,
     IconAlertTriangle,
     IconWallet,
+    IconPlus,
+    IconX,
+    IconAdjustmentsHorizontal,
 } from "@tabler/icons-react";
 import { formatCurrency as formatPrice } from "@/Utils/currency";
 
 const roundUpToNearest = (value, step) =>
     Math.ceil(value / step) * step;
+
+function CartExtrasModal({ item, onClose, onSave, saving }) {
+    const [extras, setExtras] = useState((item.extras || []).map((extra) => ({ ...extra })));
+    const total = extras.reduce((sum, extra) => sum + Number(extra.price || 0) * Number(extra.qty || 1), 0);
+    const updateExtra = (index, field, value) =>
+        setExtras((current) => current.map((extra, i) => i === index ? { ...extra, [field]: value } : extra));
+
+    return (
+        <div className="fixed inset-0 z-[80] flex items-center justify-center bg-slate-950/60 p-4 backdrop-blur-sm">
+            <div className="w-full max-w-lg rounded-2xl bg-white shadow-2xl dark:bg-slate-900">
+                <div className="flex items-start justify-between border-b border-slate-200 p-5 dark:border-slate-800">
+                    <div>
+                        <div className="flex items-center gap-2 text-primary-600">
+                            <IconAdjustmentsHorizontal size={20} />
+                            <span className="text-xs font-bold uppercase tracking-wider">Customize item</span>
+                        </div>
+                        <h3 className="mt-1 text-lg font-bold text-slate-900 dark:text-white">{item.product?.title}</h3>
+                        <p className="text-xs text-slate-500">Add cheese, sauce, toppings or any customer request.</p>
+                    </div>
+                    <button type="button" onClick={onClose} className="rounded-lg p-2 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"><IconX size={18} /></button>
+                </div>
+                <div className="max-h-[55vh] space-y-3 overflow-y-auto p-5">
+                    {extras.length === 0 && <div className="rounded-xl border border-dashed border-slate-300 p-5 text-center text-sm text-slate-500 dark:border-slate-700">No extras added. Add a custom option below.</div>}
+                    {extras.map((extra, index) => (
+                        <div key={index} className="grid grid-cols-[1fr_100px_70px_36px] items-end gap-2 rounded-xl bg-slate-50 p-3 dark:bg-slate-800/60">
+                            <label className="text-xs font-medium text-slate-500">Extra name<input value={extra.name} onChange={(event) => updateExtra(index, "name", event.target.value)} placeholder="Extra cheese" className="mt-1 w-full rounded-lg border-slate-200 text-sm dark:border-slate-700 dark:bg-slate-900" /></label>
+                            <label className="text-xs font-medium text-slate-500">Price<input type="number" min="0" value={extra.price} onChange={(event) => updateExtra(index, "price", event.target.value)} placeholder="0" className="mt-1 w-full rounded-lg border-slate-200 text-sm dark:border-slate-700 dark:bg-slate-900" /></label>
+                            <label className="text-xs font-medium text-slate-500">Qty<input type="number" min="1" value={extra.qty} onChange={(event) => updateExtra(index, "qty", event.target.value)} className="mt-1 w-full rounded-lg border-slate-200 text-sm dark:border-slate-700 dark:bg-slate-900" /></label>
+                            <button type="button" onClick={() => setExtras((current) => current.filter((_, i) => i !== index))} className="mb-0.5 rounded-lg p-2 text-slate-400 hover:bg-red-50 hover:text-red-500"><IconTrash size={16} /></button>
+                        </div>
+                    ))}
+                    <button type="button" onClick={() => setExtras((current) => [...current, { name: "", price: "", qty: 1 }])} className="inline-flex items-center gap-2 rounded-lg border border-dashed border-primary-300 px-3 py-2 text-sm font-semibold text-primary-600 hover:bg-primary-50 dark:border-primary-800 dark:hover:bg-primary-950/30"><IconPlus size={16} /> Add extra</button>
+                </div>
+                <div className="flex items-center justify-between border-t border-slate-200 p-5 dark:border-slate-800">
+                    <div><p className="text-xs text-slate-500">Extras total per item</p><p className="text-lg font-bold text-primary-600">{formatPrice(total)}</p></div>
+                    <div className="flex gap-2">
+                        <button type="button" onClick={onClose} className="rounded-lg px-4 py-2 text-sm font-medium text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800">Cancel</button>
+                        <button type="button" disabled={saving} onClick={() => onSave(extras.filter((extra) => extra.name.trim() && Number(extra.price) >= 0))} className="rounded-lg bg-primary-600 px-4 py-2 text-sm font-semibold text-white hover:bg-primary-700 disabled:opacity-50">{saving ? "Saving..." : "Save extras"}</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+}
 
 export default function Index({
     carts = [],
@@ -95,6 +142,8 @@ export default function Index({
     const [openingCashInput, setOpeningCashInput] = useState("");
     const [shiftNotesInput, setShiftNotesInput] = useState("");
     const [pendingSyncCount, setPendingSyncCount] = useState(0);
+    const [customizingCartItem, setCustomizingCartItem] = useState(null);
+    const [savingExtras, setSavingExtras] = useState(false);
     const normalizedSelectedCategory =
         selectedCategory === null ? null : Number(selectedCategory);
     const pricingItemsByCartId = useMemo(() => {
@@ -424,6 +473,20 @@ export default function Index({
                 },
             }
         );
+    };
+
+    const handleSaveExtras = (cartItem, extras) => {
+        setSavingExtras(true);
+        router.patch(route("transactions.updateCart", cartItem.id), { qty: cartItem.qty, extras }, {
+            preserveScroll: true,
+            only: ["carts", "carts_total", "initialPricingPreview"],
+            onSuccess: () => {
+                toast.success("Item extras updated");
+                setCustomizingCartItem(null);
+            },
+            onError: (requestErrors) => toast.error(requestErrors?.message || "Failed to update extras"),
+            onFinish: () => setSavingExtras(false),
+        });
     };
 
     // Handle numpad confirm for cash input
@@ -1080,9 +1143,21 @@ export default function Index({
                                                             {pricingRule.name}
                                                         </p>
                                                     )}
+                                                    {item.extras?.length > 0 && (
+                                                        <p className="mt-0.5 truncate text-[11px] font-medium text-primary-600 dark:text-primary-400">
+                                                            + {item.extras.map((extra) => `${extra.name} ×${extra.qty}`).join(", ")}
+                                                        </p>
+                                                    )}
                                                 </div>
                                             </div>
                                             <div className="flex items-center gap-1">
+                                                <button
+                                                    onClick={() => setCustomizingCartItem(item)}
+                                                    className="flex h-6 items-center gap-1 rounded bg-primary-50 px-1.5 text-[10px] font-semibold text-primary-600 hover:bg-primary-100 dark:bg-primary-950/40 dark:text-primary-300"
+                                                    title="Add extras"
+                                                >
+                                                    <IconPlus size={11} /> Add
+                                                </button>
                                                 <button
                                                     onClick={() =>
                                                         handleUpdateQty(
@@ -1949,6 +2024,15 @@ export default function Index({
                 initialValue={Number(cashInput) || 0}
                 isCurrency={true}
             />
+
+            {customizingCartItem && (
+                <CartExtrasModal
+                    item={customizingCartItem}
+                    saving={savingExtras}
+                    onClose={() => setCustomizingCartItem(null)}
+                    onSave={(extras) => handleSaveExtras(customizingCartItem, extras)}
+                />
+            )}
 
             {/* Keyboard Shortcuts Help */}
             {showShortcuts && (

@@ -52,7 +52,22 @@ function buildReceiptBytes(data, paperSize = "80mm") {
     for (const item of data.items || []) {
         const name = `${item.qty}x ${item.name}`.slice(0, width);
         bytes.push(...textBytes(name + "\n"));
-        leftRight("", data.money(item.price));
+        const quantity = Number(item.qty || 1);
+        const extrasTotal = (item.extras || []).reduce(
+            (sum, extra) =>
+                sum + Number(extra.price || 0) * Number(extra.qty || 1),
+            0,
+        );
+        const baseLineTotal = Math.max(
+            0,
+            Number(item.price || 0) - extrasTotal * quantity,
+        );
+        leftRight("", data.money(baseLineTotal));
+        for (const extra of item.extras || []) {
+            const extraName = `  + ${extra.name} x${extra.qty}`;
+            bytes.push(...textBytes(extraName.slice(0, width) + "\n"));
+            leftRight("", data.money(Number(extra.price || 0) * Number(extra.qty || 1)));
+        }
     }
 
     line();

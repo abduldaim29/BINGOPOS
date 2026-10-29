@@ -69,6 +69,61 @@ class StockMutationService
         return $mutation;
     }
 
+    public function recordManualAdjustment(
+        Product $product,
+        int $warehouseId,
+        int $stockBefore,
+        int $stockAfter,
+        ?string $reason,
+        ?int $userId = null
+    ): StockMutation {
+        $difference = $stockAfter - $stockBefore;
+        $mutation = StockMutation::create([
+            'product_id' => $product->id,
+            'warehouse_id' => $warehouseId,
+            'reference_type' => 'manual_adjustment',
+            'reference_id' => $product->id,
+            'mutation_type' => $difference > 0 ? 'in' : ($difference < 0 ? 'out' : 'adjustment'),
+            'qty' => abs($difference),
+            'stock_before' => $stockBefore,
+            'stock_after' => $stockAfter,
+            'notes' => $reason ?: 'Manual stock adjustment.',
+            'created_by' => $userId,
+        ]);
+
+        $this->auditLogService->log(
+            event: 'stock.adjusted',
+            module: 'stock',
+            auditable: $product,
+            description: 'Product stock manually adjusted.',
+            before: [
+                'product_id' => $product->id,
+                'warehouse_id' => $warehouseId,
+                'stock_before' => $stockBefore,
+                'stock_after' => $stockBefore,
+                'difference' => 0,
+                'reason' => $reason,
+            ],
+            after: [
+                'product_id' => $product->id,
+                'warehouse_id' => $warehouseId,
+                'stock_before' => $stockBefore,
+                'stock_after' => $stockAfter,
+                'difference' => $difference,
+                'reason' => $reason ?: 'Manual stock adjustment.',
+            ],
+            meta: [
+                'stock_mutation_id' => $mutation->id,
+                'reference_type' => $mutation->reference_type,
+                'reference_id' => $mutation->reference_id,
+                'mutation_type' => $mutation->mutation_type,
+                'qty' => (int) $mutation->qty,
+            ],
+        );
+
+        return $mutation;
+    }
+
     public function recordStockOpnameAdjustment(
         Product $product,
         StockOpname $stockOpname,

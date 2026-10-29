@@ -10,7 +10,7 @@ class Cart extends Model
     use HasFactory;
 
     protected $fillable = [
-        'cashier_id', 'warehouse_id', 'product_id', 'unit_id', 'conversion_factor', 'qty', 'price', 'hold_id', 'hold_label', 'held_at', 'variation_id', 'variation_name',
+        'cashier_id', 'warehouse_id', 'product_id', 'unit_id', 'conversion_factor', 'qty', 'price', 'hold_id', 'hold_label', 'held_at', 'variation_id', 'variation_name', 'extras',
     ];
 
     /**
@@ -30,6 +30,7 @@ class Cart extends Model
     protected $casts = [
         'held_at' => 'datetime',
         'conversion_factor' => 'decimal:4',
+        'extras' => 'array',
     ];
 
     public function product()

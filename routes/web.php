@@ -26,6 +26,7 @@ use App\Http\Controllers\Apps\ProductController;
 use App\Http\Controllers\Apps\ProductTypeController;
 use App\Http\Controllers\Apps\PurchaseOrderController;
 use App\Http\Controllers\Apps\ReceivableController;
+use App\Http\Controllers\Apps\RecipeController;
 use App\Http\Controllers\Apps\SalesInvoiceController;
 use App\Http\Controllers\Apps\SalesReturnController;
 use App\Http\Controllers\Apps\SettingController;
@@ -118,6 +119,7 @@ Route::get('/portal/transactions/{invoice}', [PublicPortalController::class, 'sh
     ->name('portal.transaction');
 
 Route::post('/portal/receivables/{receivable}/pay', [PublicPortalController::class, 'payReceivable'])
+    ->middleware('throttle:5,1')
     ->name('portal.receivable.pay');
 
 // Language switching
@@ -184,7 +186,8 @@ Route::group(['prefix' => 'dashboard', 'middleware' => ['auth', 'verified']], fu
         ->middlewareFor(['edit', 'update'], 'permission:categories-edit')
         ->middlewareFor('destroy', 'permission:categories-delete');
 
-    Route::resource('product-types', ProductTypeController::class)
+    Route::resource('items', ProductTypeController::class)
+        ->parameters(['items' => 'productType'])
         ->middlewareFor(['index', 'show'], 'permission:categories-access')
         ->middlewareFor(['create', 'store'], 'permission:categories-create')
         ->middlewareFor(['edit', 'update'], 'permission:categories-edit')
@@ -206,6 +209,28 @@ Route::group(['prefix' => 'dashboard', 'middleware' => ['auth', 'verified']], fu
         ->middlewareFor(['create', 'store'], 'permission:products-create')
         ->middlewareFor(['edit', 'update'], 'permission:products-edit')
         ->middlewareFor('destroy', 'permission:products-delete');
+    Route::patch('/products/{id}/restore', [ProductController::class, 'restore'])
+        ->middleware('permission:products-delete')
+        ->name('products.restore');
+    Route::delete('/products/{id}/force-delete', [ProductController::class, 'forceDestroy'])
+        ->middleware('permission:products-delete')
+        ->name('products.forceDestroy');
+
+    Route::resource('recipes', RecipeController::class)
+        ->except(['show'])
+        ->middlewareFor('index', 'permission:recipes-access')
+        ->middlewareFor(['create', 'store'], 'permission:recipes-create')
+        ->middlewareFor(['edit', 'update'], 'permission:recipes-edit')
+        ->middlewareFor('destroy', 'permission:recipes-delete');
+    Route::get('recipes-products/search', [RecipeController::class, 'searchProducts'])
+        ->middleware('permission:recipes-access')
+        ->name('recipes.products.search');
+    Route::post('recipes/{recipe}/duplicate', [RecipeController::class, 'duplicate'])
+        ->middleware('permission:recipes-create')
+        ->name('recipes.duplicate');
+    Route::patch('recipes/{recipe}/status', [RecipeController::class, 'setStatus'])
+        ->middleware('permission:recipes-edit')
+        ->name('recipes.status');
 
     // Product import and export
     Route::get('/export/products', [ImportExportController::class, 'exportProducts'])
@@ -287,6 +312,10 @@ Route::group(['prefix' => 'dashboard', 'middleware' => ['auth', 'verified']], fu
     Route::get('stock-mutations', [StockMutationController::class, 'index'])
         ->middleware('permission:stock-mutations-access')
         ->name('stock-mutations.index');
+
+    Route::post('stock-mutations/update-stock', [StockMutationController::class, 'updateStock'])
+        ->middleware('permission:stock-mutations-access')
+        ->name('stock-mutations.update-stock');
 
     // Audit logs
     Route::get('audit-logs', [AuditLogController::class, 'index'])

@@ -186,6 +186,7 @@ class CheckoutService
                 'pricing_group_label' => data_get($pricingItem, 'pricing_group_label'),
                 'variation_id' => $cart->variation_id,
                 'variation_name' => $cart->variation_name,
+                'extras' => $cart->extras ?? [],
             ]);
 
             $totalBuyPrice = $cart->product->buy_price * $cart->qty;

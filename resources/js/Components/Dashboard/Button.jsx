@@ -13,30 +13,64 @@ export default function Button({
     added,
     url,
     id,
+    confirmationTitle = "Delete Data?",
+    confirmationText = "Deleted data cannot be recovered!",
+    confirmationConfirmText = "Yes, Delete!",
+    successTitle = "Success!",
+    successText = "Data deleted successfully!",
     ...props
 }) {
     const { delete: destroy } = useForm();
 
-    const deleteData = async (url) => {
+    const deleteData = (url) => {
         Swal.fire({
-            title: "Delete Data?",
-            text: "Deleted data cannot be recovered!",
+            title: confirmationTitle,
+            text: confirmationText,
             icon: "warning",
             showCancelButton: true,
             confirmButtonColor: "#6366f1",
             cancelButtonColor: "#64748b",
-            confirmButtonText: "Yes, Delete!",
+            confirmButtonText: confirmationConfirmText,
             cancelButtonText: "Cancel",
         }).then((result) => {
             if (result.isConfirmed) {
-                destroy(url);
+                destroy(url, {
+                    onSuccess: (page) => {
+                        const error = page.props.flash?.error;
 
-                Swal.fire({
-                    title: "Success!",
-                    text: "Data deleted successfully!",
-                    icon: "success",
-                    showConfirmButton: false,
-                    timer: 1500,
+                        Swal.fire({
+                            title: error ? "Unable to complete request" : successTitle,
+                            text: error || successText,
+                            icon: error ? "error" : "success",
+                            showConfirmButton: false,
+                            timer: 1800,
+                        });
+                    },
+                    onError: (errors) => {
+                        const message = Object.values(errors).flat().join(" ");
+
+                        Swal.fire({
+                            title: "Unable to complete request",
+                            text: message || "Please check the submitted information and try again.",
+                            icon: "error",
+                        });
+                    },
+                    onHttpException: (response) => {
+                        Swal.fire({
+                            title: "Unable to complete request",
+                            text: `The server returned an error (${response.status}).`,
+                            icon: "error",
+                        });
+                        return false;
+                    },
+                    onNetworkError: () => {
+                        Swal.fire({
+                            title: "Unable to complete request",
+                            text: "The request could not reach the server. Please try again.",
+                            icon: "error",
+                        });
+                        return false;
+                    },
                 });
             }
         });

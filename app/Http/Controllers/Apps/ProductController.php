@@ -29,9 +29,8 @@ use App\Services\OutletAccessService;
 use App\Services\StockMutationService;
 
 use Illuminate\Http\Request;
-
 use Illuminate\Http\Response;
-
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 
 use Inertia\Inertia;
@@ -65,13 +64,12 @@ class ProductController extends Controller
      */
 
     public function index(Request $request)
-
     {
+        $archived = $request->boolean('archived');
+        $query = $archived ? Product::onlyTrashed() : Product::query();
 
-        $products = Product::when($request->search, function ($products, $search) {
-
+        $products = $query->when($request->search, function ($products, $search) {
             $products = $products->where('title', 'like', '%'.$search.'%');
-
         })->with('category')->latest()->paginate($this->perPage())->withQueryString();
 
 
@@ -81,11 +79,10 @@ class ProductController extends Controller
 
 
         return Inertia::render('Dashboard/Products/Index', [
-
             'products' => $products,
-
             'warehouses' => $warehouses,
-
+            'archived' => $archived,
+            'archivedCount' => Product::onlyTrashed()->count(),
         ]);
 
     }
@@ -131,15 +128,10 @@ class ProductController extends Controller
         // return inertia
 
         return Inertia::render('Dashboard/Products/Create', [
-
             'categories' => $categories,
-
             'productTypes' => $productTypes,
-
             'products' => $products,
-
             'units' => Unit::orderBy('code')->get(['id', 'code', 'symbol']),
-
         ]);
 
     }
@@ -643,49 +635,94 @@ class ProductController extends Controller
      */
 
     public function destroy($id)
-
     {
-
         // find by ID
-
         $product = Product::findOrFail($id);
-
         $before = $this->productAuditPayload($product);
 
+        if ($product->carts()->exists()) {
+            return back()->with('error', 'Remove this product from all active or held carts before archiving it.');
+        }
 
-
-        // remove image
-
-        Storage::disk(config('filesystems.image_disk', 'public'))->delete('products/'.basename($product->image));
-
-
-
-        // delete
-
+        // Keep the image and historical product relationships for a possible restore.
         $product->delete();
 
 
 
         $this->auditLogService->log(
-
-            event: 'product.deleted',
-
+            event: 'product.archived',
             module: 'products',
-
             auditable: $product,
-
-            description: 'Product deleted.',
-
-            before: $before
-
+            description: 'Product archived.',
+            before: $before,
+            after: $before
         );
-
-
 
         // redirect
 
-        return back();
+        return back()->with('success', 'Product archived successfully.');
+    }
 
+    public function restore($id)
+    {
+        $product = Product::withTrashed()->findOrFail($id);
+        $product->restore();
+
+        $this->auditLogService->log(
+            event: 'product.restored',
+            module: 'products',
+            auditable: $product,
+            description: 'Product restored.',
+            after: $this->productAuditPayload($product)
+        );
+
+        return to_route('products.index')->with('success', 'Product restored successfully.');
+    }
+
+    public function forceDestroy($id)
+    {
+        $product = Product::withTrashed()->findOrFail($id);
+
+        $blockingTables = [
+            'transaction_details' => 'sales transaction history',
+            'purchase_order_items' => 'purchase orders',
+            'goods_receiving_items' => 'goods receiving history',
+            'supplier_return_items' => 'supplier return history',
+            'stock_transfer_items' => 'stock transfer history',
+            'product_batches' => 'product batches',
+        ];
+
+        foreach ($blockingTables as $table => $label) {
+            if (DB::table($table)->where('product_id', $product->id)->exists()) {
+                return back()->with('error', "This product cannot be permanently deleted because it has {$label}. Keep it archived to preserve the records.");
+            }
+        }
+
+        if ($product->carts()->exists()) {
+            return back()->with('error', 'Remove this product from all active or held carts before permanently deleting it.');
+        }
+
+        if ($product->components()->exists() || $product->compositeOf()->exists()) {
+            return back()->with('error', 'Remove this product from composite products before permanently deleting it.');
+        }
+
+        $before = $this->productAuditPayload($product);
+        $image = $product->image;
+        $product->forceDelete();
+
+        if ($image) {
+            Storage::disk(config('filesystems.image_disk', 'public'))->delete('products/'.basename($image));
+        }
+
+        $this->auditLogService->log(
+            event: 'product.deleted',
+            module: 'products',
+            auditable: $product,
+            description: 'Product permanently deleted.',
+            before: $before
+        );
+
+        return to_route('products.index')->with('success', 'Product permanently deleted.');
     }
 
 

@@ -458,6 +458,10 @@ class TransactionController extends Controller
     {
         $request->validate([
             'qty' => 'required|integer|min:1',
+            'extras' => 'nullable|array|max:20',
+            'extras.*.name' => 'required|string|max:80',
+            'extras.*.price' => 'required|numeric|min:0|max:1000000',
+            'extras.*.qty' => 'required|numeric|min:1|max:99',
         ]);
 
         $activeShift = $this->cashierShiftService->getActiveShiftForUser(auth()->user()->id);
@@ -504,17 +508,31 @@ class TransactionController extends Controller
             ], 422);
         }
 
+        $previousQty = max(1, (int) $cart->qty);
+        $previousExtrasTotal = collect($cart->extras ?? [])
+            ->sum(fn ($extra) => (int) ($extra['price'] ?? 0) * (int) ($extra['qty'] ?? 1));
+        $extras = collect($request->input('extras', $cart->extras ?? []))
+            ->map(fn ($extra) => [
+                'name' => trim((string) $extra['name']),
+                'price' => (int) $extra['price'],
+                'qty' => (int) $extra['qty'],
+            ])->values()->all();
+        $extrasTotal = collect($extras)
+            ->sum(fn ($extra) => $extra['price'] * $extra['qty']);
+
         // Update quantity and price (derive price from DB, not from request/global sell_price)
         $cart->qty = $request->qty;
+        $cart->extras = $extras;
 
         // Preserve variation unit price; recalc for non-variations
         if ($cart->variation_id) {
-            $unitPrice = (int) round($cart->price / max(1, (int) $cart->qty));
-            $cart->price = $unitPrice * $request->qty;
+            $baseUnitPrice = (int) round($cart->price / $previousQty) - $previousExtrasTotal;
+            $cart->price = ($baseUnitPrice + $extrasTotal) * $request->qty;
         } else {
-            $cart->price = $product->is_composite
-                ? (int) $product->components->sum(fn ($c) => $c->sell_price * (float) $c->pivot->qty) * $request->qty
-                : $unitConversion->getSellPrice($product, (int) $cart->unit_id) * $request->qty;
+            $baseUnitPrice = $product->is_composite
+                ? (int) $product->components->sum(fn ($c) => $c->sell_price * (float) $c->pivot->qty)
+                : $unitConversion->getSellPrice($product, (int) $cart->unit_id);
+            $cart->price = ($baseUnitPrice + $extrasTotal) * $request->qty;
         }
 
         $cart->save();

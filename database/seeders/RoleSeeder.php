@@ -42,6 +42,10 @@ class RoleSeeder extends Seeder
         $this->createRoleWithPermissions('payment-settings-update', 'payment-settings-update');
         $this->createRoleWithPermissions('stock-opnames-access', '%stock-opnames%');
         $this->createRoleWithPermissions('stock-mutations-access', '%stock-mutations%');
+        $this->createRoleWithPermissions('recipes-access', 'recipes-access');
+        $this->createRoleWithPermissions('recipes-create', 'recipes-create');
+        $this->createRoleWithPermissions('recipes-edit', 'recipes-edit');
+        $this->createRoleWithPermissions('recipes-delete', 'recipes-delete');
         $this->createRoleWithPermissions('sales-returns-access', '%sales-returns%');
         $this->createRoleWithPermissions('cashier-shifts-access', '%cashier-shifts%');
         $this->createRoleWithPermissions('audit-logs-access', '%audit-logs%');
@@ -110,6 +114,10 @@ class RoleSeeder extends Seeder
             'payment-settings-access',
             'stock-opnames-access',
             'stock-mutations-access',
+            'recipes-access',
+            'recipes-create',
+            'recipes-edit',
+            'recipes-delete',
             'sales-returns-access',
             'cashier-shifts-access',
             'audit-logs-access',
@@ -141,6 +149,10 @@ class RoleSeeder extends Seeder
             'reports-access',
             'stock-opnames-access',
             'stock-mutations-access',
+            'recipes-access',
+            'recipes-create',
+            'recipes-edit',
+            'recipes-delete',
             'sales-returns-access',
             'audit-logs-access',
             'purchase-orders-access',

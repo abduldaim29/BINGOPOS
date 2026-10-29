@@ -249,6 +249,10 @@ class ProductController extends Controller
         Request $request,
         Product $product
     ): JsonResponse {
+        if ($product->carts()->exists()) {
+            return $this->error('Remove this product from all active or held carts before archiving it.', 409);
+        }
+
         $product->delete();
 
         return $this->noContent();

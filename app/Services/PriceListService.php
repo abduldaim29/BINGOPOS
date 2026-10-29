@@ -6,62 +6,137 @@ use App\Models\Customer;
 use App\Models\Outlet;
 use App\Models\PriceList;
 use App\Models\Product;
+use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 
 class PriceListService
 {
-    // Potential N+1 query per product; eager-load items via priceList->items when pricing whole carts
-    public function getApplicablePriceList(?Customer $customer, ?Outlet $outlet = null): ?PriceList
-    {
-        $lists = PriceList::active()
-            ->where(function ($query) use ($outlet) {
-                $query->whereNull('outlet_id');
-                if ($outlet) {
-                    $query->orWhere('outlet_id', $outlet->id);
-                }
-            })
-            ->orderByDesc('outlet_id')->orderByDesc('priority')->get();
+    /**
+     * Cache price lists and customer-specific selection for repeated
+     * product pricing within the same service instance.
+     */
+    private array $priceListsByOutlet = [];
+
+    private array $applicableLists = [];
+
+    private array $segmentMembership = [];
+
+    public function getApplicablePriceList(
+        ?Customer $customer,
+        ?Outlet $outlet = null
+    ): ?PriceList {
+        $customerId = $customer?->getKey() ?? 0;
+        $outletId = $outlet?->getKey() ?? 0;
+        $isMember = (bool) ($customer?->is_loyalty_member ?? false);
+
+        $cacheKey = implode(':', [
+            $outletId,
+            $customerId,
+            (int) $isMember,
+        ]);
+
+        if (array_key_exists($cacheKey, $this->applicableLists)) {
+            return $this->applicableLists[$cacheKey];
+        }
+
+        $lists = $this->getPriceListsForOutlet($outletId);
 
         foreach ($lists as $list) {
-            if ($list->customer_scope === 'all') {
-                return $list;
-            }
-            if ($list->customer_scope === 'walk_in') {
-                return $list;
-            }
-            if ($list->customer_scope === 'registered' && $customer) {
-                return $list;
-            }
-            if ($list->customer_scope === 'member' && $customer?->is_loyalty_member) {
-                return $list;
-            }
-            if ($list->customer_scope === 'segment' && $customer && $list->customer_segment_id) {
-                if ($customer->segments()->where('customer_segment_id', $list->customer_segment_id)->exists()) {
-                    return $list;
-                }
+            $matches = match ($list->customer_scope) {
+                'all' => true,
+                'walk_in' => $customer === null || (bool) $customer->is_walkin,
+                'registered' => $customer !== null && ! $customer->is_walkin,
+                'member' => $customer !== null && ! $customer->is_walkin && $isMember,
+                'segment' => $customer !== null && ! $customer->is_walkin
+                    && $list->customer_segment_id !== null
+                    && $this->customerBelongsToSegment(
+                        (int) $customerId,
+                        (int) $list->customer_segment_id,
+                        $customer
+                    ),
+                default => false,
+            };
+
+            if ($matches) {
+                return $this->applicableLists[$cacheKey] = $list;
             }
         }
+
+        $this->applicableLists[$cacheKey] = null;
 
         return null;
     }
 
-    public function getProductPrice(PriceList $priceList, int $productId): ?int
+    private function getPriceListsForOutlet(int $outletId): EloquentCollection
     {
-        return $priceList->items()->where('product_id', $productId)->value('price');
+        if (! array_key_exists($outletId, $this->priceListsByOutlet)) {
+            $this->priceListsByOutlet[$outletId] = PriceList::active()
+                ->with('items')
+                ->where(function ($query) use ($outletId) {
+                    $query->whereNull('outlet_id');
+
+                    if ($outletId > 0) {
+                        $query->orWhere('outlet_id', $outletId);
+                    }
+                })
+                ->orderByDesc('outlet_id')
+                ->orderByDesc('priority')
+                ->get();
+        }
+
+        return $this->priceListsByOutlet[$outletId];
     }
 
-    public function getBasePrice(Product $product, ?Customer $customer, ?Outlet $outlet = null): int
-    {
+    private function customerBelongsToSegment(
+        int $customerId,
+        int $segmentId,
+        Customer $customer
+    ): bool {
+        $key = $customerId.':'.$segmentId;
+
+        if (! array_key_exists($key, $this->segmentMembership)) {
+            $this->segmentMembership[$key] = $customer->segments()
+                ->where('customer_segment_id', $segmentId)
+                ->exists();
+        }
+
+        return $this->segmentMembership[$key];
+    }
+
+    public function getProductPrice(
+        PriceList $priceList,
+        int $productId
+    ): ?int {
+        if ($priceList->relationLoaded('items')) {
+            $item = $priceList->items->firstWhere('product_id', $productId);
+
+            return $item === null ? null : (int) $item->price;
+        }
+
+        return $priceList->items()
+            ->where('product_id', $productId)
+            ->value('price');
+    }
+
+    public function getBasePrice(
+        Product $product,
+        ?Customer $customer,
+        ?Outlet $outlet = null
+    ): int {
         if ($product->is_composite) {
             return (int) $product->components->sum(
-                fn ($c) => (int) $c->sell_price * (float) $c->pivot->qty
+                fn ($component) =>
+                    (int) $component->sell_price
+                    * (float) $component->pivot->qty
             );
         }
 
         $priceList = $this->getApplicablePriceList($customer, $outlet);
+
         if (! $priceList) {
             return (int) $product->sell_price;
         }
 
-        return (int) ($this->getProductPrice($priceList, $product->id) ?? $product->sell_price);
+        return $this->getProductPrice($priceList, (int) $product->id)
+            ?? (int) $product->sell_price;
     }
 }

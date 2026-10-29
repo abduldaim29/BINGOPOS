@@ -1,9 +1,9 @@
 import React from "react";
 import DashboardLayout from "@/Layouts/DashboardLayout";
-import { Head, router } from "@inertiajs/react";
+import { Head, router, useForm } from "@inertiajs/react";
 import Table from "@/Components/Dashboard/Table";
 import Pagination from "@/Components/Dashboard/Pagination";
-import { IconHistory } from "@tabler/icons-react";
+import { IconAdjustmentsHorizontal, IconHistory } from "@tabler/icons-react";
 
 const formatDateTime = (value) =>
     value
@@ -14,6 +14,22 @@ const formatDateTime = (value) =>
         : "-";
 
 export default function Index({ stockMutations, products, warehouses = [], filters }) {
+    const stockForm = useForm({
+        product_id: "",
+        warehouse_id: warehouses[0]?.id || "",
+        adjustment_type: "set",
+        quantity: "",
+        notes: "",
+    });
+
+    const submitStockUpdate = (event) => {
+        event.preventDefault();
+        stockForm.post(route("stock-mutations.update-stock"), {
+            preserveScroll: true,
+            onSuccess: () => stockForm.reset("quantity", "notes"),
+        });
+    };
+
     const updateFilter = (key, value) => {
         router.get(
             route("stock-mutations.index"),
@@ -39,6 +55,114 @@ export default function Index({ stockMutations, products, warehouses = [], filte
                 <p className="text-sm text-slate-500 dark:text-slate-400">
                     History of stock changes from stock counts and initial product stock.
                 </p>
+            </div>
+
+            <div className="mb-4 rounded-2xl border border-primary-100 bg-primary-50/60 p-5 dark:border-primary-900/50 dark:bg-primary-950/20">
+                <div className="mb-4 flex items-start gap-3">
+                    <div className="rounded-xl bg-primary-100 p-2 text-primary-700 dark:bg-primary-900/50 dark:text-primary-300">
+                        <IconAdjustmentsHorizontal size={20} />
+                    </div>
+                    <div>
+                        <h2 className="font-semibold text-slate-900 dark:text-white">
+                            Update Stock
+                        </h2>
+                        <p className="text-sm text-slate-600 dark:text-slate-400">
+                            Set the current stock or add/remove quantity for a warehouse.
+                        </p>
+                    </div>
+                </div>
+
+                <form onSubmit={submitStockUpdate} className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-5">
+                    <div>
+                        <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-400">
+                            Product
+                        </label>
+                        <select
+                            value={stockForm.data.product_id}
+                            onChange={(event) => stockForm.setData("product_id", event.target.value)}
+                            className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-800 outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
+                        >
+                            <option value="">Select product</option>
+                            {products.map((product) => (
+                                <option key={product.id} value={product.id}>
+                                    {product.title}
+                                </option>
+                            ))}
+                        </select>
+                        {stockForm.errors.product_id && <p className="mt-1 text-xs text-red-600">{stockForm.errors.product_id}</p>}
+                    </div>
+
+                    <div>
+                        <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-400">
+                            Warehouse
+                        </label>
+                        <select
+                            value={stockForm.data.warehouse_id}
+                            onChange={(event) => stockForm.setData("warehouse_id", event.target.value)}
+                            className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-800 outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
+                        >
+                            <option value="">Select warehouse</option>
+                            {warehouses.map((warehouse) => (
+                                <option key={warehouse.id} value={warehouse.id}>
+                                    {warehouse.code} — {warehouse.name}
+                                </option>
+                            ))}
+                        </select>
+                        {stockForm.errors.warehouse_id && <p className="mt-1 text-xs text-red-600">{stockForm.errors.warehouse_id}</p>}
+                    </div>
+
+                    <div>
+                        <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-400">
+                            Action
+                        </label>
+                        <select
+                            value={stockForm.data.adjustment_type}
+                            onChange={(event) => stockForm.setData("adjustment_type", event.target.value)}
+                            className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-800 outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
+                        >
+                            <option value="set">Set stock to</option>
+                            <option value="add">Add stock</option>
+                            <option value="remove">Remove stock</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-400">
+                            Quantity
+                        </label>
+                        <input
+                            type="number"
+                            min="0"
+                            step="1"
+                            value={stockForm.data.quantity}
+                            onChange={(event) => stockForm.setData("quantity", event.target.value)}
+                            placeholder="Enter quantity"
+                            className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-800 outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
+                        />
+                        {stockForm.errors.quantity && <p className="mt-1 text-xs text-red-600">{stockForm.errors.quantity}</p>}
+                    </div>
+
+                    <div className="flex items-end">
+                        <button
+                            type="submit"
+                            disabled={stockForm.processing}
+                            className="h-11 w-full rounded-xl bg-primary-600 px-4 text-sm font-semibold text-white transition hover:bg-primary-700 disabled:cursor-not-allowed disabled:opacity-60"
+                        >
+                            {stockForm.processing ? "Updating..." : "Update Stock"}
+                        </button>
+                    </div>
+
+                    <div className="md:col-span-2 lg:col-span-5">
+                        <input
+                            type="text"
+                            value={stockForm.data.notes}
+                            onChange={(event) => stockForm.setData("notes", event.target.value)}
+                            placeholder="Reason or note (optional)"
+                            className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-800 outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
+                        />
+                        {stockForm.errors.notes && <p className="mt-1 text-xs text-red-600">{stockForm.errors.notes}</p>}
+                    </div>
+                </form>
             </div>
 
             <div className="mb-4 grid grid-cols-1 gap-3 rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900 md:grid-cols-5">

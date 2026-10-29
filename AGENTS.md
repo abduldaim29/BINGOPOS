@@ -14,24 +14,26 @@ Open-source POS system (200+ stars). Laravel 13 + Inertia 3.0 + React 19.
 - `feature/*` — individual feature work. Branch from `development`, PR to `development`.
 - `fix/*` — hotfixes. Branch from `main`, PR to `main` + `development`.
 
-**Tags follow semver:** `v1.0.0`, `v2.1.0`, etc.
+**Tags follow semver:** `v3.0.2`, `v3.0.1`, etc.
 
 ## Stack
 
 - **Backend**: Laravel 13 (composer.json requires PHP ^8.3; CI tests on PHP 8.4)
 - **Frontend**: Inertia.js 3.0 + React 19, Vite 5
-- **CI**: `.github/workflows/deploy.yml` uses PHP 8.4 + Node 22 for build, Node 24.15 on deploy VPS
+- **CI**: `.github/workflows/deploy.yml` runs PHP 8.4 + Node 24 validation, including `php artisan test --compact` and production build checks; deploy VPS runs Node 24.15 + PHP 8.4
 - **Styling**: Tailwind CSS 3 (custom theme in `tailwind.config.js`)
 - **Auth/RBAC**: Spatie Laravel Permission + Laravel Breeze
 - **REST API**: Sanctum token-based at `/api/v1`; Scramble docs at `/docs/api`, spec at `/docs/api.json`; protect with `SCRAMBLE_DOCS_TOKEN`
 - **DB**: MySQL (default); SQLite in-memory for tests
 - **i18n**: react-i18next; locales in `resources/js/i18n/locales`; `SetLocale` middleware on web group
 - **Payment gateways**: Midtrans, Xendit (webhooks in `routes/api.php`)
+- **Observability**: Sentry Laravel SDK is installed and enabled only when `SENTRY_LARAVEL_DSN` is configured
 - **WhatsApp**: whatsapp-web.js via separate Node service (`whatsapp-service/`, port 3001)
+- **Multi-outlet**: outlet-scoped operations with `OutletAccessService`, `user_outlets`, and single-outlet fallback compatibility
 
 ## CI / Deploy
 
-- **CI is build-only** — `.github/workflows/deploy.yml` validates composer + `npm run build` (PHP 8.4, Node 22). It does **NOT run tests**. Run `php artisan test` locally before every PR.
+- **CI is a release gate** — `.github/workflows/deploy.yml` runs `composer install`, `npm ci`, `php artisan test --compact`, and `npm run build` on PHP 8.4 + Node 24. Broken tests block merges before they reach `main`.
 - **Push to `main` auto-deploys to production** (`dikasir.web.id` via SSH). Never push directly to `main` — use the release process below.
 - Deploy VPS uses Node 24.15 + PHP 8.4 (`php8.4 artisan migrate --force`).
 - npm is the package manager of record (`package-lock.json` committed, `bun.lock` gitignored). CI/deploy run `npm ci`. Don't switch to bun/yarn lockfiles.
@@ -90,6 +92,7 @@ Production must trigger `php artisan schedule:run` every minute for the schedule
 - **Controllers**: `app/Http/Controllers/Apps/` — per-module web controllers (~35)
 - **API Controllers**: `app/Http/Controllers/Api/` — REST API (Sanctum token auth)
 - **Services**: `app/Services/` — ~22 services: AuditLog, BatchService, CashierShiftService, DineOrderService, GoodsReceivingService, LoyaltyService, PaymentGatewayManager, PricingService, PriceListService, PurchaseOrderService, ReorderService, StockMutationService, StockTransferService, UnitConversionService, WhatsAppService, etc.
+- **Outlet model**: `outlets` + `user_outlets` enforce per-branch security boundaries through `OutletAccessService`; use `php artisan outlet:audit --strict` during rollout and `PUSAT` stays a central non-sales warehouse
 - **Layouts**: `POSLayout.jsx` (POS), `DashboardLayout.jsx` (admin), `AuthenticatedLayout.jsx` (profile), `GuestLayout.jsx` (auth), `PublicLayout.jsx` (public dine-in)
 - **Routes**: `routes/web.php` (~50+ dashboard routes), `routes/api.php` (webhooks + REST API), `routes/auth.php` (Breeze)
 - **Inertia shared props**: `HandleInertiaRequests.php` — auth, permissions, notifications (low stock, receivables, payables aging), active shift, store profile, appVersion

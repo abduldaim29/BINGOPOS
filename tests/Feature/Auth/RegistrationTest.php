@@ -38,6 +38,8 @@ class RegistrationTest extends TestCase
             'password_confirmation' => 'password',
         ] + $this->botGuardPayload());
 
+        $response->assertSessionHasNoErrors();
+        $response->assertRedirect(route('verification.notice'));
         $this->assertAuthenticated();
         $response->assertRedirect(route('verification.notice'));
     }

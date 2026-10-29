@@ -5,6 +5,7 @@ import Input from "@/Components/Dashboard/Input";
 import Textarea from "@/Components/Dashboard/TextArea";
 import Checkbox from "@/Components/Dashboard/Checkbox";
 import InputSelect from "@/Components/Dashboard/InputSelect";
+import ItemIngredients from "@/Components/Dashboard/ItemIngredients";
 import toast from "react-hot-toast";
 import {
     IconTag,
@@ -13,25 +14,48 @@ import {
 } from "@tabler/icons-react";
 
 export default function Edit({ productType }) {
-    const { errors, categories, products } = usePage().props;
+    const { errors, categories, products, ingredientProducts } = usePage().props;
+    const existingRecipe = productType.recipe;
 
     const { data, setData, post, processing } = useForm({
         id: productType.id,
         name: productType.name,
+        short_name: productType.short_name || "",
         code: productType.code,
         description: productType.description,
         is_active: productType.is_active,
+        sort_order: productType.sort_order || 0,
+        color: productType.color || "#0f766e",
         category_id: productType.category_id || "",
         product_id: productType.product_id || "",
+        ingredients: (existingRecipe?.ingredients || []).filter(
+            (ingredient) => String(ingredient.product_id) !== String(productType.product_id)
+        ).map((ingredient) => ({
+            product_id: ingredient.product_id,
+            unit_id: ingredient.unit_id || "",
+            quantity: ingredient.quantity || "1",
+            wastage_percent: ingredient.wastage_percent || "0",
+            purchase_price: ingredient.purchase_price || "",
+        })),
         _method: "PUT",
     });
 
     const submit = (e) => {
         e.preventDefault();
-        post(route("product-types.update", productType.id), {
+        post(route("items.update", productType.id), {
             onSuccess: () => toast.success("Item updated successfully"),
             onError: () => toast.error("Failed to update item"),
         });
+    };
+
+    const selectFinishedProduct = (product) => {
+        setData("product_id", product?.id || "");
+        setData(
+            "ingredients",
+            data.ingredients.filter(
+                (ingredient) => String(ingredient.product_id) !== String(product?.id || "")
+            )
+        );
     };
 
     return (
@@ -40,7 +64,7 @@ export default function Edit({ productType }) {
 
             <div className="mb-6">
                 <Link
-                    href={route("product-types.index")}
+                    href={route("items.index")}
                     className="inline-flex items-center gap-2 text-sm text-slate-500 hover:text-primary-600 mb-3"
                 >
                     <IconArrowLeft size={16} />
@@ -77,6 +101,14 @@ export default function Edit({ productType }) {
                                 }
                                 value={data.name}
                             />
+                            <Input
+                                type="text"
+                                label="Short Name"
+                                placeholder="e.g., Electronics"
+                                errors={errors.short_name}
+                                onChange={(e) => setData("short_name", e.target.value)}
+                                value={data.short_name}
+                            />
                             <InputSelect
                                 label="Category"
                                 data={categories || []}
@@ -89,7 +121,7 @@ export default function Edit({ productType }) {
                                 label="Product"
                                 data={products || []}
                                 selected={products?.find(p => p.id === data.product_id)}
-                                setSelected={(product) => setData("product_id", product?.id || "")}
+                                setSelected={selectFinishedProduct}
                                 placeholder="Select Product"
                                 errors={errors.product_id}
                                 displayKey="title"
@@ -104,6 +136,24 @@ export default function Edit({ productType }) {
                                 value={data.description}
                                 rows={4}
                             />
+                            <div className="grid gap-4 sm:grid-cols-2">
+                                <Input
+                                    type="number"
+                                    label="Display Order"
+                                    placeholder="0"
+                                    errors={errors.sort_order}
+                                    onChange={(e) => setData("sort_order", e.target.value)}
+                                    value={data.sort_order}
+                                />
+                                <label className="flex flex-col gap-2 text-sm text-gray-600">
+                                    Label Color
+                                    <span className="flex h-10 items-center gap-3 rounded-md border border-gray-200 px-2 dark:border-gray-800">
+                                        <input type="color" value={data.color} onChange={(e) => setData("color", e.target.value)} className="h-7 w-10 cursor-pointer border-0 bg-transparent p-0" />
+                                        <span className="text-xs text-slate-500">{data.color}</span>
+                                    </span>
+                                    {errors.color && <small className="text-xs text-red-500">{errors.color}</small>}
+                                </label>
+                            </div>
                             <Checkbox
                                 label="Active"
                                 checked={data.is_active}
@@ -112,10 +162,16 @@ export default function Edit({ productType }) {
                                 }
                             />
                         </div>
+                        <ItemIngredients
+                            ingredients={data.ingredients}
+                            setIngredients={(ingredients) => setData("ingredients", ingredients)}
+                            products={ingredientProducts || products || []}
+                            finishedProductId={data.product_id}
+                        />
 
                         <div className="flex justify-end gap-3 mt-6 pt-6 border-t border-slate-100 dark:border-slate-800">
                             <Link
-                                href={route("product-types.index")}
+                                href={route("items.index")}
                                 className="px-5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 font-medium transition-colors"
                             >
                                 Cancel

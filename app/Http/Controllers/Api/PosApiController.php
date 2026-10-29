@@ -145,7 +145,9 @@ class PosApiController extends Controller
                 closeNotes: $validated['notes'] ?? null,
             );
         } catch (\Throwable $e) {
-            return $this->error($e->getMessage(), 422);
+            report($e);
+
+            return $this->error('Unable to close the cashier shift. Please try again.', 500);
         }
 
         return $this->ok(

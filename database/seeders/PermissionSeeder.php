@@ -98,6 +98,12 @@ class PermissionSeeder extends Seeder
         $create('stock-opnames-finalize');
         $create('stock-mutations-access');
 
+        // recipes
+        $create('recipes-access');
+        $create('recipes-create');
+        $create('recipes-edit');
+        $create('recipes-delete');
+
         // sales returns
         $create('sales-returns-access');
         $create('sales-returns-create');

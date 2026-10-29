@@ -593,7 +593,6 @@ const ReceiptStyles = () => (
         }
 
         .receipt-customer-name {
-            font-weight: 700;
             overflow-wrap: anywhere;
         }
 
@@ -632,6 +631,7 @@ const ReceiptStyles = () => (
 
         .receipt-item-name {
             min-width: 0;
+            font-weight: 700;
             overflow-wrap: anywhere;
             word-break: normal;
         }
@@ -898,6 +898,10 @@ export default function ThermalReceipt({
                     {items.map((item, index) => {
                         const qty = Number(item.qty) || 1;
                         const itemTotal = Number(item.price) || 0;
+                        const extrasTotal = (item.extras || []).reduce(
+                            (sum, extra) => sum + Number(extra.price || 0) * Number(extra.qty || 1),
+                            0
+                        );
                         const unitPrice =
                             Number(item.unit_price || 0) || itemTotal / qty;
                         const baseUnitPrice =
@@ -916,9 +920,19 @@ export default function ThermalReceipt({
                                             {item.variation_name}
                                         </p>
                                     )}
+                                    {(item.extras || []).map((extra, extraIndex) => (
+                                        <p key={extraIndex} className="receipt-item-small">
+                                            + {extra.name} ({receiptFormatPrice(Number(extra.price || 0))} x {Number(extra.qty || 1)})
+                                        </p>
+                                    ))}
                                     <p className="receipt-item-small">
-                                        {receiptFormatPrice(unitPrice)} each
+                                        {receiptFormatPrice(Math.max(0, unitPrice - extrasTotal))} each
                                     </p>
+                                    {extrasTotal > 0 && (
+                                        <p className="receipt-item-small">
+                                            Extras: {receiptFormatPrice(extrasTotal)}
+                                        </p>
+                                    )}
                                     {Number(item.discount_total || 0) > 0 &&
                                         baseUnitPrice > unitPrice && (
                                             <p className="receipt-item-small">
@@ -1037,6 +1051,10 @@ export function ThermalReceipt58mm({
                     {items.map((item, index) => {
                         const qty = Number(item.qty) || 1;
                         const itemTotal = Number(item.price) || 0;
+                        const extrasTotal = (item.extras || []).reduce(
+                            (sum, extra) => sum + Number(extra.price || 0) * Number(extra.qty || 1),
+                            0
+                        );
                         const unitPrice =
                             Number(item.unit_price || 0) || itemTotal / qty;
 
@@ -1052,9 +1070,19 @@ export function ThermalReceipt58mm({
                                             {item.variation_name}
                                         </p>
                                     )}
+                                    {(item.extras || []).map((extra, extraIndex) => (
+                                        <p key={extraIndex} className="receipt-item-small">
+                                            + {extra.name} ({receiptFormatPrice(Number(extra.price || 0))} x {Number(extra.qty || 1)})
+                                        </p>
+                                    ))}
                                     <p className="receipt-item-small">
-                                        {receiptFormatPrice(unitPrice)} each
+                                        {receiptFormatPrice(Math.max(0, unitPrice - extrasTotal))} each
                                     </p>
+                                    {extrasTotal > 0 && (
+                                        <p className="receipt-item-small">
+                                            Extras: {receiptFormatPrice(extrasTotal)}
+                                        </p>
+                                    )}
                                 </div>
                                 <span className="receipt-item-qty">{qty}</span>
                                 <span className="receipt-item-amount">

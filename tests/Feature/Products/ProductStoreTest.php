@@ -6,6 +6,7 @@ use App\Models\Category;
 use App\Models\Product;
 use App\Models\ProductWarehouse;
 use App\Models\StockMutation;
+use App\Models\Transaction;
 use App\Models\User;
 use App\Models\Warehouse;
 use Database\Seeders\PermissionSeeder;
@@ -158,5 +159,55 @@ class ProductStoreTest extends TestCase
 
         $this->post(route('products.store'), $payload)
             ->assertSessionHasErrors('image');
+    }
+
+    public function test_delete_archives_products_with_transaction_history_and_can_restore_them(): void
+    {
+        $product = Product::create([
+            'image' => 'product.png',
+            'barcode' => 'BRCD-'.Str::upper(Str::random(10)),
+            'sku' => 'SKU-'.Str::upper(Str::random(10)),
+            'title' => 'Produk Terpakai',
+            'description' => 'Tidak bisa dihapus.',
+            'category_id' => $this->category->id,
+            'buy_price' => 5000,
+            'sell_price' => 10000,
+            'stock' => 10,
+            'tax_rate' => 0,
+        ]);
+
+        $transaction = Transaction::create([
+            'cashier_id' => $this->admin->id,
+            'warehouse_id' => $this->warehouse->id,
+            'invoice' => 'TRX-'.Str::upper(Str::random(8)),
+            'cash' => 20000,
+            'change' => 0,
+            'discount' => 0,
+            'grand_total' => 20000,
+            'payment_method' => 'cash',
+            'payment_status' => 'paid',
+        ]);
+
+        $transaction->details()->create([
+            'product_id' => $product->id,
+            'qty' => 1,
+            'price' => 20000,
+        ]);
+
+        $this->delete(route('products.destroy', $product->id))
+            ->assertRedirect()
+            ->assertSessionHas('success', 'Product archived successfully.');
+
+        $this->assertSoftDeleted('products', ['id' => $product->id]);
+        $this->assertSame($product->id, $transaction->details()->firstOrFail()->product->id);
+
+        $this->patch(route('products.restore', $product->id))
+            ->assertRedirect(route('products.index'))
+            ->assertSessionHas('success', 'Product restored successfully.');
+
+        $this->assertDatabaseHas('products', [
+            'id' => $product->id,
+            'deleted_at' => null,
+        ]);
     }
 }

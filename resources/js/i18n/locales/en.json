@@ -535,16 +535,16 @@
         "dataTitle": "Sub Categories Data"
     },
     "productTypes": {
-        "title": "Product Types",
-        "addProductType": "Add Product Type",
-        "editProductType": "Edit Product Type",
-        "productTypeName": "Product Type Name",
+        "title": "Items",
+        "addProductType": "Add Item",
+        "editProductType": "Edit Item",
+        "productTypeName": "Item Name",
         "code": "Code",
-        "noProductTypes": "No product types found",
-        "searchPlaceholder": "Search product types...",
-        "registered": "product types registered",
-        "addFirst": "Add your first product type",
-        "dataTitle": "Product Types Data"
+        "noProductTypes": "No items found",
+        "searchPlaceholder": "Search items...",
+        "registered": "items registered",
+        "addFirst": "Add your first item",
+        "dataTitle": "Items Data"
     },
     "suppliers": {
         "title": "Suppliers",

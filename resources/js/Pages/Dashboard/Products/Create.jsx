@@ -60,6 +60,28 @@ export default function Create({
     const [selectedVariations, setSelectedVariations] = useState([]);
     const [availableVariations, setAvailableVariations] = useState({});
 
+    const variationTemplateFor = (value) => {
+        const name = value?.name?.toLowerCase() || "";
+        if (name.includes("pizza")) return "pizza";
+        if (name.includes("soft drink") || name.includes("soft_drink")) return "soft_drinks";
+        if (name.includes("hard drink") || name.includes("hard_drink")) return "hard_drinks";
+        if (name.includes("hot drink") || name.includes("hot_drink")) return "hot_drinks";
+        if (name.includes("nugget")) return "nuggets";
+        if (name.includes("hotshot")) return "hotshots";
+        if (name.includes("wing")) return "wings";
+        if (name.includes("burger")) return "burgers";
+        if (name.includes("fries") || name.includes("fry")) return "fries";
+        return null;
+    };
+
+    const enableVariations = (template) => {
+        setSelectedVariationTemplate(template);
+        setSelectedVariations([]);
+        setData("variation_prices", {});
+        setHasVariations(Boolean(template));
+        setAvailableVariations(template ? { [template]: variationOptions[template] } : {});
+    };
+
     // Universal variation options for different product types
     const variationOptions = {
         pizza: [
@@ -238,6 +260,8 @@ export default function Create({
     const setSelectedProductTypeHandler = (value) => {
         setSelectedProductType(value);
         setData("product_type_id", value?.id || "");
+        const template = variationTemplateFor(value);
+        if (template) enableVariations(template);
     };
 
     const toggleComposite = (checked) => {
@@ -352,7 +376,7 @@ export default function Create({
     const updateVariationPrice = (variationId, value) => {
         setData("variation_prices", {
             ...(data.variation_prices || {}),
-            [variationId]: value ? parseInt(value, 10) : 0,
+            [variationId]: value,
         });
     };
 
@@ -409,6 +433,13 @@ export default function Create({
                     String(unit.barcode || "").trim() ||
                     generateBarcode(),
             })),
+
+            variation_prices: Object.fromEntries(
+                Object.entries(formData.variation_prices || {}).map(([variationId, price]) => [
+                    variationId,
+                    price === "" ? 0 : Number(price),
+                ])
+            ),
         }));
 
         post(route("products.store"), {
@@ -532,23 +563,9 @@ export default function Create({
                                             const subCategoryName = value?.name?.toLowerCase() || '';
                                             console.log('Selected subcategory:', subCategoryName); // Debug log
 
-                                            let template = null;
-                                            if (subCategoryName === 'soft drinks' || subCategoryName.includes('soft drink')) {
-                                                template = 'soft_drinks';
-                                            } else if (subCategoryName === 'hard drinks' || subCategoryName.includes('hard drink')) {
-                                                template = 'hard_drinks';
-                                            } else if (subCategoryName === 'hot drinks' || subCategoryName.includes('hot drink')) {
-                                                template = 'hot_drinks';
-                                            }
-                                            setSelectedVariationTemplate(template);
-                                            setSelectedVariations([]);
-                                            setData('variation_prices', {});
+                                            const template = variationTemplateFor(value);
                                             if (template) {
-                                                setAvailableVariations({ [template]: variationOptions[template] });
-                                                setHasVariations(true);
-                                            } else {
-                                                setAvailableVariations({});
-                                                setHasVariations(false);
+                                                enableVariations(template);
                                             }
                                         }}
                                         placeholder="Select a subcategory (optional)"
@@ -627,9 +644,19 @@ export default function Create({
                                             {selectedVariations.length > 0 && (
                                                 <div className="mt-4 p-4 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">
                                                     <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-3">
-                                                        Set Prices for Selected Variations
+                                                        Variation Pricing
                                                     </label>
-                                                    <div className="space-y-3">
+                                                    <div className="overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-700">
+                                                        <table className="min-w-full text-sm">
+                                                            <thead className="bg-white text-left text-xs uppercase tracking-wide text-slate-500 dark:bg-slate-900">
+                                                                <tr>
+                                                                    <th className="px-3 py-2">Variation</th>
+                                                                    <th className="px-3 py-2">Size / Details</th>
+                                                                    <th className="px-3 py-2">Price Label</th>
+                                                                    <th className="px-3 py-2 text-right">Price (Rs)</th>
+                                                                </tr>
+                                                            </thead>
+                                                            <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
                                                         {selectedVariations.map(variationId => {
                                                             // Find the variation details
                                                             let variation = null;
@@ -643,28 +670,37 @@ export default function Create({
                                                             if (!variation) return null;
 
                                                             return (
-                                                                <div key={variationId} className="flex items-center gap-3">
-                                                                    <div className="flex-1">
+                                                                <tr key={variationId}>
+                                                                    <td className="px-3 py-3 font-medium text-slate-800 dark:text-white">
                                                                         <p className="text-sm font-medium text-slate-800 dark:text-white">
                                                                             {variation.name} ({variation.category.replace('_', ' ')})
                                                                         </p>
-                                                                        <p className="text-xs text-slate-500 dark:text-slate-400">
-                                                                            {variation.size}
-                                                                        </p>
-                                                                    </div>
+                                                                    </td>
+                                                                    <td className="px-3 py-3 text-slate-500 dark:text-slate-400">{variation.size}</td>
+                                                                    <td className="px-3 py-3 text-xs font-medium text-primary-600 dark:text-primary-400">
+                                                                        {selectedVariations[0] === variationId ? "Base Price" : "Variation Price"}
+                                                                    </td>
+                                                                    <td className="px-3 py-3 text-right">
                                                                     <input
-                                                                        type="number"
-                                                                        placeholder="Price"
-                                                                        className="w-32"
-                                                                        value={data.variation_prices?.[variationId] ?? ""}
-                                                                        onChange={(e) => updateVariationPrice(variationId, e.target.value)}
-                                                                        min="0"
-                                                                        step="0.01"
+                                                                        type="text"
+                                                                        placeholder={selectedVariations[0] === variationId ? "Base price" : "Enter price"}
+                                                                        className="w-32 rounded-lg border border-slate-300 bg-white px-3 py-2 text-right text-slate-900 placeholder:text-slate-400 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 dark:border-slate-600 dark:bg-slate-950 dark:text-white dark:placeholder:text-slate-500"
+                                                                        value={String(data.variation_prices?.[variationId] ?? "")}
+                                                                        onChange={(e) => {
+                                                                            const value = e.target.value;
+                                                                            if (/^\d*(\.\d{0,2})?$/.test(value)) {
+                                                                                updateVariationPrice(variationId, value);
+                                                                            }
+                                                                        }}
                                                                         inputMode="decimal"
+                                                                        autoComplete="off"
                                                                     />
-                                                                </div>
+                                                                    </td>
+                                                                </tr>
                                                             );
                                                         })}
+                                                            </tbody>
+                                                        </table>
                                                     </div>
                                                 </div>
                                             )}

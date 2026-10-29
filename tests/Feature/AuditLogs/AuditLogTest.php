@@ -144,7 +144,7 @@ class AuditLogTest extends TestCase
             'module' => 'products',
         ]);
         $this->assertDatabaseHas('audit_logs', [
-            'event' => 'product.deleted',
+            'event' => 'product.archived',
             'module' => 'products',
         ]);
     }

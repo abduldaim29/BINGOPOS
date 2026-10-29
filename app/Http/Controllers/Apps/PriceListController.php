@@ -49,6 +49,11 @@ class PriceListController extends Controller
             'priority' => ['integer', 'min:0'],
             'notes' => ['nullable', 'string', 'max:500'],
         ]);
+        if ($validated['customer_scope'] === 'segment' && empty($validated['customer_segment_id'])) {
+            return back()->withErrors([
+                'customer_segment_id' => 'Select a customer segment for segment pricing.',
+            ])->withInput();
+        }
 
         $validated['is_active'] = true;
         $validated['outlet_id'] = $this->outletAccess->activeOutlet($request)?->id;
@@ -70,6 +75,11 @@ class PriceListController extends Controller
             'priority' => ['integer', 'min:0'],
             'notes' => ['nullable', 'string', 'max:500'],
         ]);
+        if ($validated['customer_scope'] === 'segment' && empty($validated['customer_segment_id'])) {
+            return back()->withErrors([
+                'customer_segment_id' => 'Select a customer segment for segment pricing.',
+            ])->withInput();
+        }
 
         $priceList->update($validated);
 

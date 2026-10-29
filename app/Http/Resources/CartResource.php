@@ -32,6 +32,7 @@ class CartResource extends JsonResource
             'hold_id' => $this->hold_id,
             'hold_label' => $this->hold_label,
             'held_at' => optional($this->held_at)->toISOString(),
+            'extras' => $this->extras ?? [],
         ];
     }
 }

@@ -45,6 +45,7 @@ RUN sed -ri 's!/var/www/html!/var/www/html/public!g' \
         --prefer-dist \
         --no-interaction \
         --optimize-autoloader \
+    && php artisan storage:link \
     && chown -R www-data:www-data storage bootstrap/cache \
     && chmod -R ug+rwX storage bootstrap/cache
 

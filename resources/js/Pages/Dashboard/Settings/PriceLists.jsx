@@ -8,12 +8,12 @@ export default function PriceLists({ priceLists }) {
     const { flash } = usePage().props;
     const [showForm, setShowForm] = useState(false);
     const [editing, setEditing] = useState(null);
-    const [form, setForm] = useState({ name: "", slug: "", customer_scope: "all", notes: "", priority: 0 });
+    const [form, setForm] = useState({ name: "", slug: "", customer_scope: "registered", notes: "", priority: 0 });
 
     if (flash?.success) toast.success(flash.success);
 
     const resetForm = () => {
-        setForm({ name: "", slug: "", customer_scope: "all", notes: "", priority: 0 });
+        setForm({ name: "", slug: "", customer_scope: "registered", notes: "", priority: 0 });
         setEditing(null);
         setShowForm(false);
     };
@@ -80,6 +80,7 @@ export default function PriceLists({ priceLists }) {
                                         <option value="registered">Registered</option>
                                         <option value="member">Member</option>
                                     </select>
+                                    <p className="mt-1 text-xs text-amber-600">All Customers applies this price to every POS sale, including walk-ins.</p>
                                 </div>
                                 <div>
                                     <label className="block text-sm font-medium mb-1">Priority</label>

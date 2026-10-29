@@ -7,10 +7,11 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Product extends Model
 {
-    use HasFactory;
+    use HasFactory, SoftDeletes;
 
     protected $casts = [
         'id' => 'integer',
@@ -139,9 +140,24 @@ class Product extends Model
         return $this->hasMany(StockOpnameItem::class);
     }
 
+    public function transactionDetails()
+    {
+        return $this->hasMany(TransactionDetail::class);
+    }
+
+    public function carts()
+    {
+        return $this->hasMany(Cart::class);
+    }
+
     public function stockMutations()
     {
         return $this->hasMany(StockMutation::class);
+    }
+
+    public function recipes()
+    {
+        return $this->hasMany(Recipe::class);
     }
 
     public function salesReturnItems()
@@ -182,9 +198,45 @@ class Product extends Model
     }
 
     protected function image(): Attribute
-    {
-        return Attribute::make(
-            get: fn ($value) => $value ? (str_starts_with($value, 'http') ? $value : asset('/storage/products/'.$value)) : null,
-        );
-    }
+{
+    return Attribute::make(
+        get: function ($value): ?string {
+            if (! is_string($value) || trim($value) === '') {
+                return null;
+            }
+
+            // Preserve already complete image URLs.
+            if (preg_match('~^https?://~i', $value)) {
+                return $value;
+            }
+
+            // Normalize previously stored image paths.
+            $path = str_replace('\\', '/', trim($value));
+            $path = ltrim($path, '/');
+            $path = preg_replace('~^(?:public/)?storage/~i', '', $path) ?? $path;
+
+            if (! str_starts_with($path, 'products/')) {
+                $path = 'products/'.$path;
+            }
+
+            // Use the public Supabase bucket URL when S3 storage is enabled.
+            if (config('filesystems.image_disk', 'public') === 's3') {
+                $baseUrl = rtrim(
+                    (string) config('filesystems.image_url'),
+                    '/'
+                );
+
+                if ($baseUrl !== '') {
+                    return $baseUrl.'/'.$path;
+                }
+
+                // Leave the normalized path available for frontend URL handling.
+                return $path;
+            }
+
+            // Keep existing local development behavior.
+            return asset('storage/'.$path);
+        },
+    );
+}
 }

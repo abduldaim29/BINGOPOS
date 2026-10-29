@@ -17,6 +17,8 @@ import {
     IconPrinter,
     IconUpload,
     IconDownload,
+    IconArchive,
+    IconRefresh,
 } from "@tabler/icons-react";
 import Search from "@/Components/Dashboard/Search";
 import Table from "@/Components/Dashboard/Table";
@@ -38,6 +40,8 @@ function ProductCard({
     onToggle,
     canUpdate,
     canDelete,
+    archived,
+    onRestore,
     t,
 }) {
     const rowNumber = index + 1 + (currentPage - 1) * perPage;
@@ -56,14 +60,16 @@ function ProductCard({
             {/* Product Image */}
             <div className="relative aspect-square bg-slate-100 dark:bg-slate-800 overflow-hidden">
                 {/* Checkbox */}
-                <div className="absolute top-2 left-2 z-10">
-                    <input
-                        type="checkbox"
-                        checked={isSelected}
-                        onChange={() => onToggle(product)}
-                        className="w-5 h-5 rounded border-2 border-white bg-white/80 text-primary-500 focus:ring-primary-500 cursor-pointer shadow-sm"
-                    />
-                </div>
+                {!archived && (
+                    <div className="absolute top-2 left-2 z-10">
+                        <input
+                            type="checkbox"
+                            checked={isSelected}
+                            onChange={() => onToggle(product)}
+                            className="w-5 h-5 rounded border-2 border-white bg-white/80 text-primary-500 focus:ring-primary-500 cursor-pointer shadow-sm"
+                        />
+                    </div>
+                )}
                 {product.image ? (
                     <img
                         src={getProductImageUrl(product.image)}
@@ -104,9 +110,9 @@ function ProductCard({
                 </div>
 
                 {/* Action Buttons Overlay */}
-                {(canUpdate || canDelete) && (
+                {(archived ? canDelete : canUpdate || canDelete) && (
                     <div className="absolute inset-0 bg-slate-900/0 group-hover:bg-slate-900/40 transition-all flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100">
-                        {canUpdate && (
+                        {!archived && canUpdate && (
                             <Link
                                 href={route("products.edit", product.id)}
                                 className="p-2.5 rounded-xl bg-white text-warning-600 hover:bg-warning-50 shadow-lg transition-colors"
@@ -114,10 +120,38 @@ function ProductCard({
                                 <IconPencilCog size={18} />
                             </Link>
                         )}
-                        {canDelete && (
+                        {archived && canDelete && (
+                            <>
+                                <button
+                                    type="button"
+                                    onClick={() => onRestore(product)}
+                                    title="Restore product"
+                                    className="p-2.5 rounded-xl bg-white text-success-600 hover:bg-success-50 shadow-lg transition-colors"
+                                >
+                                    <IconRefresh size={18} />
+                                </button>
+                                <Button
+                                    type={"delete"}
+                                    icon={<IconTrash size={18} />}
+                                    title="Permanently delete product"
+                                    confirmationTitle="Permanently delete product?"
+                                    confirmationText="This cannot be undone. Products with sales or stock history will be protected."
+                                    confirmationConfirmText="Yes, permanently delete"
+                                    successText="Product permanently deleted."
+                                    className="p-2.5 rounded-xl bg-white text-danger-600 hover:bg-danger-50 shadow-lg"
+                                    url={route("products.forceDestroy", product.id)}
+                                />
+                            </>
+                        )}
+                        {!archived && canDelete && (
                             <Button
                                 type={"delete"}
-                                icon={<IconTrash size={18} />}
+                                icon={<IconArchive size={18} />}
+                                title="Archive product"
+                                confirmationTitle="Archive product?"
+                                confirmationText="The product will be hidden from active lists. Sales history will be preserved."
+                                confirmationConfirmText="Yes, archive"
+                                successText="Product archived successfully."
                                 className={
                                     "p-2.5 rounded-xl bg-white text-danger-600 hover:bg-danger-50 shadow-lg"
                                 }
@@ -180,7 +214,7 @@ function ProductCard({
     );
 }
 
-export default function Index({ products }) {
+export default function Index({ products, archived = false, archivedCount = 0 }) {
     const { t } = useTranslation();
     const { can } = useAuthorization();
     const [viewMode, setViewMode] = useState("grid"); // 'grid' | 'list'
@@ -190,6 +224,24 @@ export default function Index({ products }) {
     const canCreateProducts = can("products-create");
     const canEditProducts = can("products-edit");
     const canDeleteProducts = can("products-delete");
+    const restoreProduct = (product) => {
+        router.patch(
+            route("products.restore", product.id),
+            {},
+            {
+                onSuccess: () => toast.success("Product restored successfully."),
+                onError: () => toast.error("Product could not be restored."),
+                onHttpException: () => {
+                    toast.error("Product could not be restored.");
+                    return false;
+                },
+                onNetworkError: () => {
+                    toast.error("Product could not be restored.");
+                    return false;
+                },
+            }
+        );
+    };
 
     const handlePrintSingleBarcode = (product) => {
         setSingleProductBarcode(product);
@@ -233,31 +285,42 @@ export default function Index({ products }) {
 
     return (
         <>
-            <Head title={t("products.title")} />
+            <Head title={archived ? "Archived Products" : t("products.title")} />
 
             {/* Header */}
             <div data-tour="products-header" className="mb-6">
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                     <div>
                         <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
-                            {t("products.title")}
+                            {archived ? "Archived Products" : t("products.title")}
                         </h1>
                         <p className="text-sm text-slate-500 dark:text-slate-400">
-                            {products.total} {t("products.messages.registered")}
+                            {products.total}{" "}
+                            {archived ? "archived products" : t("products.messages.registered")}
                         </p>
                     </div>
                     <div
                         data-tour="products-actions"
                         className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto"
                     >
-                        <button
+                        {canDeleteProducts && (
+                            <Link
+                                href={archived ? route("products.index") : route("products.index", { archived: 1 })}
+                                className="inline-flex items-center justify-center gap-2 px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors w-full sm:w-auto"
+                            >
+                                {archived
+                                    ? "Active products"
+                                    : `Archived products${archivedCount ? ` (${archivedCount})` : ""}`}
+                            </Link>
+                        )}
+                        {!archived && <button
                             onClick={handlePrintAllBarcodes}
                             className="inline-flex items-center justify-center gap-2 px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors w-full sm:w-auto"
                         >
                             <IconBarcode size={18} />
                             {t("products.actions.printAllBarcode")}
-                        </button>
-                        {canCreateProducts && (
+                        </button>}
+                        {!archived && canCreateProducts && (
                             <>
                                 <a
                                     href={route("export.products")}
@@ -309,7 +372,7 @@ export default function Index({ products }) {
                                 />
                             </>
                         )}
-                        {canCreateProducts && (
+                        {!archived && canCreateProducts && (
                             <Button
                                 type={"link"}
                                 icon={
@@ -335,14 +398,14 @@ export default function Index({ products }) {
                 className="mb-4 flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-3"
             >
                 <div className="flex items-center gap-3">
-                    <div className="w-full sm:w-80">
+                    {!archived && <div className="w-full sm:w-80">
                         <Search
                             url={route("products.index")}
                             placeholder={t("products.messages.searchPlaceholder")}
                         />
-                    </div>
+                    </div>}
                     {/* Select All Checkbox */}
-                    <label className="flex items-center gap-2 cursor-pointer">
+                    {!archived && <label className="flex items-center gap-2 cursor-pointer">
                         <input
                             type="checkbox"
                             checked={
@@ -356,14 +419,14 @@ export default function Index({ products }) {
                         <span className="text-sm text-slate-600 dark:text-slate-400 hidden sm:inline">
                             {t("common.buttons.selectAll")}
                         </span>
-                    </label>
+                    </label>}
                 </div>
                 <div
                     data-tour="products-view"
                     className="flex items-center gap-2"
                 >
                     {/* Show selection count and print selected button */}
-                    {selectedProducts.length > 0 && (
+                    {!archived && selectedProducts.length > 0 && (
                         <button
                             onClick={handlePrintSelected}
                             className="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-primary-500 hover:bg-primary-600 text-white text-sm font-medium transition-colors"
@@ -414,6 +477,8 @@ export default function Index({ products }) {
                                     onToggle={toggleProductSelection}
                                     canUpdate={canEditProducts}
                                     canDelete={canDeleteProducts}
+                                    archived={archived}
+                                    onRestore={restoreProduct}
                                     t={t}
                                 />
                             ))}
@@ -505,7 +570,7 @@ export default function Index({ products }) {
                                             </Table.Td>
                                             <Table.Td>
                                                 <div className="flex gap-2">
-                                                    {canEditProducts && (
+                                                    {!archived && canEditProducts && (
                                                         <Button
                                                             type={"edit"}
                                                             icon={
@@ -523,15 +588,43 @@ export default function Index({ products }) {
                                                             )}
                                                         />
                                                     )}
-                                                    {canDeleteProducts && (
+                                                    {archived && canDeleteProducts && (
+                                                        <>
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => restoreProduct(product)}
+                                                                title="Restore product"
+                                                                className="inline-flex items-center justify-center p-2 rounded-xl border bg-success-100 border-success-200 text-success-600 hover:bg-success-200 dark:bg-success-900/50 dark:border-success-800 dark:text-success-400"
+                                                            >
+                                                                <IconRefresh size={16} />
+                                                            </button>
+                                                            <Button
+                                                                type={"delete"}
+                                                                icon={<IconTrash size={16} />}
+                                                                title="Permanently delete product"
+                                                                confirmationTitle="Permanently delete product?"
+                                                                confirmationText="This cannot be undone. Products with sales or stock history will be protected."
+                                                                confirmationConfirmText="Yes, permanently delete"
+                                                                successText="Product permanently deleted."
+                                                                className="border bg-danger-100 border-danger-200 text-danger-600 hover:bg-danger-200 dark:bg-danger-900/50 dark:border-danger-800 dark:text-danger-400"
+                                                                url={route("products.forceDestroy", product.id)}
+                                                            />
+                                                        </>
+                                                    )}
+                                                    {!archived && canDeleteProducts && (
                                                         <Button
                                                             type={"delete"}
                                                             icon={
-                                                                <IconTrash
+                                                                <IconArchive
                                                                     size={16}
                                                                     strokeWidth={1.5}
                                                                 />
                                                             }
+                                                            title="Archive product"
+                                                            confirmationTitle="Archive product?"
+                                                            confirmationText="The product will be hidden from active lists. Sales history will be preserved."
+                                                            confirmationConfirmText="Yes, archive"
+                                                            successText="Product archived successfully."
                                                             className={
                                                                 "border bg-danger-100 border-danger-200 text-danger-600 hover:bg-danger-200 dark:bg-danger-900/50 dark:border-danger-800 dark:text-danger-400"
                                                             }
@@ -560,12 +653,14 @@ export default function Index({ products }) {
                             />
                         </div>
                         <h3 className="text-lg font-medium text-slate-800 dark:text-slate-200 mb-1">
-                            No Products Yet
+                            {archived ? "No Archived Products" : "No Products Yet"}
                         </h3>
                         <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
-                            {t("products.empty.description")}
+                            {archived
+                                ? "Archived products will appear here."
+                                : t("products.empty.description")}
                         </p>
-                        {canCreateProducts && (
+                        {!archived && canCreateProducts && (
                             <Button
                                 type={"link"}
                                 icon={<IconCirclePlus size={18} />}

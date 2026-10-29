@@ -82,8 +82,8 @@ export default function Menu() {
                 },
                 {
                     title: t("sidebar.items.items"),
-                    href: route("product-types.index"),
-                    active: url === "/dashboard/product-types" ? true : false,
+                    href: route("items.index"),
+                    active: url === "/dashboard/items" ? true : false,
                     icon: <IconBooks size={20} strokeWidth={1.5} />,
                     permissions: hasAnyPermission(["categories-access"]),
                 },
@@ -185,6 +185,13 @@ export default function Menu() {
                     active: url.startsWith("/dashboard/stock-mutations"),
                     icon: <IconChartArrowsVertical size={20} strokeWidth={1.5} />,
                     permissions: hasAnyPermission(["stock-mutations-access"]),
+                },
+                {
+                    title: "Recipe Management",
+                    href: route("recipes.index"),
+                    active: url.startsWith("/dashboard/recipes"),
+                    icon: <IconToolsKitchen2 size={20} strokeWidth={1.5} />,
+                    permissions: hasAnyPermission(["recipes-access"]),
                 },
                 {
                     title: t("sidebar.items.stockTransfers"),

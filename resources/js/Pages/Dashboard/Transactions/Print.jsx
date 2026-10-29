@@ -186,6 +186,7 @@ export default function Print({ transaction }) {
                 qty: Number(item.qty),
                 name: item.product?.title ?? item.product?.name ?? "Item",
                 price: Number(item.price),
+                extras: item.extras || [],
             })),
             money: formatPrice,
             subtotal: baseSubtotal,
@@ -697,6 +698,10 @@ export default function Print({ transaction }) {
                                                     Number(item.qty) || 1;
                                                 const subtotal =
                                                     Number(item.price) || 0;
+                                                const extrasTotal = (item.extras || []).reduce(
+                                                    (sum, extra) => sum + Number(extra.price || 0) * Number(extra.qty || 1),
+                                                    0
+                                                );
                                                 const unitPrice =
                                                     Number(
                                                         item.unit_price || 0
@@ -734,6 +739,11 @@ export default function Print({ transaction }) {
                                                                         "Active Promotion"}
                                                                 </p>
                                                             )}
+                                                            {(item.extras || []).map((extra, extraIndex) => (
+                                                                <p key={extraIndex} className="text-xs text-primary-600 dark:text-primary-400">
+                                                                        + {extra.name} ({formatPrice(Number(extra.price || 0))} × {Number(extra.qty || 1)})
+                                                                </p>
+                                                            ))}
                                                             {item.product
                                                                 ?.barcode && (
                                                                 <p className="text-xs text-slate-500 dark:text-slate-400">
@@ -753,11 +763,10 @@ export default function Print({ transaction }) {
                                                                         )}
                                                                     </p>
                                                                 )}
-                                                                <p>
-                                                                    {formatPrice(
-                                                                        unitPrice
-                                                                    )}
-                                                                </p>
+                                                                <p>{formatPrice(Math.max(0, unitPrice - extrasTotal))}</p>
+                                                                {extrasTotal > 0 && (
+                                                                    <p className="text-xs text-primary-600">+ extras {formatPrice(extrasTotal)}</p>
+                                                                )}
                                                             </div>
                                                         </td>
                                                         <td className="py-3 text-center text-slate-600 dark:text-slate-400">

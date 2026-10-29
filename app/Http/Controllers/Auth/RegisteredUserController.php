@@ -25,14 +25,9 @@ class RegisteredUserController extends Controller
     {
         abort_unless(config('security.auth.public_registration'), 404);
 
-        // Get available user roles for registration with specific order
-        $roleOrder = ['super-admin', 'administrator', 'inventory-manager', 'cashier'];
-        $userRoles = Role::whereIn('name', $roleOrder)
-            ->get(['id', 'name'])
-            ->sortBy(function ($role) use ($roleOrder) {
-                return array_search($role->name, $roleOrder);
-            })
-            ->values();
+        $userRoles = collect([
+            Role::firstOrCreate(['name' => 'cashier', 'guard_name' => 'web']),
+        ]);
 
         return Inertia::render('Auth/Register', [
             'botGuard' => BotGuard::payload(),
@@ -53,7 +48,6 @@ class RegisteredUserController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|string|lowercase|email|max:255|unique:'.User::class,
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
-            'role' => 'required|string|in:super-admin,administrator,inventory-manager,cashier',
         ]);
 
         $user = User::create([
@@ -63,19 +57,21 @@ class RegisteredUserController extends Controller
         ]);
 
         // Automatically verify email in localhost/development environments
-        if (app()->environment('local', 'testing')) {
+        if (app()->environment('local')) {
             $user->markEmailAsVerified();
         }
 
-        // Assign the selected role to the new user
-        $user->assignRole($request->role);
+        $user->assignRole(Role::firstOrCreate([
+            'name' => 'cashier',
+            'guard_name' => 'web',
+        ]));
 
         event(new Registered($user));
 
         Auth::login($user);
 
         // Skip the verification notice in localhost/development environments
-        if (app()->environment('local', 'testing')) {
+        if (app()->environment('local')) {
             return redirect()->route('dashboard');
         }
 

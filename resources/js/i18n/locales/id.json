@@ -535,16 +535,16 @@
         "dataTitle": "Data Sub Kategori"
     },
     "productTypes": {
-        "title": "Tipe Produk",
-        "addProductType": "Tambah Tipe Produk",
-        "editProductType": "Edit Tipe Produk",
-        "productTypeName": "Nama Tipe Produk",
+        "title": "Items",
+        "addProductType": "Tambah Item",
+        "editProductType": "Edit Item",
+        "productTypeName": "Nama Item",
         "code": "Kode",
-        "noProductTypes": "Tidak ada tipe produk",
-        "searchPlaceholder": "Cari tipe produk...",
-        "registered": "tipe produk terdaftar",
-        "addFirst": "Tambah tipe produk pertama Anda",
-        "dataTitle": "Data Tipe Produk"
+        "noProductTypes": "Tidak ada item",
+        "searchPlaceholder": "Cari item...",
+        "registered": "item terdaftar",
+        "addFirst": "Tambah item pertama Anda",
+        "dataTitle": "Data Items"
     },
     "suppliers": {
         "title": "Supplier",

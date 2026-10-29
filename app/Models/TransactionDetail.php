@@ -35,6 +35,7 @@ class TransactionDetail extends Model
         'restaurant_deal_type',
         'variation_id',
         'variation_name',
+        'extras',
     ];
 
     protected $casts = [
@@ -46,6 +47,7 @@ class TransactionDetail extends Model
         'pricing_rule_id' => 'integer',
         'pricing_rule_kind' => 'string',
         'conversion_factor' => 'decimal:4',
+        'extras' => 'array',
     ];
 
     public function transaction()
@@ -55,7 +57,7 @@ class TransactionDetail extends Model
 
     public function product()
     {
-        return $this->belongsTo(Product::class);
+        return $this->belongsTo(Product::class)->withTrashed();
     }
 
     public function unit()

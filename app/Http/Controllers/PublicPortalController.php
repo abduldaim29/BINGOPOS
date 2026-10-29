@@ -36,6 +36,7 @@ class PublicPortalController extends Controller
                     'product_title' => $d->product?->title ?? '-',
                     'qty' => $d->qty,
                     'price' => (int) $d->price,
+                    'extras' => $d->extras ?? [],
                 ]),
                 'receivable' => $transaction->receivable ? [
                     'id' => $transaction->receivable->id,

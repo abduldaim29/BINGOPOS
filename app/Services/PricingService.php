@@ -88,78 +88,99 @@ class PricingService
     }
 
     public function calculateProductPrice(
-        Product $product,
-        int $qty = 1,
-        ?Customer $customer = null,
-        ?Collection $rules = null,
-        ?Outlet $outlet = null
-    ): array {
-        $rules = $rules ?? $this->getActiveRules(null, $outlet);
-        $quantity = max(1, $qty);
-        $matchingRules = $rules
-            ->filter(fn (PricingRule $rule) => $this->matchesCustomerScope($rule, $customer))
-            ->filter(fn (PricingRule $rule) => $this->ruleTouchesProduct($rule, $product));
+    Product $product,
+    int $qty = 1,
+    ?Customer $customer = null,
+    ?Collection $rules = null,
+    ?Outlet $outlet = null
+): array {
+    $rules = $rules ?? $this->getActiveRules(null, $outlet);
+    $quantity = max(1, $qty);
 
-        $directCandidates = $matchingRules
-            ->filter(fn (PricingRule $rule) => in_array($rule->kind, [
-                PricingRule::KIND_STANDARD_DISCOUNT,
-                PricingRule::KIND_QTY_BREAK,
-            ], true))
-            ->map(function (PricingRule $rule) use ($product, $quantity, $customer) {
-                $previewQuantity = $rule->kind === PricingRule::KIND_QTY_BREAK
-                    ? max($quantity, (int) ($rule->preview_quantity_multiplier ?: $rule->qtyBreaks->max('min_qty') ?: 1))
-                    : $quantity;
+    $matchingRules = $rules
+        ->filter(fn (PricingRule $rule) => $this->matchesCustomerScope($rule, $customer))
+        ->filter(fn (PricingRule $rule) => $this->ruleTouchesProduct($rule, $product));
 
-                return $this->calculateLineCandidate($rule, $product, $previewQuantity, $customer);
-            })
-            ->filter()
-            ->sortBy([
-                ['rule.priority', 'desc'],
-                ['line_discount', 'desc'],
-                ['rule.id', 'asc'],
-            ])
-            ->first();
+    $directCandidates = $matchingRules
+        ->filter(fn (PricingRule $rule) => in_array($rule->kind, [
+            PricingRule::KIND_STANDARD_DISCOUNT,
+            PricingRule::KIND_QTY_BREAK,
+        ], true))
+        ->map(function (PricingRule $rule) use ($product, $quantity, $customer) {
+            $previewQuantity = $rule->kind === PricingRule::KIND_QTY_BREAK
+                ? max(
+                    $quantity,
+                    (int) (
+                        $rule->preview_quantity_multiplier
+                        ?: $rule->qtyBreaks->max('min_qty')
+                        ?: 1
+                    )
+                )
+                : $quantity;
 
-        if ($directCandidates) {
-            $baseUnitPrice = (int) $directCandidates['base_unit_price'];
-            $effectiveUnitPrice = (int) round(
-                $directCandidates['line_total'] / max(1, (int) $directCandidates['quantity'])
+            return $this->calculateLineCandidate(
+                $rule,
+                $product,
+                $previewQuantity,
+                $customer
             );
-            $rule = $directCandidates['rule'];
+        })
+        ->filter()
+        ->sortBy([
+            ['rule.priority', 'desc'],
+            ['line_discount', 'desc'],
+            ['rule.id', 'asc'],
+        ])
+        ->first();
 
-            return [
-                'base_unit_price' => $baseUnitPrice,
-                'effective_unit_price' => $effectiveUnitPrice,
-                'quantity' => (int) $directCandidates['quantity'],
-                'line_base_total' => (int) $directCandidates['line_base_total'],
-                'line_total' => (int) $directCandidates['line_total'],
-                'line_discount_total' => (int) $directCandidates['line_discount'],
-                'pricing_rule' => $this->serializeRule($rule),
-            ];
-        }
+    if ($directCandidates) {
+        $baseUnitPrice = (int) $directCandidates['base_unit_price'];
 
-        $complexRule = $matchingRules
-            ->filter(fn (PricingRule $rule) => in_array($rule->kind, [
-                PricingRule::KIND_BUNDLE_PRICE,
-                PricingRule::KIND_BUY_X_GET_Y,
-            ], true))
-            ->sortBy([
-                ['priority', 'desc'],
-                ['id', 'asc'],
-            ])
-            ->first();
+        $effectiveUnitPrice = (int) round(
+            $directCandidates['line_total']
+            / max(1, (int) $directCandidates['quantity'])
+        );
+
+        $rule = $directCandidates['rule'];
 
         return [
-            'base_unit_price' => $this->basePriceFor($product, $customer, $outlet),
-            'effective_unit_price' => $this->basePriceFor($product, $customer, $outlet),
-            'quantity' => $quantity,
-            'line_base_total' => $this->basePriceFor($product, $customer, $outlet) * $quantity,
-            'line_total' => $this->basePriceFor($product, $customer, $outlet) * $quantity,
-            'line_discount_total' => 0,
-            'pricing_rule' => $complexRule ? $this->serializeRule($complexRule, false) : null,
+            'base_unit_price' => $baseUnitPrice,
+            'effective_unit_price' => $effectiveUnitPrice,
+            'quantity' => (int) $directCandidates['quantity'],
+            'line_base_total' => (int) $directCandidates['line_base_total'],
+            'line_total' => (int) $directCandidates['line_total'],
+            'line_discount_total' => (int) $directCandidates['line_discount'],
+            'pricing_rule' => $this->serializeRule($rule),
         ];
     }
 
+    $complexRule = $matchingRules
+        ->filter(fn (PricingRule $rule) => in_array($rule->kind, [
+            PricingRule::KIND_BUNDLE_PRICE,
+            PricingRule::KIND_BUY_X_GET_Y,
+        ], true))
+        ->sortBy([
+            ['priority', 'desc'],
+            ['id', 'asc'],
+        ])
+        ->first();
+
+    // Optimized: calculate the base price only once.
+    $baseUnitPrice = $this->basePriceFor($product, $customer, $outlet);
+    $lineBaseTotal = $baseUnitPrice * $quantity;
+
+    return [
+        'base_unit_price' => $baseUnitPrice,
+        'effective_unit_price' => $baseUnitPrice,
+        'quantity' => $quantity,
+        'line_base_total' => $lineBaseTotal,
+        'line_total' => $lineBaseTotal,
+        'line_discount_total' => 0,
+        'pricing_rule' => $complexRule
+            ? $this->serializeRule($complexRule, false)
+            : null,
+    ];
+}
     public function ruleLabel(PricingRule $rule): string
     {
         $currencySymbol = Setting::getCurrencySymbol();
@@ -177,11 +198,15 @@ class PricingService
         $items = $carts->map(function (Cart $cart) use ($customer, $outlet) {
             // Composite product sell_price is 0; unit price = stored cart price / quantity.
             // For variations, use the stored unit price (derived from line total).
+            $extrasTotal = collect($cart->extras ?? [])
+                ->sum(fn ($extra) => (int) ($extra['price'] ?? 0) * (int) ($extra['qty'] ?? 1));
             $baseUnitPrice = $cart->product->is_composite
-                ? (int) round($cart->price / max(1, (int) $cart->qty))
+                ? (int) round($cart->price / max(1, (int) $cart->qty)) - $extrasTotal
                 : ($cart->variation_id
-                    ? (int) round($cart->price / max(1, (int) $cart->qty))
+                    ? (int) round($cart->price / max(1, (int) $cart->qty)) - $extrasTotal
                     : $this->basePriceFor($cart->product, $customer, $outlet));
+            $baseUnitPrice = max(0, $baseUnitPrice);
+            $lineBaseTotal = ($baseUnitPrice + $extrasTotal) * (int) $cart->qty;
 
             return [
                 'cart_id' => $cart->id,
@@ -190,8 +215,8 @@ class PricingService
                 'qty' => (int) $cart->qty,
                 'base_unit_price' => $baseUnitPrice,
                 'effective_unit_price' => $baseUnitPrice,
-                'line_base_total' => $baseUnitPrice * (int) $cart->qty,
-                'line_total' => $baseUnitPrice * (int) $cart->qty,
+                'line_base_total' => $lineBaseTotal,
+                'line_total' => $lineBaseTotal,
                 'line_discount_total' => 0,
                 'pricing_rule' => null,
                 'pricing_group_key' => null,
