@@ -361,13 +361,18 @@ class ProductStoreTest extends TestCase
         $this->assertEquals(250, $product->max_stock);
     }
 
-    public function test_store_requires_image(): void
+    public function test_store_uses_default_image_when_image_is_omitted(): void
     {
         $payload = $this->validPayload();
         unset($payload['image']);
 
         $this->post(route('products.store'), $payload)
-            ->assertSessionHasErrors('image');
+            ->assertRedirect(route('products.index'));
+
+        $this->assertSame(
+            'default.png',
+            Product::latest('id')->firstOrFail()->getRawOriginal('image')
+        );
     }
 
     public function test_delete_archives_products_with_transaction_history_and_can_restore_them(): void
