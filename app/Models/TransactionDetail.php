@@ -23,6 +23,12 @@ class TransactionDetail extends Model
         'base_unit_price',
         'unit_price',
         'price',
+        'cost_total',
+        'taxable_amount',
+        'gross_sales_amount',
+        'tax_total',
+        'tax_rate',
+        'tax_type',
         'discount_total',
         'product_batch_id',
         'pricing_rule_id',
@@ -43,6 +49,11 @@ class TransactionDetail extends Model
         'base_unit_price' => 'integer',
         'unit_price' => 'integer',
         'price' => 'integer',
+        'cost_total' => 'integer',
+        'taxable_amount' => 'integer',
+        'gross_sales_amount' => 'integer',
+        'tax_total' => 'integer',
+        'tax_rate' => 'decimal:4',
         'discount_total' => 'integer',
         'pricing_rule_id' => 'integer',
         'pricing_rule_kind' => 'string',
@@ -88,5 +99,10 @@ class TransactionDetail extends Model
     public function batchAllocations()
     {
         return $this->hasMany(TransactionDetailBatchAllocation::class);
+    }
+
+    public function recipeConsumptions()
+    {
+        return $this->hasMany(TransactionDetailRecipeConsumption::class);
     }
 }

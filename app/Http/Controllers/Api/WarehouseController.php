@@ -7,6 +7,7 @@ use App\Http\Resources\WarehouseResource;
 use App\Http\Traits\ApiResponder;
 use App\Models\Warehouse;
 use App\Services\OutletAccessService;
+use App\Services\WarehouseService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -45,7 +46,7 @@ class WarehouseController extends Controller
     /**
      * POST /api/v1/warehouses
      */
-    public function store(Request $request): JsonResponse
+    public function store(Request $request, WarehouseService $warehouseService): JsonResponse
     {
         $validated = $request->validate([
             'code' => [
@@ -72,7 +73,7 @@ class WarehouseController extends Controller
             403
         );
 
-        $warehouse = Warehouse::create([
+        $warehouse = $warehouseService->create([
             ...$validated,
             'outlet_id' => $outlet,
             'is_active' => $validated['is_active'] ?? true,
@@ -104,7 +105,11 @@ class WarehouseController extends Controller
     /**
      * PUT/PATCH /api/v1/warehouses/{warehouse}
      */
-    public function update(Request $request, Warehouse $warehouse): JsonResponse
+    public function update(
+        Request $request,
+        Warehouse $warehouse,
+        WarehouseService $warehouseService
+    ): JsonResponse
     {
         abort_unless(
             $this->outletAccessService->canUseWarehouse(
@@ -139,7 +144,7 @@ class WarehouseController extends Controller
             );
         }
 
-        $warehouse->update($validated);
+        $warehouseService->update($warehouse, $validated);
 
         return $this->ok(
             new WarehouseResource($warehouse),

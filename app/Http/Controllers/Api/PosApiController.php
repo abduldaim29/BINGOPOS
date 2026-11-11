@@ -174,23 +174,20 @@ class PosApiController extends Controller
 
         $products = Product::query()
             ->with($relations)
-            ->when(
-                $warehouseId,
-                function ($q) use ($warehouseId) {
-                    $q->whereHas(
+            ->where(function ($query) use ($warehouseId) {
+                if ($warehouseId) {
+                    $query->whereHas(
                         'warehouses',
-                        fn ($w) => $w
-                            ->where(
-                                'product_warehouse.warehouse_id',
-                                $warehouseId
-                            )
+                        fn ($warehouse) => $warehouse
+                            ->where('product_warehouse.warehouse_id', $warehouseId)
                             ->where('product_warehouse.stock', '>', 0)
                     );
-                },
-                function ($q) {
-                    $q->where('stock', '>', 0);
+                } else {
+                    $query->where('stock', '>', 0);
                 }
-            )
+
+                $query->orWhere('stock_mode', 'made_to_order');
+            })
             ->when(
                 $request->string('search')->toString(),
                 function ($q, $search) {
@@ -241,16 +238,20 @@ class PosApiController extends Controller
 
         $categories = Category::query()
             ->whereHas('products', function ($query) use ($warehouseId) {
-                if ($warehouseId) {
-                    $query->whereHas(
-                        'warehouses',
-                        fn ($warehouse) => $warehouse
-                            ->where('product_warehouse.warehouse_id', $warehouseId)
-                            ->where('product_warehouse.stock', '>', 0)
-                    );
-                } else {
-                    $query->where('stock', '>', 0);
-                }
+                $query->where(function ($available) use ($warehouseId) {
+                    if ($warehouseId) {
+                        $available->whereHas(
+                            'warehouses',
+                            fn ($warehouse) => $warehouse
+                                ->where('product_warehouse.warehouse_id', $warehouseId)
+                                ->where('product_warehouse.stock', '>', 0)
+                        );
+                    } else {
+                        $available->where('stock', '>', 0);
+                    }
+
+                    $available->orWhere('stock_mode', 'made_to_order');
+                });
             })
             ->orderBy('name')
             ->get(['id', 'name']);
@@ -308,6 +309,7 @@ class PosApiController extends Controller
             $product->load('category')
         ))->resolve();
 
+        $data['is_live_cooking'] = $product->stock_mode === 'made_to_order';
         $data['stock'] = $stock;
 
         $data['units'] = $product->units()->get()->map(fn ($u) => [
@@ -325,6 +327,13 @@ class PosApiController extends Controller
      */
     public function cart(Request $request): JsonResponse
     {
+        $validated = $request->validate([
+            'tax_rate_override' => ['nullable', 'numeric', 'min:0', 'max:100'],
+            'payment_method' => ['nullable', 'in:cash,card,bank_transfer,midtrans,xendit,safepay,qris,pay_later'],
+            'tenders' => ['nullable', 'array', 'max:2'],
+            'tenders.*.method' => ['required_with:tenders', 'in:cash,card,bank_transfer,midtrans,xendit,safepay,qris'],
+            'tenders.*.amount' => ['required_with:tenders', 'integer', 'min:1'],
+        ]);
         $carts = Cart::with('product', 'unit')
             ->where('cashier_id', $request->user()->id)
             ->active()
@@ -357,6 +366,9 @@ class PosApiController extends Controller
                 'manual_discount' => (int) $request->integer('discount', 0),
                 'shipping_cost' => (int) $request->integer('shipping_cost', 0),
                 'redeem_points' => (int) $request->integer('redeem_points', 0),
+                'tax_rate_override' => $validated['tax_rate_override'] ?? null,
+                'payment_method' => $validated['payment_method'] ?? 'cash',
+                'tenders' => $validated['tenders'] ?? [],
             ],
             null,
             $outlet
@@ -455,6 +467,8 @@ class PosApiController extends Controller
             return $this->notFound('Product not found.');
         }
 
+        $isLiveCooking = $product->stock_mode === 'made_to_order';
+
         if ($product->is_composite) {
             $product->load('components');
 
@@ -513,7 +527,7 @@ class PosApiController extends Controller
                 )
                 : (int) $product->stock;
 
-            if ($availableStock < $baseQty) {
+            if (! $isLiveCooking && $availableStock < $baseQty) {
                 return $this->error(
                     "Insufficient stock. Available quantity: {$availableStock}.",
                     422
@@ -591,7 +605,9 @@ class PosApiController extends Controller
 
         $product = $cart->product;
 
-        if (! $product->is_composite) {
+        $isLiveCooking = $product->stock_mode === 'made_to_order';
+
+        if (! $product->is_composite && ! $isLiveCooking) {
             $baseQty = $this->unitConversionService->toBaseUnit(
                 $product,
                 $cart->unit_id,
@@ -825,10 +841,11 @@ class PosApiController extends Controller
             'discount' => ['nullable', 'integer', 'min:0'],
             'shipping_cost' => ['nullable', 'integer', 'min:0'],
             'redeem_points' => ['nullable', 'integer', 'min:0'],
+            'tax_rate_override' => ['nullable', 'numeric', 'min:0', 'max:100'],
             'cash' => ['nullable', 'numeric', 'min:0'],
             'payment_method' => [
                 'nullable',
-                'in:cash,bank_transfer,midtrans,xendit,safepay,qris,pay_later',
+                'in:cash,card,bank_transfer,midtrans,xendit,safepay,qris,pay_later',
             ],
             'bank_account_id' => [
                 'nullable',
@@ -884,7 +901,7 @@ class PosApiController extends Controller
             );
         }
 
-        if ($paymentGateway) {
+        if ($paymentGateway && $paymentGateway !== TransactionTender::METHOD_CARD) {
             $paymentSetting = PaymentSetting::forOutlet($outlet);
 
             $gatewayReady = $paymentSetting
@@ -955,6 +972,9 @@ class PosApiController extends Controller
             tenderInput: $tenderInput,
             outlet: $outlet,
             bankAccountId: $validated['bank_account_id'] ?? null,
+            taxRateOverride: isset($validated['tax_rate_override'])
+                ? (float) $validated['tax_rate_override']
+                : null,
         );
 
         try {
@@ -1052,7 +1072,7 @@ class PosApiController extends Controller
                     'payment_status' => 'pending',
                 ]);
             }
-        } elseif ($paymentGateway) {
+        } elseif ($paymentGateway && $paymentGateway !== TransactionTender::METHOD_CARD) {
             try {
                 $paymentResponse = $paymentGateway === 'qris'
                     ? $paymentGatewayManager->createQrisPayment(
@@ -1131,7 +1151,14 @@ class PosApiController extends Controller
                 'integer',
                 'min:0',
             ],
+            'transactions.*.tax_rate_override' => [
+                'nullable',
+                'numeric',
+                'min:0',
+                'max:100',
+            ],
             'transactions.*.cash' => ['nullable', 'numeric', 'min:0'],
+            'transactions.*.payment_gateway' => ['nullable', 'in:card'],
             'transactions.*.pay_later' => ['nullable', 'boolean'],
             'transactions.*.due_date' => ['nullable', 'date'],
             'transactions.*.items' => ['required', 'array', 'min:1'],
@@ -1281,12 +1308,19 @@ class PosApiController extends Controller
                 'discount' => $payload['discount'] ?? 0,
                 'redeem_points' => $payload['redeem_points'] ?? 0,
                 'cash' => $payload['cash'] ?? null,
-                'payment_method' => $isPayLater ? 'pay_later' : 'cash',
+                'payment_method' => $isPayLater
+                    ? 'pay_later'
+                    : (($payload['payment_gateway'] ?? null) === TransactionTender::METHOD_CARD
+                        ? TransactionTender::METHOD_CARD
+                        : 'cash'),
                 'due_date' => $isPayLater
                     ? ($payload['due_date'] ?? null)
                     : null,
                 'client_uuid' => $uuid,
             ]));
+            $checkoutRequest->merge([
+                'tax_rate_override' => $payload['tax_rate_override'] ?? null,
+            ]);
 
             $checkoutRequest->setUserResolver(fn () => $user);
 

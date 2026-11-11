@@ -4,10 +4,10 @@ import { IconChevronDown, IconCircle, IconCircleFilled } from '@tabler/icons-rea
 export default function ListBox({ selected, data, setSelected, label, errors }) {
 
     const preview = selected.length ?
-        selected.length >= 4 ? `jumlah hak akses terpilih ${selected.length}` :
+        selected.length >= 4 ? `${selected.length} permissions selected` :
             selected.map((item) => item.name).join(', ')
         :
-        'Pilh Hak Akses'
+        'Select Permissions'
 
     return (
         <div className='flex flex-col gap-2'>

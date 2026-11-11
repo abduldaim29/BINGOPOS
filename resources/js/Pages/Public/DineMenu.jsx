@@ -200,6 +200,7 @@ export default function DineMenu({
                                             alt={product.title}
                                             className="w-full aspect-square object-cover"
                                             loading="lazy"
+                                            decoding="async"
                                         />
                                     ) : (
                                         <div className="w-full aspect-square bg-slate-100 flex items-center justify-center">

@@ -7,6 +7,7 @@ use App\Models\Outlet;
 use App\Models\Product;
 use App\Models\Warehouse;
 use App\Services\OutletAccessService;
+use App\Services\WarehouseService;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
@@ -24,7 +25,7 @@ class WarehouseController extends Controller
         ]);
     }
 
-    public function store(Request $request)
+    public function store(Request $request, WarehouseService $warehouseService)
     {
         $validated = $request->validate([
             'code' => ['required', 'string', 'max:20', 'unique:warehouses,code'],
@@ -44,7 +45,7 @@ class WarehouseController extends Controller
             $validated['outlet_id'] = $outlet->id;
         }
 
-        $warehouse = Warehouse::create($validated);
+        $warehouse = $warehouseService->create($validated);
 
         // Sync all existing products to this warehouse with 0 stock
         $productIds = Product::pluck('id');
@@ -56,7 +57,7 @@ class WarehouseController extends Controller
         return back()->with('success', 'Warehouse added successfully.');
     }
 
-    public function update(Request $request, Warehouse $warehouse)
+    public function update(Request $request, Warehouse $warehouse, WarehouseService $warehouseService)
     {
         abort_unless($this->outletAccessService->canUseWarehouse($request->user(), $warehouse), 404);
         $validated = $request->validate([
@@ -75,7 +76,7 @@ class WarehouseController extends Controller
             return back()->with('error', 'Close the active shift before deactivating the warehouse.');
         }
 
-        $warehouse->update($validated);
+        $warehouseService->update($warehouse, $validated);
 
         return back()->with('success', 'Warehouse updated successfully.');
     }

@@ -3,7 +3,7 @@ import DashboardLayout from "@/Layouts/DashboardLayout";
 import { Head, Link, router } from "@inertiajs/react";
 import Button from "@/Components/Dashboard/Button";
 import Table from "@/Components/Dashboard/Table";
-import { IconArrowLeft, IconBrandWhatsapp, IconChecks, IconPlayerPlay, IconPlayerStop } from "@tabler/icons-react";
+import { IconArrowLeft, IconChecks, IconPlayerPlay, IconPlayerStop } from "@tabler/icons-react";
 import toast from "react-hot-toast";
 
 const formatDateTime = (value) =>
@@ -97,16 +97,6 @@ export default function Show({ campaign }) {
                                             </Table.Td>
                                             <Table.Td className="text-center">
                                                 <div className="flex items-center justify-center gap-2">
-                                                    {log.payload?.whatsapp_url && (
-                                                        <a
-                                                            href={log.payload.whatsapp_url}
-                                                            target="_blank"
-                                                            rel="noopener noreferrer"
-                                                            className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-green-50 text-green-600 hover:bg-green-100 dark:bg-green-900/30 dark:text-green-300"
-                                                        >
-                                                            <IconBrandWhatsapp size={16} />
-                                                        </a>
-                                                    )}
                                                     {log.status !== "sent" && (
                                                         <button
                                                             type="button"

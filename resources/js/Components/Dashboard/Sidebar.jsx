@@ -37,6 +37,7 @@ export default function Sidebar({ sidebarOpen }) {
                                 src={storeLogo}
                                 alt={storeName}
                                 className="w-10 h-10  object-cover"
+                                decoding="async"
                             />
                         ) : (
                             <div className="w-10 h-10  bg-gradient-to-br from-primary-500 to-primary-700 flex items-center justify-center">
@@ -55,6 +56,7 @@ export default function Sidebar({ sidebarOpen }) {
                             src={storeLogo}
                             alt={storeName}
                             className="w-9 h-9 rounded-md object-cover"
+                            decoding="async"
                         />
                     ) : (
                         <div className="w-9 h-9 rounded-md bg-gradient-to-br from-primary-500 to-primary-700 flex items-center justify-center">

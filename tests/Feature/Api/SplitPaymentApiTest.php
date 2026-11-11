@@ -25,8 +25,8 @@ class SplitPaymentApiTest extends TestCase
 
         $response = $this->postJson('/api/v1/pos/checkout', [
             'tenders' => [
-                ['method' => 'cash', 'amount' => 5000, 'cash_received' => 6000],
-                ['method' => 'bank_transfer', 'amount' => 5000, 'bank_account_id' => $bankAccount->id],
+                ['method' => 'cash', 'amount' => 5850, 'cash_received' => 6000],
+                ['method' => 'bank_transfer', 'amount' => 5850, 'bank_account_id' => $bankAccount->id],
             ],
         ]);
 
@@ -37,7 +37,7 @@ class SplitPaymentApiTest extends TestCase
 
         $transaction = Transaction::latest('id')->first();
         $this->assertSame(6000, $transaction->cash);
-        $this->assertSame(1000, $transaction->change);
+        $this->assertSame(150, $transaction->change);
         $this->assertSame(9, (int) $product->fresh()->stock);
     }
 
@@ -46,14 +46,14 @@ class SplitPaymentApiTest extends TestCase
         $cashier = User::factory()->create();
         $warehouse = Warehouse::create([
             'code' => 'SPLIT-API',
-            'name' => 'Gudang API',
+            'name' => 'API Warehouse',
             'type' => 'main',
             'is_active' => true,
             'sort_order' => 0,
         ]);
         $category = Category::create(['name' => 'API Test', 'image' => '', 'description' => '']);
         $product = Product::create([
-            'title' => 'Produk API Split', 'barcode' => 'API-SPLIT', 'sku' => 'API-SPLIT',
+            'title' => 'API Split Product', 'barcode' => 'API-SPLIT', 'sku' => 'API-SPLIT',
             'image' => '', 'description' => '', 'buy_price' => 5000, 'sell_price' => 10000,
             'stock' => 10, 'category_id' => $category->id, 'tax_rate' => 0,
         ]);

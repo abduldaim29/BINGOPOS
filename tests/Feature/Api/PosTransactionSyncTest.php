@@ -17,6 +17,11 @@ class PosTransactionSyncTest extends TestCase
 {
     use RefreshDatabase;
 
+    private User $cashier;
+    private Warehouse $warehouse;
+    private Category $category;
+    private Product $product;
+
     protected function setUp(): void
     {
         parent::setUp();
@@ -29,16 +34,16 @@ class PosTransactionSyncTest extends TestCase
         $this->cashier = User::factory()->create();
         $this->warehouse = Warehouse::create([
             'code' => 'WH-SYNC',
-            'name' => 'Gudang Sync',
+            'name' => 'Sync Warehouse',
             'status' => 'active',
         ]);
         $this->category = Category::create([
-            'name' => 'Kategori Sync',
+            'name' => 'Sync Category',
             'image' => '',
             'description' => '',
         ]);
         $this->product = Product::create([
-            'title' => 'Produk Sync',
+            'title' => 'Sync Product',
             'barcode' => 'SYNC-001',
             'sku' => 'SKU-SYNC-001',
             'image' => '',
@@ -89,7 +94,7 @@ class PosTransactionSyncTest extends TestCase
 
         $transaction = Transaction::first();
         $this->assertNotNull($transaction);
-        $this->assertEquals(20000, $transaction->grand_total);
+        $this->assertEquals(23200, $transaction->grand_total);
         $this->assertEquals(
             '550e8400-e29b-41d4-a716-446655440000',
             $transaction->client_uuid

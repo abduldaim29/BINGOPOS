@@ -2,18 +2,60 @@ import React from "react";
 import {
     IconShoppingBag,
     IconPhoto,
-    IconMinus,
     IconPlus,
     IconSparkles,
     IconTag,
+    IconX,
+    IconArrowsSort,
 } from "@tabler/icons-react";
 import { getProductImageUrl } from "@/Utils/imageUrl";
 import { formatCurrency } from "@/Utils/currency";
 
+function LazyProductImage({ image, title }) {
+    const imageRef = React.useRef(null);
+    const [shouldLoad, setShouldLoad] = React.useState(false);
+
+    React.useEffect(() => {
+        const element = imageRef.current;
+        if (!element) return undefined;
+
+        if (!("IntersectionObserver" in window)) {
+            setShouldLoad(true);
+            return undefined;
+        }
+
+        const observer = new IntersectionObserver(
+            ([entry]) => {
+                if (entry.isIntersecting) {
+                    setShouldLoad(true);
+                    observer.disconnect();
+                }
+            },
+            { rootMargin: "160px" }
+        );
+        observer.observe(element);
+
+        return () => observer.disconnect();
+    }, []);
+
+    return (
+        <img
+            ref={imageRef}
+            src={shouldLoad ? getProductImageUrl(image, { thumbnail: true }) : undefined}
+            alt={title}
+            className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110 group-hover:rotate-1"
+            loading="lazy"
+            decoding="async"
+            fetchPriority="low"
+        />
+    );
+}
+
 // Single Product Card - Unique Modern Design
-function ProductCard({ product, onAddToCart, isAdding }) {
-    const hasStock = product.stock > 0;
-    const lowStock = product.stock > 0 && product.stock <= 5;
+const ProductCard = React.memo(function ProductCard({ product, onAddToCart, isAdding }) {
+    const isLiveCooking = Boolean(product.is_live_cooking);
+    const hasStock = isLiveCooking || product.stock > 0;
+    const lowStock = !isLiveCooking && product.stock > 0 && product.stock <= 5;
     const promoBadge = product.pricing_badge;
     const promoPrice = Number(promoBadge?.promo_price || 0);
     const basePrice = Number(promoBadge?.base_price || product.sell_price || 0);
@@ -40,13 +82,21 @@ function ProductCard({ product, onAddToCart, isAdding }) {
           : showPromo
             ? promoPrice
             : product.sell_price;
+    const handleAddToCart = () => {
+        if (!hasStock || isAdding) return;
+        const variationName = selectedVariationId
+            ? selectedVariationId.replace(/^[a-z]+_/, "").replace(/_/g, " ")
+            : null;
+
+        onAddToCart(product, selectedUnit, selectedVariationId, variationName);
+    };
 
     return (
         <div
             className={`
                 group relative flex flex-col
                 bg-gradient-to-br from-white via-white to-slate-50 dark:from-slate-900 dark:via-slate-900 dark:to-slate-950
-                rounded-3xl border-2 border-slate-200/50 dark:border-slate-700/50
+                rounded-2xl border border-slate-200/70 dark:border-slate-700/70
                 overflow-hidden transition-all duration-300 ease-out
                 ${
                     hasStock
@@ -61,28 +111,18 @@ function ProductCard({ product, onAddToCart, isAdding }) {
             {/* Product Image Container */}
             <button
                 type="button"
-                onClick={() => {
-                    if (!hasStock) return;
-                    // Get variation name if selected
-                    let variationName = null;
-                    if (selectedVariationId && product.variations) {
-                        variationName = selectedVariationId.replace(/^[a-z]+_/, '').replace(/_/g, ' ');
-                    }
-                    onAddToCart(product, selectedUnit, selectedVariationId, variationName);
-                }}
+                onClick={handleAddToCart}
                 disabled={!hasStock || isAdding}
                 className={`relative block text-left overflow-hidden ${
                     hasStock ? "cursor-pointer" : "cursor-not-allowed"
                 }`}
             >
                 {/* Image */}
-                <div className="relative aspect-[4/5] bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-800 dark:to-slate-900 overflow-hidden">
+                <div className="relative aspect-square bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-800 dark:to-slate-900 overflow-hidden">
                     {product.image ? (
-                        <img
-                            src={getProductImageUrl(product.image)}
-                            alt={product.title}
-                            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110 group-hover:rotate-1"
-                            loading="lazy"
+                        <LazyProductImage
+                            image={product.image}
+                            title={product.title}
                         />
                     ) : (
                         <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-800 dark:to-slate-900">
@@ -94,7 +134,6 @@ function ProductCard({ product, onAddToCart, isAdding }) {
                             </div>
                         </div>
                     )}
-
                     {/* Promotional Gradient Overlay */}
                     {showPromo && (
                         <div className="absolute inset-0 bg-gradient-to-tr from-rose-500/20 via-transparent to-amber-500/20" />
@@ -106,6 +145,11 @@ function ProductCard({ product, onAddToCart, isAdding }) {
                             <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-gradient-to-r from-rose-500 to-rose-600 text-white text-[10px] font-bold rounded-full shadow-lg shadow-rose-500/30">
                                 <IconSparkles size={10} />
                                 {promoBadge.label}
+                            </span>
+                        )}
+                        {isLiveCooking && (
+                            <span className="px-2.5 py-1 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white text-[10px] font-bold rounded-full shadow-lg shadow-emerald-500/30">
+                                Made to order
                             </span>
                         )}
                         {lowStock && (
@@ -129,22 +173,13 @@ function ProductCard({ product, onAddToCart, isAdding }) {
                         </div>
                     )}
 
-                    {/* Quick Add Button - Appears on Hover */}
-                    {hasStock && (
-                        <div className="absolute inset-0 bg-gradient-to-t from-slate-900/80 via-slate-900/40 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-300 flex items-end justify-center pb-4">
-                            <div className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-primary-500 to-primary-600 text-white text-sm font-bold rounded-2xl shadow-xl shadow-primary-500/30 transform translate-y-4 group-hover:translate-y-0 transition-transform duration-300">
-                                <IconPlus size={16} />
-                                <span>Add to Cart</span>
-                            </div>
-                        </div>
-                    )}
                 </div>
             </button>
 
             {/* Product Info */}
-            <div className="relative p-4 flex flex-col gap-2.5">
+            <div className="relative p-3 flex flex-col gap-2">
                 {/* Decorative Line */}
-                <div className="absolute top-0 left-4 right-4 h-px bg-gradient-to-r from-transparent via-slate-200 dark:via-slate-700 to-transparent" />
+                <div className="absolute top-0 left-3 right-3 h-px bg-gradient-to-r from-transparent via-slate-200 dark:via-slate-700 to-transparent" />
 
                 {/* Title */}
                 <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-100 line-clamp-2 leading-snug min-h-[2.5rem]">
@@ -172,7 +207,7 @@ function ProductCard({ product, onAddToCart, isAdding }) {
                     </div>
 
                     {/* Stock Indicator */}
-                    {hasStock && (
+                    {hasStock && !isLiveCooking && (
                         <div className={`flex items-center gap-1 px-2 py-1 rounded-lg ${
                             selectedVariationId
                                 ? "bg-accent-50 dark:bg-accent-950/30"
@@ -251,10 +286,20 @@ function ProductCard({ product, onAddToCart, isAdding }) {
                         })}
                     </div>
                 )}
+
+                <button
+                    type="button"
+                    onClick={handleAddToCart}
+                    disabled={!hasStock || isAdding}
+                    className="mt-1 inline-flex min-h-10 w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-primary-500 to-primary-600 px-3 py-2 text-sm font-bold text-white shadow-md shadow-primary-500/20 transition hover:from-primary-600 hover:to-primary-700 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                    <IconPlus size={16} />
+                    <span>{isAdding ? "Adding..." : "Add to Cart"}</span>
+                </button>
             </div>
         </div>
     );
-}
+});
 
 // Category Tab Button - Modern Pill Design
 function CategoryTab({ category, isActive, onClick }) {
@@ -262,7 +307,7 @@ function CategoryTab({ category, isActive, onClick }) {
         <button
             onClick={onClick}
             className={`
-                relative px-5 py-2.5 rounded-2xl text-sm font-bold whitespace-nowrap
+                relative px-4 py-2 rounded-2xl text-sm font-bold whitespace-nowrap
                 transition-all duration-300 min-h-touch
                 ${
                     isActive
@@ -301,18 +346,27 @@ function SearchInput({
                     placeholder ||
                     "Search products or scan barcode... (/ to focus)"
                 }
-                className="relative w-full h-14 pl-5 pr-14 rounded-2xl border-2 border-slate-200/70 dark:border-slate-700/70
+                className="relative w-full h-12 pl-4 pr-12 rounded-2xl border-2 border-slate-200/70 dark:border-slate-700/70
                     bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl
                     text-slate-800 dark:text-slate-200
                     placeholder-slate-400 dark:placeholder-slate-500
                     focus:ring-4 focus:ring-primary-500/20 focus:border-primary-500 dark:focus:border-primary-500
                     focus:bg-white dark:focus:bg-slate-900
-                    transition-all duration-300 text-base font-medium shadow-lg shadow-slate-200/50 dark:shadow-slate-900/50"
+                    transition-all duration-300 text-sm font-medium shadow-lg shadow-slate-200/50 dark:shadow-slate-900/50"
                 disabled={isSearching}
             />
-            <div className="absolute right-4 top-1/2 -translate-y-1/2">
+            <div className="absolute right-3 top-1/2 -translate-y-1/2">
                 {isSearching ? (
                     <div className="w-6 h-6 border-3 border-primary-500 border-t-transparent rounded-full animate-spin" />
+                ) : value ? (
+                    <button
+                        type="button"
+                        onClick={() => onChange("")}
+                        aria-label="Clear product search"
+                        className="rounded-xl p-2 text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-800 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-white"
+                    >
+                        <IconX size={18} />
+                    </button>
                 ) : (
                     <div className="p-1.5 rounded-xl bg-gradient-to-br from-primary-500 to-primary-600 shadow-md shadow-primary-500/30">
                         <IconShoppingBag size={18} className="text-white" />
@@ -337,27 +391,56 @@ export default function ProductGrid({
     addingProductId,
     searchInputRef,
 }) {
+    const [sortBy, setSortBy] = React.useState("recommended");
+    const [visibleCount, setVisibleCount] = React.useState(48);
+    const deferredSearchQuery = React.useDeferredValue(searchQuery);
     const normalizedSelectedCategory =
         selectedCategory === null ? null : Number(selectedCategory);
 
-    // Filter products by category and search
-    const filteredProducts = products.filter((product) => {
-        const matchesCategory =
-            normalizedSelectedCategory === null ||
-            Number(product.category_id) === normalizedSelectedCategory;
-        const matchesSearch =
-            !searchQuery ||
-            product.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            product.barcode?.toLowerCase().includes(searchQuery.toLowerCase());
-        return matchesCategory && matchesSearch;
-    });
+    const filteredProducts = React.useMemo(() => {
+        const normalizedSearch = deferredSearchQuery.trim().toLowerCase();
+        const filtered = products.filter((product) => {
+            const matchesCategory =
+                normalizedSelectedCategory === null ||
+                Number(product.category_id) === normalizedSelectedCategory;
+            const matchesSearch =
+                !normalizedSearch ||
+                product.title.toLowerCase().includes(normalizedSearch) ||
+                product.barcode?.toLowerCase().includes(normalizedSearch);
+            return matchesCategory && matchesSearch;
+        });
+
+        if (sortBy === "name") {
+            filtered.sort((a, b) => a.title.localeCompare(b.title));
+        } else if (sortBy === "price-low") {
+            filtered.sort(
+                (a, b) => Number(a.sell_price || 0) - Number(b.sell_price || 0)
+            );
+        } else if (sortBy === "price-high") {
+            filtered.sort(
+                (a, b) => Number(b.sell_price || 0) - Number(a.sell_price || 0)
+            );
+        } else if (sortBy === "stock") {
+            filtered.sort(
+                (a, b) => Number(b.stock || 0) - Number(a.stock || 0)
+            );
+        }
+
+        return filtered;
+    }, [products, normalizedSelectedCategory, deferredSearchQuery, sortBy]);
+
+    React.useEffect(() => {
+        setVisibleCount(48);
+    }, [normalizedSelectedCategory, deferredSearchQuery, sortBy]);
+
+    const visibleProducts = filteredProducts.slice(0, visibleCount);
 
     return (
         <div className="h-full flex flex-col bg-gradient-to-br from-slate-50 via-white to-slate-100 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
             {/* Search Bar - Glassmorphism Header */}
             <div
                 data-tour="pos-search"
-                className="relative p-5 border-b border-slate-200/50 dark:border-slate-800/50 bg-white/50 dark:bg-slate-900/50 backdrop-blur-xl"
+                className="relative p-4 border-b border-slate-200/50 dark:border-slate-800/50 bg-white/50 dark:bg-slate-900/50 backdrop-blur-xl"
             >
                 <div className="absolute inset-0 bg-gradient-to-r from-primary-500/5 via-transparent to-accent-500/5" />
                 <div className="relative">
@@ -373,8 +456,8 @@ export default function ProductGrid({
             </div>
 
             {/* Category Tabs - Floating Pill Design */}
-            <div className="px-5 py-4 border-b border-slate-200/50 dark:border-slate-800/50 bg-white/30 dark:bg-slate-900/30 backdrop-blur-md overflow-x-auto scrollbar-hide">
-                <div className="flex gap-3">
+            <div className="px-4 py-3 border-b border-slate-200/50 dark:border-slate-800/50 bg-white/30 dark:bg-slate-900/30 backdrop-blur-md overflow-x-auto scrollbar-hide">
+                <div className="flex gap-2">
                     <CategoryTab
                         category={{ id: null, name: "All" }}
                         isActive={normalizedSelectedCategory === null}
@@ -395,17 +478,52 @@ export default function ProductGrid({
             </div>
 
             {/* Products Grid - Modern Masonry-style Layout */}
-            <div className="flex-1 overflow-y-auto p-5 scrollbar-thin">
+            <div className="flex-1 overflow-y-auto p-4 scrollbar-thin">
+                <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+                    <p className="text-xs font-medium text-slate-500 dark:text-slate-400" aria-live="polite">
+                        {filteredProducts.length} {filteredProducts.length === 1 ? "product" : "products"}
+                        {filteredProducts.length !== products.length && ` found from ${products.length}`}
+                    </p>
+                    <label className="inline-flex items-center gap-2 text-xs font-medium text-slate-500 dark:text-slate-400">
+                        <IconArrowsSort size={16} aria-hidden="true" />
+                        <span className="sr-only">Sort products</span>
+                        <select
+                            value={sortBy}
+                            onChange={(event) => setSortBy(event.target.value)}
+                            aria-label="Sort products"
+                            className="rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs text-slate-700 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
+                        >
+                            <option value="recommended">Recommended</option>
+                            <option value="name">Name: A to Z</option>
+                            <option value="price-low">Price: Low to high</option>
+                            <option value="price-high">Price: High to low</option>
+                            <option value="stock">Stock: High to low</option>
+                        </select>
+                    </label>
+                </div>
                 {filteredProducts.length > 0 ? (
-                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-                        {filteredProducts.map((product) => (
-                            <ProductCard
-                                key={product.id}
-                                product={product}
-                                onAddToCart={onAddToCart}
-                                isAdding={addingProductId === product.id}
-                            />
-                        ))}
+                    <div>
+                        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
+                            {visibleProducts.map((product) => (
+                                <ProductCard
+                                    key={product.id}
+                                    product={product}
+                                    onAddToCart={onAddToCart}
+                                    isAdding={addingProductId === product.id}
+                                />
+                            ))}
+                        </div>
+                        {visibleCount < filteredProducts.length && (
+                            <div className="flex justify-center py-5">
+                                <button
+                                    type="button"
+                                    onClick={() => setVisibleCount((count) => count + 48)}
+                                    className="rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 shadow-sm hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
+                                >
+                                    Show more products ({filteredProducts.length - visibleCount} remaining)
+                                </button>
+                            </div>
+                        )}
                     </div>
                 ) : (
                     <div className="h-full flex flex-col items-center justify-center text-slate-400 dark:text-slate-600">

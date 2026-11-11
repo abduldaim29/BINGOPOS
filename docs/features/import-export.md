@@ -47,8 +47,8 @@ Import master data (products and customers) from spreadsheets. Export data to Ex
 
 ### Product Template
 
-| barcode | sku | name | description | category | purchase_price | selling_price | stock | min_stock | max_stock | tax_type | tax_rate |
-|---------|-----|------|-------------|----------|----------------|---------------|-------|-----------|-----------|----------|----------|
+| barcode | sku | name | description | category | purchase_price | selling_price | stock | min_stock | max_stock | tax_type | tax_rate | image_url |
+|---------|-----|------|-------------|----------|----------------|---------------|-------|-----------|-----------|----------|----------|-----------|
 
 ### Customer Template
 

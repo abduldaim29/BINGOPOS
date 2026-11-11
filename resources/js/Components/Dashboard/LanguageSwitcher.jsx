@@ -13,10 +13,12 @@ export default function LanguageSwitcher() {
     // Sync i18n with backend locale on mount and when locale changes
     useEffect(() => {
         if (locale?.current && locale.current !== i18n.language) {
-            // Only accept English locale, default to English otherwise
-            const targetLocale = locale.current === 'en' ? 'en' : 'en';
+            const storedLocale = localStorage.getItem('locale');
+            const targetLocale = ["en", "id"].includes(storedLocale)
+                ? storedLocale
+                : (["en", "id"].includes(locale.current) ? locale.current : "en");
             i18n.changeLanguage(targetLocale);
-            localStorage.setItem('locale', targetLocale);
+            localStorage.setItem("locale", targetLocale);
             setCurrentLocale(targetLocale);
         }
     }, [locale?.current]);
@@ -24,7 +26,7 @@ export default function LanguageSwitcher() {
     // Listen for storage changes
     useEffect(() => {
         const handleStorageChange = (e) => {
-            if (e.key === 'locale' && e.newValue && e.newValue !== i18n.language) {
+            if (e.key === 'locale' && ["en", "id"].includes(e.newValue) && e.newValue !== i18n.language) {
                 i18n.changeLanguage(e.newValue);
                 setCurrentLocale(e.newValue);
             }
@@ -34,26 +36,21 @@ export default function LanguageSwitcher() {
     }, []);
 
     const handleChange = (newLocale) => {
-        // Only allow English locale
-        if (newLocale !== 'en') {
+        if (!["en", "id"].includes(newLocale)) {
             return;
         }
 
-        console.log('Changing language to:', newLocale);
-
-        // Save to localStorage
         localStorage.setItem('locale', newLocale);
 
-        // Change frontend language immediately
         i18n.changeLanguage(newLocale);
         setCurrentLocale(newLocale);
 
-        // Reload page to ensure all components re-render with new language
         window.location.reload();
     };
 
     const languages = [
         { code: "en", name: "English", flag: "🇬🇧" },
+        { code: "id", name: "Bahasa Indonesia", flag: "🇮🇩" },
     ];
 
     const currentLang = languages.find((l) => l.code === currentLocale) || languages[0];

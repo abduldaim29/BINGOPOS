@@ -18,8 +18,7 @@ Customer segmentation, campaign automation, and reminders to improve engagement 
 - Create campaign with audience filter (segment)
 - Process campaign: generate log per customer
 - Campaign types: reminder, promo, follow-up
-- Share invoice via WhatsApp link
-- Direct WhatsApp delivery if WhatsApp Gateway is active and device is connected
+- Campaign logs support manual follow-up tracking
 - Cancel campaign if needed
 
 ### Reminders
@@ -62,6 +61,5 @@ Customer segmentation, campaign automation, and reminders to improve engagement 
 1. Create segment (manual/auto)
 2. Create campaign → select audience filter
 3. Process campaign → system generate log per customer
-4. Choose delivery: direct WhatsApp, link `wa.me`, or manual follow-up
-5. Process campaign sends directly if service is available; if not, logs can be handled manually
-6. Mark sent/skip per log according to delivery results
+4. Follow up with customers using the campaign details outside the application
+5. Mark each log sent or skipped to track follow-up progress

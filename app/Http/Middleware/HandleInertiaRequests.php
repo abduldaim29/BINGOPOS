@@ -90,6 +90,7 @@ class HandleInertiaRequests extends Middleware
                         'warehouse_totals',
                         fn ($join) => $join->on('warehouse_totals.product_id', '=', 'products.id')
                     )
+                    ->where('products.stock_mode', '!=', 'made_to_order')
                     ->where('min_stock', '>', 0)
                     ->where(function ($query) use ($includeLegacy) {
                         $query->whereColumn('warehouse_totals.warehouse_stock', '<=', 'min_stock');
@@ -148,9 +149,9 @@ class HandleInertiaRequests extends Middleware
                     ->orderBy('due_date')
                     ->limit(5)
                     ->get(['id', 'invoice', 'customer_id', 'due_date', 'total', 'paid', 'status'])
-                    ->map(function ($item) {
+                    ->map(function ($item) use ($activeOutlet) {
                         $remaining = max(0, ($item->total ?? 0) - ($item->paid ?? 0));
-                        $currencySymbol = Setting::getCurrencySymbol($outlet);
+                        $currencySymbol = Setting::getCurrencySymbol($activeOutlet);
 
                         return [
                             'id' => $item->id,
@@ -168,9 +169,9 @@ class HandleInertiaRequests extends Middleware
                     ->orderBy('due_date')
                     ->limit(5)
                     ->get(['id', 'document_number', 'due_date', 'total', 'paid', 'status'])
-                    ->map(function ($item) {
+                    ->map(function ($item) use ($activeOutlet) {
                         $remaining = max(0, ($item->total ?? 0) - ($item->paid ?? 0));
-                        $currencySymbol = Setting::getCurrencySymbol($outlet);
+                        $currencySymbol = Setting::getCurrencySymbol($activeOutlet);
 
                         return [
                             'id' => $item->id,
@@ -240,9 +241,7 @@ class HandleInertiaRequests extends Middleware
                 'currency_decimal_places' => '2',
             ]);
             $logo = $settings['store_logo'];
-            if ($logo && ! str_starts_with($logo, 'http') && ! str_starts_with($logo, '/storage')) {
-                $logo = asset('storage/'.ltrim($logo, '/'));
-            }
+            $logo = app(\App\Services\ImageStorageService::class)->url($logo, 'store');
 
             $storeProfile = [
                 'name' => $settings['store_name'],
@@ -281,6 +280,10 @@ class HandleInertiaRequests extends Middleware
 
         return [
             ...parent::share($request),
+            'flash' => [
+                'success' => fn () => $request->session()->get('success'),
+                'error' => fn () => $request->session()->get('error'),
+            ],
             'auth' => [
                 'user' => $request->user(),
                 'permissions' => $request->user() ? $request->user()->getPermissions() : [],

@@ -4,13 +4,14 @@ Back to the documentation index: `docs/README.md`
 
 ## Purpose
 
-Provide richer customer master data than basic POS functionality, including Indonesian regional addresses and transaction history.
+Provide richer customer master data than basic POS functionality, including Pakistan/Indonesian regional addresses and transaction history.
 
 ## Current Features
 
 - Customer CRUD operations
 - Create customers from the dashboard
 - Create customers via AJAX from the POS
+- Pakistan province options with manual city, district, and area fields
 - Complete address data with Indonesian administrative regions
 - Customer transaction history
 
@@ -42,7 +43,8 @@ Provide richer customer master data than basic POS functionality, including Indo
 
 - `customers`
 - Transactions associated with customers
-- Regional data from `laravolt/indonesia`
+- Pakistan provinces from `config/pakistan_regions.php`
+- Indonesian regional data from `laravolt/indonesia`
 
 ## Current Limitations
 

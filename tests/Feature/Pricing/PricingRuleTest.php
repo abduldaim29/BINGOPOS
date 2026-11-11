@@ -335,7 +335,7 @@ class PricingRuleTest extends TestCase
                 'discount' => 5000,
                 'shipping_cost' => 0,
                 'grand_total' => 999999,
-                'cash' => 100000,
+                'cash' => 120000,
                 'change' => 0,
             ]);
 
@@ -344,10 +344,10 @@ class PricingRuleTest extends TestCase
         $response->assertRedirect(route('transactions.print', $transaction->invoice));
         $this->assertNotNull($transaction);
         $this->assertSame($shift->id, $transaction->cashier_shift_id);
-        $this->assertSame(95000, (int) $transaction->grand_total);
+        $this->assertSame(111000, (int) $transaction->grand_total);
         $this->assertSame(5000, (int) $transaction->discount);
-        $this->assertSame(100000, (int) $transaction->cash);
-        $this->assertSame(5000, (int) $transaction->change);
+        $this->assertSame(120000, (int) $transaction->cash);
+        $this->assertSame(9000, (int) $transaction->change);
 
         $detail = $transaction->details->first();
         $this->assertSame(60000, (int) $detail->base_unit_price);

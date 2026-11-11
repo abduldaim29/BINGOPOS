@@ -28,7 +28,6 @@ Open-source POS system (200+ stars). Laravel 13 + Inertia 3.0 + React 19.
 - **i18n**: react-i18next; locales in `resources/js/i18n/locales`; `SetLocale` middleware on web group
 - **Payment gateways**: Midtrans, Xendit (webhooks in `routes/api.php`)
 - **Observability**: Sentry Laravel SDK is installed and enabled only when `SENTRY_LARAVEL_DSN` is configured
-- **WhatsApp**: whatsapp-web.js via separate Node service (`whatsapp-service/`, port 3001)
 - **Multi-outlet**: outlet-scoped operations with `OutletAccessService`, `user_outlets`, and single-outlet fallback compatibility
 
 ## CI / Deploy
@@ -57,13 +56,6 @@ php artisan test                     # all
 php artisan test --filter=FooTest    # one class
 php artisan test --filter=test_name  # one method
 
-# WhatsApp Service (separate terminal)
-cd whatsapp-service
-npm install && npm start             # port 3001
-
-# PM2 for production
-pm2 start whatsapp-service/server.js --name wa-service
-
 # Artisan commands
 php artisan inventory:reconcile           # report global vs pivot stock mismatch
   php artisan inventory:reconcile --fix     # align global stock to pivot sum
@@ -91,7 +83,7 @@ Production must trigger `php artisan schedule:run` every minute for the schedule
 
 - **Controllers**: `app/Http/Controllers/Apps/` — per-module web controllers (~35)
 - **API Controllers**: `app/Http/Controllers/Api/` — REST API (Sanctum token auth)
-- **Services**: `app/Services/` — ~22 services: AuditLog, BatchService, CashierShiftService, DineOrderService, GoodsReceivingService, LoyaltyService, PaymentGatewayManager, PricingService, PriceListService, PurchaseOrderService, ReorderService, StockMutationService, StockTransferService, UnitConversionService, WhatsAppService, etc.
+- **Services**: `app/Services/` — ~22 services: AuditLog, BatchService, CashierShiftService, DineOrderService, GoodsReceivingService, LoyaltyService, PaymentGatewayManager, PricingService, PriceListService, PurchaseOrderService, ReorderService, StockMutationService, StockTransferService, UnitConversionService, etc.
 - **Outlet model**: `outlets` + `user_outlets` enforce per-branch security boundaries through `OutletAccessService`; use `php artisan outlet:audit --strict` during rollout and `PUSAT` stays a central non-sales warehouse
 - **Layouts**: `POSLayout.jsx` (POS), `DashboardLayout.jsx` (admin), `AuthenticatedLayout.jsx` (profile), `GuestLayout.jsx` (auth), `PublicLayout.jsx` (public dine-in)
 - **Routes**: `routes/web.php` (~50+ dashboard routes), `routes/api.php` (webhooks + REST API), `routes/auth.php` (Breeze)
@@ -133,12 +125,10 @@ After seeding, a default `PUSAT` warehouse is created and existing product stock
 3. **Product images need storage:link** — `php artisan storage:link` or images won't render.
 4. **Missing migrations cause 500 on new modules** — run `php artisan migrate` for newer modules (purchase orders, goods receiving, supplier returns, stock opname, dine-in, etc.).
 5. **Tests force SQLite in-memory** — `phpunit.xml` sets `DB_CONNECTION=sqlite`, `DB_DATABASE=:memory:`. Don't assume MySQL features. **Set `tax_rate=0` on test Product::create** to avoid PPN changing grand_total.
-6. **Dev servers unified** — `composer run dev` starts server + queue + pail + vite together (`php artisan dev`). WA service stays separate.
-7. **WhatsApp service separate** — `whatsapp-service/` needs `npm start` in another terminal + `WA_SERVICE_URL` in .env.
-8. **CRM campaign auto-send** — requires `wa_enabled=true` + connected device in Settings > WhatsApp.
-9. **Version bump on release** — update `APP_VERSION` in `.env` + `.env.example` when tagging.
-10. **Concurrency patterns** — all stock mutations (checkout, transfer, receiving, payment) are wrapped in `DB::transaction` with `lockForUpdate()` on affected rows. Never skip the transaction or lock.
-11. **Dine-in online payment is disabled** — `payment_option=pay_online` returns 422. Only `pay_at_counter` is accepted.
+6. **Dev servers unified** — `composer run dev` starts server + queue + pail + vite together (`php artisan dev`).
+7. **Version bump on release** — update `APP_VERSION` in `.env` + `.env.example` when tagging.
+8. **Concurrency patterns** — all stock mutations (checkout, transfer, receiving, payment) are wrapped in `DB::transaction` with `lockForUpdate()` on affected rows. Never skip the transaction or lock.
+9. **Dine-in online payment is disabled** — `payment_option=pay_online` returns 422. Only `pay_at_counter` is accepted.
 
 ## Release Process
 

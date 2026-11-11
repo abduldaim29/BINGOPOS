@@ -5,19 +5,18 @@ namespace App\Http\Controllers\Apps;
 use App\Http\Controllers\Controller;
 use App\Models\Setting;
 use App\Services\AuditLogService;
+use App\Services\ImageStorageService;
 use App\Services\LoyaltyService;
 use App\Services\OutletAccessService;
-use App\Services\WhatsAppService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 
 class SettingController extends Controller
 {
     public function __construct(
         private readonly AuditLogService $auditLogService,
+        private readonly ImageStorageService $imageStorage,
         private readonly LoyaltyService $loyaltyService,
-        private readonly WhatsAppService $whatsAppService,
         private readonly OutletAccessService $outletAccessService
     ) {}
 
@@ -69,9 +68,11 @@ class SettingController extends Controller
             'store_email' => Setting::getForOutlet('store_email', $outlet, ''),
             'store_website' => Setting::getForOutlet('store_website', $outlet, ''),
             'store_city' => Setting::getForOutlet('store_city', $outlet, ''),
-            'store_npwp' => Setting::get('store_npwp', ''),
-            'store_nib' => Setting::get('store_nib', ''),
-            'tax_default_rate' => Setting::get('tax_default_rate', '11.00'),
+            'brand_ntn' => Setting::getForOutlet('brand_ntn', $outlet, ''),
+            'brand_strn' => Setting::getForOutlet('brand_strn', $outlet, ''),
+            'tax_default_rate' => Setting::get('tax_default_rate', '18.00'),
+            'tax_cash_rate' => Setting::get('tax_cash_rate', '16.00'),
+            'tax_card_rate' => Setting::get('tax_card_rate', '6.00'),
         ];
 
         return Inertia::render('Dashboard/Settings/Store', [
@@ -92,10 +93,12 @@ class SettingController extends Controller
             'store_email' => 'nullable|email|max:255',
             'store_website' => 'nullable|string|max:255',
             'store_city' => 'nullable|string|max:255',
-            'store_logo' => 'nullable|image|max:2048',
-            'store_npwp' => 'nullable|string|max:20',
-            'store_nib' => 'nullable|string|max:30',
-            'tax_default_rate' => 'nullable|numeric|min:0|max:100',
+            'store_logo' => 'nullable|image|mimes:jpeg,jpg,png,webp|max:2048',
+            'brand_ntn' => 'nullable|string|max:20',
+            'brand_strn' => 'nullable|string|max:30',
+            'tax_default_rate' => 'required|numeric|min:0|max:100',
+            'tax_cash_rate' => 'required|numeric|min:0|max:100',
+            'tax_card_rate' => 'required|numeric|min:0|max:100',
         ]);
 
         $before = [
@@ -105,17 +108,20 @@ class SettingController extends Controller
             'store_email' => Setting::getForOutlet('store_email', $outlet, ''),
             'store_website' => Setting::getForOutlet('store_website', $outlet, ''),
             'store_city' => Setting::getForOutlet('store_city', $outlet, ''),
+            'brand_ntn' => Setting::getForOutlet('brand_ntn', $outlet, '') ? '***' : null,
+            'brand_strn' => Setting::getForOutlet('brand_strn', $outlet, '') ? '***' : null,
+            'tax_default_rate' => Setting::get('tax_default_rate', '18.00'),
+            'tax_cash_rate' => Setting::get('tax_cash_rate', '16.00'),
+            'tax_card_rate' => Setting::get('tax_card_rate', '6.00'),
             'store_logo_changed' => false,
         ];
 
         $logoPath = Setting::getForOutlet('store_logo', $outlet);
+        $oldLogoPath = $logoPath;
         $logoChanged = false;
 
         if ($request->file('store_logo')) {
-            if ($logoPath) {
-                Storage::disk(config('filesystems.image_disk', 'public'))->delete($logoPath);
-            }
-            $logoPath = $request->file('store_logo')->store('store', config('filesystems.image_disk', 'public'));
+            $logoPath = $this->imageStorage->store($request->file('store_logo'), 'store');
             $logoChanged = true;
         }
 
@@ -126,9 +132,11 @@ class SettingController extends Controller
         Setting::setForOutlet('store_website', $request->store_website, $outlet, 'Store website');
         Setting::setForOutlet('store_city', $request->store_city, $outlet, 'Store city/district');
         Setting::setForOutlet('store_logo', $logoPath, $outlet, 'Store logo');
-        Setting::set('store_npwp', $request->store_npwp, 'Store NPWP');
-        Setting::set('store_nib', $request->store_nib, 'Store NIB');
+        Setting::setForOutlet('brand_ntn', $request->brand_ntn, $outlet, 'Brand NTN');
+        Setting::setForOutlet('brand_strn', $request->brand_strn, $outlet, 'Brand STRN');
         Setting::set('tax_default_rate', $request->tax_default_rate, 'Default VAT rate (%)');
+        Setting::set('tax_cash_rate', $request->tax_cash_rate, 'Cash payment VAT rate (%)');
+        Setting::set('tax_card_rate', $request->tax_card_rate, 'Card payment VAT rate (%)');
 
         $this->auditLogService->log(
             event: 'store.setting.updated',
@@ -144,10 +152,17 @@ class SettingController extends Controller
                 'store_website' => $request->store_website,
                 'store_city' => $request->store_city,
                 'store_logo_changed' => $logoChanged,
-                'store_npwp' => $request->store_npwp ? '***' : null,
+                'brand_ntn' => $request->brand_ntn ? '***' : null,
+                'brand_strn' => $request->brand_strn ? '***' : null,
                 'tax_default_rate' => $request->tax_default_rate,
+                'tax_cash_rate' => $request->tax_cash_rate,
+                'tax_card_rate' => $request->tax_card_rate,
             ],
         );
+
+        if ($logoChanged && $oldLogoPath) {
+            $this->imageStorage->delete($oldLogoPath, 'store');
+        }
 
         return Inertia::render('Dashboard/Settings/Store', [
             'settings' => [
@@ -158,9 +173,11 @@ class SettingController extends Controller
                 'store_email' => Setting::getForOutlet('store_email', $outlet, ''),
                 'store_website' => Setting::getForOutlet('store_website', $outlet, ''),
                 'store_city' => Setting::getForOutlet('store_city', $outlet, ''),
-                'store_npwp' => Setting::get('store_npwp', ''),
-                'store_nib' => Setting::get('store_nib', ''),
-                'tax_default_rate' => Setting::get('tax_default_rate', '11.00'),
+                'brand_ntn' => Setting::getForOutlet('brand_ntn', $outlet, ''),
+                'brand_strn' => Setting::getForOutlet('brand_strn', $outlet, ''),
+                'tax_default_rate' => Setting::get('tax_default_rate', '18.00'),
+                'tax_cash_rate' => Setting::get('tax_cash_rate', '16.00'),
+                'tax_card_rate' => Setting::get('tax_card_rate', '6.00'),
             ],
         ])->with('success', 'Store profile updated successfully');
     }
@@ -250,79 +267,4 @@ class SettingController extends Controller
         return back()->with('success', 'Loyalty settings saved successfully');
     }
 
-    public function whatsapp()
-    {
-        $outlet = $this->outletAccessService->activeOutlet(request());
-        $waStatus = ['connected' => false, 'phone' => null, 'qr' => null];
-        if (Setting::getForOutlet('wa_service_url', $outlet)) {
-            try {
-                $waStatus = $this->whatsAppService->status($outlet);
-            } catch (\Exception $e) {
-                $waStatus['error'] = $e->getMessage();
-            }
-        }
-
-        return Inertia::render('Dashboard/Settings/Whatsapp', [
-            'settings' => [
-                'wa_service_url' => Setting::getForOutlet('wa_service_url', $outlet, ''),
-                'wa_enabled' => Setting::getBoolForOutlet('wa_enabled', $outlet, false),
-                'wa_auto_reminder' => Setting::getBoolForOutlet('wa_auto_reminder', $outlet, false),
-                'wa_auto_invoice' => Setting::getBoolForOutlet('wa_auto_invoice', $outlet, false),
-            ],
-            'waStatus' => $waStatus,
-        ]);
-    }
-
-    public function updateWhatsapp(Request $request)
-    {
-        $outlet = $this->outletAccessService->activeOutlet($request);
-        $validated = $request->validate([
-            'wa_service_url' => ['nullable', 'string', 'max:255'],
-            'wa_enabled' => ['boolean'],
-            'wa_auto_reminder' => ['boolean'],
-            'wa_auto_invoice' => ['boolean'],
-        ]);
-
-        Setting::setForOutlet('wa_service_url', $validated['wa_service_url'] ?? '', $outlet, 'WhatsApp service URL');
-        Setting::setForOutlet('wa_enabled', ($validated['wa_enabled'] ?? false) ? '1' : '0', $outlet, 'WhatsApp gateway enabled');
-        Setting::setForOutlet('wa_auto_reminder', ($validated['wa_auto_reminder'] ?? false) ? '1' : '0', $outlet, 'Automatically send reminders via WhatsApp');
-        Setting::setForOutlet('wa_auto_invoice', ($validated['wa_auto_invoice'] ?? false) ? '1' : '0', $outlet, 'Automatically send invoices via WhatsApp');
-
-        return back()->with('success', 'WhatsApp settings saved.');
-    }
-
-    public function testWhatsapp(Request $request)
-    {
-        $request->validate(['target' => 'required|string']);
-        $outlet = $this->outletAccessService->activeOutlet($request);
-
-        $sent = $this->whatsAppService->send(
-            $request->target,
-            'Test message from Point of Sales — '.config('app.url'),
-            $outlet
-        );
-
-        return response()->json(['status' => $sent]);
-    }
-
-    public function startWhatsapp(Request $request)
-    {
-        $result = $this->whatsAppService->start($this->outletAccessService->activeOutlet($request));
-
-        return response()->json($result);
-    }
-
-    public function whatsappStatus(Request $request)
-    {
-        $status = $this->whatsAppService->status($this->outletAccessService->activeOutlet($request));
-
-        return response()->json($status);
-    }
-
-    public function disconnectWhatsapp(Request $request)
-    {
-        $this->whatsAppService->disconnect($this->outletAccessService->activeOutlet($request));
-
-        return response()->json(['status' => true]);
-    }
 }

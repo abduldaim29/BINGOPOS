@@ -113,8 +113,8 @@ class CashierShiftService
                 ['refund_cash']
             )
             ->selectRaw(
-                'COALESCE(SUM(CASE WHEN return_type != ? THEN COALESCE(credited_amount, 0) ELSE 0 END), 0) as non_cash_refund_total',
-                ['refund_cash']
+                'COALESCE(SUM(CASE WHEN return_type = ? THEN COALESCE(credited_amount, 0) ELSE 0 END), 0) as non_cash_refund_total',
+                ['store_credit']
             )
             ->first();
 

@@ -12,6 +12,7 @@ use App\Models\SalesReturn;
 use App\Models\SalesReturnItem;
 use App\Models\Transaction;
 use App\Models\TransactionDetail;
+use App\Models\Outlet;
 use App\Models\Warehouse;
 use App\Services\AuditLogService;
 use App\Services\CashierShiftService;
@@ -42,37 +43,146 @@ class SalesReturnController extends Controller
     {
         $this->ensureSalesReturnTablesExist();
 
+        $validatedFilters = $request->validate([
+            'code' => ['nullable', 'string', 'max:100'],
+            'invoice' => ['nullable', 'string', 'max:100'],
+            'date_from' => ['nullable', 'date'],
+            'date_to' => ['nullable', 'date', 'after_or_equal:date_from'],
+            'return_type' => ['nullable', 'in:refund_cash,store_credit'],
+            'status' => ['nullable', 'in:draft,completed'],
+        ]);
         $filters = [
-            'code' => $request->input('code'),
-            'invoice' => $request->input('invoice'),
-            'date_from' => $request->input('date_from'),
-            'date_to' => $request->input('date_to'),
-            'return_type' => $request->input('return_type'),
+            'code' => $validatedFilters['code'] ?? '',
+            'invoice' => $validatedFilters['invoice'] ?? '',
+            'date_from' => $validatedFilters['date_from'] ?? '',
+            'date_to' => $validatedFilters['date_to'] ?? '',
+            'return_type' => $validatedFilters['return_type'] ?? '',
+            'status' => $validatedFilters['status'] ?? '',
         ];
+        $warehouseIds = $this->outletAccessService->warehousesFor($request->user())->pluck('id');
+        $activeOutlet = $this->outletAccessService->activeOutlet($request);
+        if ($activeOutlet) {
+            $warehouseIds = $this->outletAccessService->warehousesFor($request->user())
+                ->where('outlet_id', $activeOutlet->id)
+                ->pluck('id');
+        }
 
-        $salesReturns = SalesReturn::query()
-            ->with(['transaction:id,invoice,payment_method,payment_status', 'customer:id,name', 'cashier:id,name'])
-            ->when(! $request->user()->isSuperAdmin(), function (Builder $query) use ($request) {
-                $query->whereHas('transaction', function (Builder $builder) use ($request) {
-                    $builder->where('cashier_id', $request->user()->id);
-                });
+        $returnsQuery = SalesReturn::query()
+            ->with([
+                'transaction:id,invoice,grand_total,created_at',
+                'customer:id,name',
+                'cashier:id,name',
+                'items:id,sales_return_id,qty_return',
+            ])
+            ->where(function (Builder $query) use ($warehouseIds) {
+                $query->whereIn('warehouse_id', $warehouseIds);
+                if (Outlet::active()->count() <= 1) {
+                    $query->orWhereNull('warehouse_id');
+                }
             })
+            ->when(
+                ! $request->user()->isSuperAdmin(),
+                fn (Builder $query) => $query->where('cashier_id', $request->user()->id)
+            )
             ->when($filters['code'], fn (Builder $query, $code) => $query->where('code', 'like', '%'.$code.'%'))
-            ->when($filters['invoice'], function (Builder $query, $invoice) {
-                $query->whereHas('transaction', fn (Builder $builder) => $builder->where('invoice', 'like', '%'.$invoice.'%'));
-            })
+            ->when($filters['invoice'], fn (Builder $query, $invoice) => $query->whereHas(
+                'transaction',
+                fn (Builder $transactionQuery) => $transactionQuery->where('invoice', 'like', '%'.$invoice.'%')
+            ))
             ->when($filters['date_from'], fn (Builder $query, $date) => $query->whereDate('created_at', '>=', $date))
             ->when($filters['date_to'], fn (Builder $query, $date) => $query->whereDate('created_at', '<=', $date))
-            ->when($filters['return_type'], fn (Builder $query, $returnType) => $query->where('return_type', $returnType))
-            ->withCount('items')
-            ->latest()
-            ->paginate($this->perPage())->withQueryString()
-            ->withQueryString();
+            ->when($filters['return_type'], fn (Builder $query, $type) => $query->where('return_type', $type))
+            ->when($filters['status'], fn (Builder $query, $status) => $query->where('status', $status))
+            ->latest('created_at');
+
+        $salesReturns = $returnsQuery->paginate(10)->withQueryString();
+        $summary = (clone $returnsQuery)
+            ->reorder()
+            ->selectRaw('
+                COUNT(*) as returns_count,
+                COALESCE(SUM(total_return_amount), 0) as returned_total,
+                COALESCE(SUM(refund_amount), 0) as refunded_total,
+                COALESCE(SUM(credited_amount), 0) as credited_total
+            ')
+            ->first();
 
         return Inertia::render('Dashboard/SalesReturns/Index', [
             'salesReturns' => $salesReturns,
             'filters' => $filters,
+            'summary' => [
+                'returns_count' => (int) ($summary->returns_count ?? 0),
+                'returned_total' => (int) ($summary->returned_total ?? 0),
+                'refunded_total' => (int) ($summary->refunded_total ?? 0),
+                'credited_total' => (int) ($summary->credited_total ?? 0),
+            ],
+            'canCreateSalesReturn' => $request->user()->can('sales-returns-create'),
         ]);
+    }
+
+    public function printDailySales(Request $request): Response
+    {
+        $validated = $request->validate([
+            'date' => ['required', 'date'],
+        ]);
+        $date = Carbon::parse($validated['date'])->toDateString();
+        $filters = ['date_from' => $date, 'date_to' => $date, 'invoice' => ''];
+        $salesQuery = $this->dailySalesQuery($request, $filters);
+        $summary = (clone $salesQuery)
+            ->reorder()
+            ->selectRaw('COUNT(*) as orders_count, COALESCE(SUM(grand_total), 0) as revenue_total')
+            ->first();
+
+        $sales = (clone $salesQuery)
+            ->with(['details.product', 'details.unit', 'warehouse.outlet'])
+            ->withSum('details as items_sold', 'qty')
+            ->reorder()
+            ->orderBy('created_at')
+            ->get();
+
+        return Inertia::render('Dashboard/SalesReturns/DailySalesPrint', [
+            'sales' => $sales,
+            'date' => $date,
+            'autoPrint' => $request->boolean('auto_print'),
+            'summary' => [
+                'orders_count' => (int) ($summary->orders_count ?? 0),
+                'revenue_total' => (int) ($summary->revenue_total ?? 0),
+                'items_sold' => (int) $sales->sum('items_sold'),
+                'item_subtotal' => (int) $sales->sum(fn (Transaction $sale) => $sale->details->sum(fn ($detail) => (int) $detail->price + (int) $detail->discount_total)),
+                'promotion_discount_total' => (int) $sales->sum(fn (Transaction $sale) => $sale->details->sum('discount_total')),
+                'discount_total' => (int) $sales->sum(fn (Transaction $sale) => (int) $sale->discount + (int) $sale->loyalty_discount_total + (int) $sale->customer_voucher_discount),
+                'tax_total' => (int) $sales->sum('tax_total'),
+                'shipping_total' => (int) $sales->sum('shipping_cost'),
+            ],
+        ]);
+    }
+
+    private function dailySalesQuery(Request $request, array $salesFilters): Builder
+    {
+        $warehouseIds = $this->outletAccessService->warehousesFor($request->user())->pluck('id');
+        $activeOutlet = $this->outletAccessService->activeOutlet($request);
+        if ($activeOutlet) {
+            $warehouseIds = $this->outletAccessService->warehousesFor($request->user())
+                ->where('outlet_id', $activeOutlet->id)
+                ->pluck('id');
+        }
+
+        return Transaction::query()
+            ->with([
+                'customer:id,name',
+                'cashier:id,name',
+                'warehouse:id,code,name,outlet_id',
+            ])
+            ->where(function (Builder $query) use ($warehouseIds) {
+                $query->whereIn('warehouse_id', $warehouseIds);
+                if (Outlet::active()->count() <= 1) {
+                    $query->orWhereNull('warehouse_id');
+                }
+            })
+            ->when(! $request->user()->isSuperAdmin(), fn (Builder $query) => $query->where('cashier_id', $request->user()->id))
+            ->when($salesFilters['date_from'] ?? null, fn (Builder $query, $date) => $query->whereDate('created_at', '>=', $date))
+            ->when($salesFilters['date_to'] ?? null, fn (Builder $query, $date) => $query->whereDate('created_at', '<=', $date))
+            ->when($salesFilters['invoice'] ?? null, fn (Builder $query, $invoice) => $query->where('invoice', 'like', '%'.$invoice.'%'))
+            ->orderByDesc('created_at');
     }
 
     public function create(Request $request, Transaction $transaction): Response|RedirectResponse
@@ -137,6 +247,22 @@ class SalesReturnController extends Controller
         return Inertia::render('Dashboard/SalesReturns/Show', [
             'salesReturn' => $this->transformSalesReturn($salesReturn),
             'transaction' => $this->transformTransactionForEditor($salesReturn->transaction, $salesReturn),
+        ]);
+    }
+
+    public function printInvoice(Request $request, SalesReturn $salesReturn): Response
+    {
+        $this->ensureSalesReturnTablesExist();
+        $salesReturn = $this->resolveAccessibleSalesReturn($request, $salesReturn->id);
+
+        return Inertia::render('Dashboard/SalesReturns/Print', [
+            'salesReturn' => $this->transformSalesReturn($salesReturn),
+            'transaction' => [
+                'invoice' => $salesReturn->transaction?->invoice,
+                'created_at' => optional($salesReturn->transaction?->created_at)?->toISOString(),
+                'payment_method' => $salesReturn->transaction?->payment_method,
+                'cashier' => $salesReturn->transaction?->cashier?->only(['id', 'name']),
+            ],
         ]);
     }
 
@@ -228,7 +354,9 @@ class SalesReturnController extends Controller
             }
 
             foreach ($salesReturn->items as $item) {
-                if ($item->restock_to_inventory && $item->product) {
+                $isRecipeSale = $item->transactionDetail?->recipeConsumptions()->exists() ?? false;
+                // Prepared recipe ingredients remain consumed when the finished item is returned.
+                if ($item->restock_to_inventory && $item->product && ! $isRecipeSale) {
                     $product = $item->product()->lockForUpdate()->first();
 
                     if ($product) {
@@ -260,13 +388,26 @@ class SalesReturnController extends Controller
                 }
 
                 $detail = $item->transactionDetail;
-                $buyPrice = (int) ($item->product?->buy_price ?? 0);
-                $margin = ((int) $detail->price - $buyPrice) * (int) $item->qty_return;
+                $detailCost = $detail->cost_total !== null
+                    ? $this->allocateReturnedAmount(
+                        (int) $detail->cost_total,
+                        (int) $item->qty_returned_before,
+                        (int) $item->qty_return,
+                        (int) $detail->qty
+                    )
+                    : null;
+                $returnedCost = $item->cost_total
+                    ?? $detailCost;
+                if ($item->net_sales_total !== null && (! $item->restock_to_inventory || $returnedCost !== null)) {
+                    $profitAdjustment = $item->restock_to_inventory
+                        ? $returnedCost - (int) $item->net_sales_total
+                        : -(int) $item->net_sales_total;
 
-                Profit::create([
-                    'transaction_id' => $salesReturn->transaction_id,
-                    'total' => -$margin,
-                ]);
+                    Profit::create([
+                        'transaction_id' => $salesReturn->transaction_id,
+                        'total' => $profitAdjustment,
+                    ]);
+                }
             }
 
             $salesReturn->loadMissing('transaction.receivable');
@@ -519,8 +660,12 @@ class SalesReturnController extends Controller
 
     private function prepareDraftPayload(Transaction $transaction, array $validated, ?int $excludeSalesReturnId = null): array
     {
-        $details = $transaction->details->keyBy('id');
+        $orderedDetails = $transaction->details->sortBy('id')->values();
+        $details = $orderedDetails->keyBy('id');
         $returnedQtyMap = $this->getCompletedReturnedQtyMap($transaction->id, $excludeSalesReturnId);
+        $invoiceDiscounts = $this->invoiceDiscountAllocations($transaction, $orderedDetails);
+        $hasTaxSnapshots = Schema::hasColumn('transaction_details', 'tax_total')
+            && Schema::hasColumn('transaction_details', 'tax_type');
 
         $returnType = $validated['return_type'];
 
@@ -529,7 +674,7 @@ class SalesReturnController extends Controller
         }
 
         $items = collect($validated['items'])
-            ->map(function (array $item) use ($details, $returnedQtyMap) {
+            ->map(function (array $item) use ($details, $returnedQtyMap, $invoiceDiscounts, $hasTaxSnapshots) {
                 $detail = $details->get((int) $item['transaction_detail_id']);
 
                 if (! $detail) {
@@ -546,6 +691,18 @@ class SalesReturnController extends Controller
 
                 $qtyReturnedBefore = (int) ($returnedQtyMap[$detail->id] ?? 0);
                 $remainingQty = (int) $detail->qty - $qtyReturnedBefore;
+                $subtotal = $this->allocateReturnedAmount(
+                    (int) $detail->price,
+                    $qtyReturnedBefore,
+                    $qtyReturn,
+                    (int) $detail->qty
+                );
+                $invoiceDiscountForReturn = $this->allocateReturnedAmount(
+                    (int) ($invoiceDiscounts[$detail->id] ?? 0),
+                    $qtyReturnedBefore,
+                    $qtyReturn,
+                    (int) $detail->qty
+                );
 
                 if ($qtyReturn > $remainingQty) {
                     throw ValidationException::withMessages([
@@ -559,17 +716,53 @@ class SalesReturnController extends Controller
                     ]);
                 }
 
-                return [
+                $returnItem = [
                     'transaction_detail_id' => $detail->id,
                     'product_id' => $detail->product_id,
                     'qty_sold' => (int) $detail->qty,
                     'qty_returned_before' => $qtyReturnedBefore,
                     'qty_return' => $qtyReturn,
-                    'unit_price' => (int) $detail->price,
-                    'subtotal' => $qtyReturn * (int) $detail->price,
+                    'unit_price' => (int) round((int) $detail->price / max(1, (int) $detail->qty)),
+                    'subtotal' => $subtotal,
                     'return_reason' => trim($item['return_reason']),
                     'restock_to_inventory' => (bool) ($item['restock_to_inventory'] ?? true),
                 ];
+                if (Schema::hasColumn('sales_return_items', 'cost_total')) {
+                    $returnItem['cost_total'] = $detail->cost_total === null
+                        ? null
+                        : $this->allocateReturnedAmount(
+                            (int) $detail->cost_total,
+                            $qtyReturnedBefore,
+                            $qtyReturn,
+                            (int) $detail->qty
+                        );
+                }
+                if (
+                    Schema::hasColumn('sales_return_items', 'net_sales_total')
+                    && Schema::hasColumn('sales_return_items', 'tax_refund_total')
+                    && $hasTaxSnapshots
+                    && $detail->tax_total !== null
+                    && $detail->tax_type !== null
+                ) {
+                    $embeddedTax = $detail->tax_type === 'inclusive'
+                        ? (int) $detail->tax_total
+                        : 0;
+                    $taxRefundTotal = $detail->tax_type === 'inclusive'
+                        ? $this->allocateReturnedAmount(
+                            (int) $detail->tax_total,
+                            $qtyReturnedBefore,
+                            $qtyReturn,
+                            (int) $detail->qty
+                        )
+                        : 0;
+                    $returnItem['net_sales_total'] = max(
+                        0,
+                        $subtotal - $taxRefundTotal - $invoiceDiscountForReturn
+                    );
+                    $returnItem['tax_refund_total'] = $taxRefundTotal;
+                }
+
+                return $returnItem;
             })
             ->filter()
             ->values();
@@ -593,6 +786,42 @@ class SalesReturnController extends Controller
         ];
     }
 
+    private function invoiceDiscountAllocations(Transaction $transaction, Collection $details): array
+    {
+        $invoiceDiscountTotal = (int) $transaction->discount
+            + (int) $transaction->loyalty_discount_total
+            + (int) $transaction->customer_voucher_discount;
+        $subtotal = (int) $details->sum('price');
+        $cumulativeLineTotal = 0;
+        $allocatedDiscount = 0;
+        $allocations = [];
+
+        foreach ($details as $index => $detail) {
+            $cumulativeLineTotal += (int) $detail->price;
+            $allocatedDiscountThroughLine = $index === $details->count() - 1
+                ? $invoiceDiscountTotal
+                : (int) round(
+                    $invoiceDiscountTotal
+                    * $cumulativeLineTotal
+                    / max(1, $subtotal)
+                );
+            $allocations[$detail->id] = $allocatedDiscountThroughLine - $allocatedDiscount;
+            $allocatedDiscount = $allocatedDiscountThroughLine;
+        }
+
+        return $allocations;
+    }
+
+    private function allocateReturnedAmount(int $total, int $qtyReturnedBefore, int $qtyReturn, int $qtySold): int
+    {
+        $qtySold = max(1, $qtySold);
+        $before = min($qtySold, max(0, $qtyReturnedBefore));
+        $through = min($qtySold, $before + $qtyReturn);
+
+        return (int) round($total * $through / $qtySold)
+            - (int) round($total * $before / $qtySold);
+    }
+
     private function calculateSettlement(Transaction $transaction, int $totalReturnAmount, string $returnType): array
     {
         $resolvedReturnType = ! $transaction->customer_id && $returnType === 'store_credit'
@@ -611,13 +840,13 @@ class SalesReturnController extends Controller
 
             if ($resolvedReturnType === 'store_credit') {
                 $creditedAmount = $settlementAmount;
-            } else {
+            } elseif ($resolvedReturnType === 'refund_cash') {
                 $refundAmount = $settlementAmount;
             }
         } elseif ($transaction->payment_status === 'paid') {
             if ($resolvedReturnType === 'store_credit') {
                 $creditedAmount = $totalReturnAmount;
-            } else {
+            } elseif ($resolvedReturnType === 'refund_cash') {
                 $refundAmount = $totalReturnAmount;
             }
         }

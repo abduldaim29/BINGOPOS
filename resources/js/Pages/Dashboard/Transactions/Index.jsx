@@ -11,7 +11,6 @@ import axios from "axios";
 import toast from "react-hot-toast";
 import POSLayout from "@/Layouts/POSLayout";
 import ProductGrid from "@/Components/POS/ProductGrid";
-import CartPanel from "@/Components/POS/CartPanel";
 import CustomerSelect from "@/Components/POS/CustomerSelect";
 import NumpadModal from "@/Components/POS/NumpadModal";
 import HeldTransactions, {
@@ -94,8 +93,7 @@ export default function Index({
     products = [],
     categories = [],
     initialPricingPreview = { items: [], summary: {} },
-    paymentGateways = [],
-    defaultPaymentGateway = "cash",
+    taxRates = { vat: 18, cash: 16, card: 6 },
     bankAccounts = [],
     loyaltyTierOptions = [],
 }) {
@@ -123,11 +121,11 @@ export default function Index({
     const [redeemPointsInput, setRedeemPointsInput] = useState("");
     const [cashInput, setCashInput] = useState("");
     const [shippingInput, setShippingInput] = useState("");
+    const [taxRateInput, setTaxRateInput] = useState("");
     const [orderType, setOrderType] = useState("in_store");
     const [orderNote, setOrderNote] = useState("");
-    const [paymentMethod, setPaymentMethod] = useState(
-        defaultPaymentGateway ?? "cash"
-    );
+    const [paymentMethod, setPaymentMethod] = useState("cash");
+    const [splitMode, setSplitMode] = useState(false);
     const [payLater, setPayLater] = useState(false);
     const [dueDate, setDueDate] = useState("");
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -135,7 +133,6 @@ export default function Index({
     const [numpadOpen, setNumpadOpen] = useState(false);
     const [showShortcuts, setShowShortcuts] = useState(false);
     const [selectedBankAccount, setSelectedBankAccount] = useState(null);
-    const [splitMode, setSplitMode] = useState(false);
     const emptyTender = { method: "", amount: "", cash_received: "", bank_account_id: null };
     const [splitTenders, setSplitTenders] = useState([{ ...emptyTender }, { ...emptyTender }]);
     const [selectedVoucherId, setSelectedVoucherId] = useState("");
@@ -158,11 +155,6 @@ export default function Index({
 
     // Ref for search input to enable keyboard focus
     const searchInputRef = useRef(null);
-
-    // Set default payment method
-    useEffect(() => {
-        setPaymentMethod(defaultPaymentGateway ?? "cash");
-    }, [defaultPaymentGateway]);
 
     useEffect(() => {
         setPricingPreview(initialPricingPreview);
@@ -190,7 +182,7 @@ export default function Index({
             );
 
             if (product) {
-                if (product.stock > 0) {
+                if (product.stock > 0 || product.is_live_cooking) {
                     handleAddToCart(product);
                     toast.success(`${product.title} added (barcode)`);
                 } else {
@@ -306,6 +298,19 @@ export default function Index({
                         customer_id: selectedCustomer?.id ?? null,
                         discount,
                         shipping_cost: shipping,
+                        tax_rate_override:
+                            taxRateInput === "" ? null : Number(taxRateInput),
+                        payment_method: splitMode
+                            ? null
+                            : payLater
+                              ? "pay_later"
+                              : paymentMethod,
+                        tenders: splitMode
+                            ? splitTenders.filter(
+                                  (tender) =>
+                                      tender.method && Number(tender.amount) > 0
+                              )
+                            : [],
                         redeem_points: Number(redeemPointsInput || 0),
                         customer_voucher_id: selectedVoucherId || null,
                     },
@@ -337,6 +342,11 @@ export default function Index({
         pricingDependency,
         discount,
         shipping,
+        taxRateInput,
+        paymentMethod,
+        payLater,
+        splitMode,
+        splitTenders,
         redeemPointsInput,
         selectedVoucherId,
     ]);
@@ -360,24 +370,40 @@ export default function Index({
         }
     }, [pricingPreview?.eligible_vouchers, selectedVoucherId]);
 
-    // Payment options
-    const paymentOptions = useMemo(() => {
-        const options = Array.isArray(paymentGateways)
-            ? paymentGateways.filter(
-                  (gateway) =>
-                      gateway?.value && gateway.value.toLowerCase() !== "cash"
-              )
-            : [];
+    const paymentOptions = [
+        {
+            value: "cash",
+            label: `${t("transactions.cash")} (${taxRates.cash}%)`,
+            description: t("transactions.directCashPayment"),
+        },
+        { value: "card", label: `Card (${taxRates.card}%)` },
+    ];
 
-        return [
-            {
-                value: "cash",
-                label: t("transactions.cash"),
-                description: t("transactions.directCashPayment"),
-            },
-            ...options,
-        ];
-    }, [paymentGateways]);
+    const splitPaymentOptions = [
+        { value: "cash", label: `${t("transactions.cash")} (${taxRates.cash}%)` },
+        { value: "card", label: `Card (${taxRates.card}%)` },
+    ];
+
+    const activeSplitTenders = useMemo(
+        () => splitTenders.filter((tender) => tender.method && Number(tender.amount) > 0),
+        [splitTenders]
+    );
+    const splitTotal = useMemo(
+        () => activeSplitTenders.reduce((sum, tender) => sum + Number(tender.amount || 0), 0),
+        [activeSplitTenders]
+    );
+    const splitRemaining = payable - splitTotal;
+    const splitPaymentIsValid =
+        activeSplitTenders.length === 2 && splitRemaining === 0;
+    const paymentIsValid = splitMode
+        ? splitPaymentIsValid
+        : paymentMethod !== "cash" || cash >= payable;
+    const updateSplitTender = (index, patch) =>
+        setSplitTenders((previous) =>
+            previous.map((tender, currentIndex) =>
+                currentIndex === index ? { ...tender, ...patch } : tender
+            )
+        );
 
     // Auto-set cash input for non-cash payment
     useEffect(() => {
@@ -385,27 +411,6 @@ export default function Index({
             setCashInput(String(payable));
         }
     }, [isCashPayment, payable]);
-
-    // Split payment helpers
-    const activeSplitTenders = useMemo(
-        () => splitTenders.filter((t) => t.method && Number(t.amount) > 0),
-        [splitTenders]
-    );
-    const splitTotal = useMemo(
-        () => activeSplitTenders.reduce((sum, t) => sum + Number(t.amount || 0), 0),
-        [activeSplitTenders]
-    );
-    const splitRemaining = payable - splitTotal;
-    const updateSplitTender = (index, patch) =>
-        setSplitTenders((prev) =>
-            prev.map((tender, i) =>
-                i === index ? { ...tender, ...patch } : tender
-            )
-        );
-    const resetSplitTenders = () => {
-        setSplitMode(false);
-        setSplitTenders([{ ...emptyTender }, { ...emptyTender }]);
-    };
 
     const handleOpenShift = () => {
         router.post(route("cashier-shifts.store"), {
@@ -416,12 +421,12 @@ export default function Index({
     };
 
     // Handle add product to cart
-    const handleAddToCart = async (product, unit = null, variationId = null, variationName = null) => {
+    const handleAddToCart = useCallback((product, unit = null, variationId = null, variationName = null) => {
         if (!product?.id) return;
+        if (addingProductId === product.id) return;
 
         setAddingProductId(product.id);
 
-        // Calculate correct price: variation price takes precedence over unit price
         const finalPrice = variationId && product.variation_prices?.[variationId]
             ? product.variation_prices[variationId]
             : (unit ? unit.sell_price : product.sell_price);
@@ -449,13 +454,14 @@ export default function Index({
                 },
             }
         );
-    };
+    }, [addingProductId]);
 
     // Handle update cart quantity
     const [updatingCartId, setUpdatingCartId] = useState(null);
 
     const handleUpdateQty = (cartId, newQty) => {
         if (newQty < 1) return;
+        if (updatingCartId === cartId || removingItemId === cartId) return;
         setUpdatingCartId(cartId);
 
         router.patch(
@@ -471,6 +477,7 @@ export default function Index({
                     toast.error(errors?.message || "Failed to update quantity");
                     setUpdatingCartId(null);
                 },
+                onFinish: () => setUpdatingCartId(null),
             }
         );
     };
@@ -659,6 +666,7 @@ export default function Index({
 
     // Handle remove from cart
     const handleRemoveFromCart = (cartId) => {
+        if (removingItemId === cartId || updatingCartId === cartId) return;
         setRemovingItemId(cartId);
 
         router.delete(route("transactions.destroyCart", cartId), {
@@ -672,6 +680,7 @@ export default function Index({
                 toast.error("Failed to remove item");
                 setRemovingItemId(null);
             },
+            onFinish: () => setRemovingItemId(null),
         });
     };
 
@@ -698,57 +707,17 @@ export default function Index({
             return;
         }
 
-        // Validate bank transfer requires bank selection
-        const isBankTransfer = paymentMethod === "bank_transfer";
-        if (!splitMode && isBankTransfer && !selectedBankAccount) {
-            toast.error(t("transactions.selectBankAccount"));
+        if (splitMode && !splitPaymentIsValid) {
+            toast.error("Add cash and card amounts that exactly match the total.");
             return;
         }
 
-        // Split payment validation
-        if (splitMode) {
-            if (payLater) {
-                toast.error("Split payment not applicable for credit notes");
-                return;
-            }
-            if (activeSplitTenders.length < 2) {
-                toast.error("Split payment requires 2 methods");
-                return;
-            }
-            if (splitRemaining !== 0) {
-                toast.error(
-                    splitRemaining > 0
-                        ? t("transactions.shortMessage", { amount: formatPrice(splitRemaining) })
-                        : t("transactions.excessMessage", { amount: formatPrice(-splitRemaining) })
-                );
-                return;
-            }
-            const bankTender = activeSplitTenders.find(
-                (t) => t.method === "bank_transfer"
-            );
-            if (bankTender && !bankTender.bank_account_id) {
-                toast.error("Select destination bank account for transfer tender");
-                return;
-            }
-            const cashTender = activeSplitTenders.find(
-                (t) => t.method === "cash"
-            );
-            if (
-                cashTender &&
-                Number(cashTender.cash_received || 0) < Number(cashTender.amount)
-            ) {
-                toast.error(t("transactions.splitCashError"));
-                return;
-            }
+        if (splitMode && !navigator.onLine) {
+            toast.error("Split payments are unavailable while offline.");
+            return;
         }
 
         setIsSubmitting(true);
-
-        if (!navigator.onLine && splitMode) {
-            toast.error("Split payment not available offline");
-            setIsSubmitting(false);
-            return;
-        }
 
         if (!navigator.onLine) {
             const payload = {
@@ -758,12 +727,15 @@ export default function Index({
                 redeem_points: Number(redeemPointsInput || 0),
                 customer_voucher_id: selectedVoucherId || null,
                 shipping_cost: shipping,
+                tax_rate_override:
+                    taxRateInput === "" ? null : Number(taxRateInput),
                 grand_total: payable,
                 cash: isCashPayment ? cash : payable,
-                payment_gateway: payLater ? null : isCashPayment ? null : paymentMethod,
+                payment_gateway:
+                    splitMode || payLater || isCashPayment ? null : paymentMethod,
+                tenders: splitMode ? activeSplitTenders : undefined,
                 pay_later: payLater,
                 due_date: payLater ? dueDate : null,
-                bank_account_id: isBankTransfer ? selectedBankAccount?.id : null,
                 order_type: orderType,
                 note: orderNote || null,
                 items: carts.map((item) => ({
@@ -790,34 +762,14 @@ export default function Index({
                 redeem_points: Number(redeemPointsInput || 0),
                 customer_voucher_id: selectedVoucherId || null,
                 shipping_cost: shipping,
+                tax_rate_override:
+                    taxRateInput === "" ? null : Number(taxRateInput),
                 grand_total: payable,
                 cash: isCashPayment ? cash : payable,
                 change: isCashPayment ? Math.max(cash - payable, 0) : 0,
-                // ponytail: tenders[] only when split active — legacy single-method path otherwise
-                tenders: splitMode
-                    ? activeSplitTenders.map((tender) => ({
-                          method: tender.method,
-                          amount: Number(tender.amount),
-                          cash_received:
-                              tender.method === "cash"
-                                  ? Number(tender.cash_received || tender.amount)
-                                  : null,
-                          bank_account_id:
-                              tender.method === "bank_transfer"
-                                  ? tender.bank_account_id
-                                  : null,
-                      }))
-                    : null,
-                payment_gateway: splitMode
-                    ? null
-                    : payLater
-                      ? null
-                      : isCashPayment
-                        ? null
-                        : paymentMethod,
-                bank_account_id: isBankTransfer
-                    ? selectedBankAccount?.id
-                    : null,
+                payment_gateway:
+                    splitMode || payLater || isCashPayment ? null : paymentMethod,
+                tenders: splitMode ? activeSplitTenders : undefined,
                 pay_later: payLater,
                 due_date: dueDate,
                 order_type: orderType,
@@ -829,11 +781,12 @@ export default function Index({
                     setRedeemPointsInput("");
                     setCashInput("");
                     setShippingInput("");
+                    setTaxRateInput("");
                     setSelectedCustomer(null);
-                    setSelectedBankAccount(null);
-                    resetSplitTenders();
                     setSelectedVoucherId("");
-                    setPaymentMethod(defaultPaymentGateway ?? "cash");
+                    setPaymentMethod("cash");
+                    setSplitMode(false);
+                    setSplitTenders([{ ...emptyTender }, { ...emptyTender }]);
                     setPayLater(false);
                     setDueDate("");
                     setOrderType("in_store");
@@ -850,23 +803,6 @@ export default function Index({
     };
 
     // Filter products including out of stock
-    const allProducts = useMemo(() => {
-        return products.filter((product) => {
-            const matchesCategory =
-                normalizedSelectedCategory === null ||
-                Number(product.category_id) === normalizedSelectedCategory;
-            const matchesSearch =
-                !searchQuery ||
-                product.title
-                    .toLowerCase()
-                    .includes(searchQuery.toLowerCase()) ||
-                product.barcode
-                    ?.toLowerCase()
-                    .includes(searchQuery.toLowerCase());
-            return matchesCategory && matchesSearch;
-        });
-    }, [products, normalizedSelectedCategory, searchQuery]);
-
     if (!activeCashierShift) {
         return (
             <>
@@ -988,7 +924,7 @@ export default function Index({
                     }`}
                 >
                     <ProductGrid
-                        products={allProducts}
+                        products={products}
                         categories={categories}
                         selectedCategory={selectedCategory}
                         onCategoryChange={(categoryId) =>
@@ -1040,32 +976,43 @@ export default function Index({
 
                     {/* Cart Items - Scrollable */}
                     <div data-tour="pos-cart" className="flex-1 overflow-y-auto min-h-0">
-                        {/* Hold Button - at top of cart section */}
-                        {carts.length > 0 && (
-                            <div className="p-3 border-b border-slate-200 dark:border-slate-800">
-                                <HoldButton
-                                    hasItems={carts.length > 0}
-                                    onHold={handleHoldCart}
-                                    isHolding={isHolding}
-                                />
-                            </div>
-                        )}
-
-                        <div className="p-3 border-b border-slate-200 dark:border-slate-800">
-                            <div className="flex items-center justify-between mb-3">
-                                <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-2">
-                                    <IconShoppingCart size={16} />
-                                    Cart
-                                </h3>
+                        <div className="border-b border-slate-200 bg-gradient-to-br from-primary-50 via-white to-white p-4 dark:border-slate-800 dark:from-primary-950/30 dark:via-slate-900 dark:to-slate-900">
+                            <div className="flex items-center justify-between gap-3">
+                                <div className="flex min-w-0 items-center gap-3">
+                                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-primary-600 text-white shadow-lg shadow-primary-600/20">
+                                        <IconShoppingCart size={21} />
+                                    </div>
+                                    <div className="min-w-0">
+                                        <h3 className="text-base font-bold text-slate-900 dark:text-white">Current order</h3>
+                                        <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
+                                            {carts.length
+                                                ? `${carts.length} product${carts.length === 1 ? "" : "s"} · ${cartCount} item${cartCount === 1 ? "" : "s"}`
+                                                : "Your order is ready to build"}
+                                        </p>
+                                    </div>
+                                </div>
                                 {carts.length > 0 && (
-                                    <span className="px-2.5 py-0.5 text-xs font-bold bg-primary-100 text-primary-700 dark:bg-primary-900/50 dark:text-primary-300 rounded-full whitespace-nowrap">
-                                        {cartCount} item
-                                    </span>
+                                    <div className="shrink-0 text-right">
+                                        <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">Items total</p>
+                                        <p className="mt-0.5 text-sm font-bold tabular-nums text-primary-700 dark:text-primary-300">{formatPrice(baseSubtotal)}</p>
+                                    </div>
                                 )}
                             </div>
 
+                            {carts.length > 0 && (
+                                <div className="mt-3">
+                                    <HoldButton
+                                        hasItems
+                                        onHold={handleHoldCart}
+                                        isHolding={isHolding}
+                                    />
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="border-b border-slate-200 p-3 dark:border-slate-800">
                             {carts.length > 0 ? (
-                                <div className="space-y-2 max-h-[200px] overflow-y-auto pr-1">
+                                <div className="max-h-[320px] space-y-3 overflow-y-auto pr-1">
                                     {carts.map((item) => (
                                         (() => {
                                             const pricingItem =
@@ -1096,9 +1043,14 @@ export default function Index({
                                             return (
                                         <div
                                             key={item.id}
-                                            className="flex items-center gap-2 p-2 rounded-lg bg-slate-50 dark:bg-slate-800/50 group"
+                                            className={`rounded-2xl border border-slate-200 bg-white p-3 shadow-sm transition-all dark:border-slate-700 dark:bg-slate-800/70 ${
+                                                updatingCartId === item.id || removingItemId === item.id
+                                                    ? "opacity-60"
+                                                    : "hover:border-primary-200 hover:shadow-md dark:hover:border-primary-800"
+                                            }`}
                                         >
-                                            <div className="w-10 h-10 rounded-lg bg-slate-200 dark:bg-slate-700 overflow-hidden flex-shrink-0">
+                                            <div className="flex min-w-0 items-start gap-3">
+                                            <div className="h-14 w-14 shrink-0 overflow-hidden rounded-xl bg-slate-100 ring-1 ring-slate-200 dark:bg-slate-700 dark:ring-slate-600">
                                                 {item.product?.image ? (
                                                     <img
                                                         src={getProductImageUrl(
@@ -1108,57 +1060,73 @@ export default function Index({
                                                         className="w-full h-full object-cover"
                                                     />
                                                 ) : (
-                                                    <div className="w-full h-full flex items-center justify-center">
+                                                    <div className="flex h-full w-full items-center justify-center">
                                                         <IconShoppingCart
-                                                            size={14}
+                                                            size={20}
                                                             className="text-slate-400"
                                                         />
                                                     </div>
                                                 )}
                                             </div>
-                                            <div className="flex-1 min-w-0">
-                                                <p className="text-xs font-medium text-slate-700 dark:text-slate-300 truncate">
-                                                    {item.product?.title ||
-                                                        "Product"}
-                                                </p>
-                                                <div className="text-xs text-slate-500">
-                                                    {pricingRule &&
-                                                        effectiveUnitPrice <
-                                                            baseUnitPrice && (
-                                                            <p className="line-through text-slate-400">
-                                                                {formatPrice(
-                                                                    baseUnitPrice
-                                                                )}{" "}
-                                                                × {item.qty}
+                                            <div className="min-w-0 flex-1">
+                                                <div className="flex items-start justify-between gap-2">
+                                                    <div className="min-w-0">
+                                                        <p className="truncate text-sm font-bold leading-5 text-slate-800 dark:text-slate-100">
+                                                            {item.product?.title || "Product"}
+                                                        </p>
+                                                        {(item.variation_name || item.unit?.name || item.unit_name) && (
+                                                            <span className="mt-1 inline-flex max-w-full truncate rounded-md bg-primary-50 px-2 py-0.5 text-[10px] font-semibold text-primary-700 dark:bg-primary-950/50 dark:text-primary-300">
+                                                                {item.variation_name || item.unit?.name || item.unit_name}
+                                                            </span>
+                                                        )}
+                                                        {item.extras?.length > 0 && (
+                                                            <p className="mt-0.5 truncate text-[11px] font-medium text-primary-600 dark:text-primary-400">
+                                                                + {item.extras.map((extra) => `${extra.name} ×${extra.qty}`).join(", ")}
                                                             </p>
                                                         )}
-                                                    <p>
-                                                        {formatPrice(
-                                                            effectiveUnitPrice
-                                                        )}{" "}
-                                                        × {item.qty}
-                                                    </p>
-                                                    {pricingRule && (
-                                                        <p className="mt-0.5 text-[11px] font-medium text-rose-500">
-                                                            {pricingRule.name}
-                                                        </p>
-                                                    )}
-                                                    {item.extras?.length > 0 && (
-                                                        <p className="mt-0.5 truncate text-[11px] font-medium text-primary-600 dark:text-primary-400">
-                                                            + {item.extras.map((extra) => `${extra.name} ×${extra.qty}`).join(", ")}
-                                                        </p>
-                                                    )}
+                                                    </div>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => handleRemoveFromCart(item.id)}
+                                                        disabled={updatingCartId === item.id || removingItemId === item.id}
+                                                        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-slate-400 transition hover:bg-danger-50 hover:text-danger-600 disabled:cursor-not-allowed disabled:opacity-50 dark:hover:bg-danger-950/40"
+                                                        aria-label={`Remove ${item.product?.title || "product"}`}
+                                                        title="Remove item"
+                                                    >
+                                                        {removingItemId === item.id ? (
+                                                            <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-r-transparent" />
+                                                        ) : (
+                                                            <IconTrash size={16} />
+                                                        )}
+                                                    </button>
                                                 </div>
                                             </div>
-                                            <div className="flex items-center gap-1">
+                                            </div>
+
+                                            <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-slate-100 pt-3 dark:border-slate-700">
+                                                <div className="flex min-w-0 flex-1 items-center gap-2">
                                                 <button
+                                                    type="button"
                                                     onClick={() => setCustomizingCartItem(item)}
-                                                    className="flex h-6 items-center gap-1 rounded bg-primary-50 px-1.5 text-[10px] font-semibold text-primary-600 hover:bg-primary-100 dark:bg-primary-950/40 dark:text-primary-300"
-                                                    title="Add extras"
+                                                    disabled={updatingCartId === item.id || removingItemId === item.id}
+                                                    className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-lg border border-primary-100 bg-primary-50 px-2.5 text-xs font-semibold text-primary-700 transition hover:bg-primary-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-primary-900/50 dark:bg-primary-950/40 dark:text-primary-300 dark:hover:bg-primary-900/60"
+                                                    title="Customize item"
                                                 >
-                                                    <IconPlus size={11} /> Add
+                                                    <IconAdjustmentsHorizontal size={14} /> Customize
                                                 </button>
+                                                {pricingRule && (
+                                                    <span className="truncate rounded-md bg-emerald-50 px-2 py-1 text-[10px] font-semibold text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300">
+                                                        {pricingRule.name}
+                                                    </span>
+                                                )}
+                                                </div>
+                                                <div className="flex items-center gap-2">
+                                                <span className="hidden text-[11px] text-slate-500 sm:inline dark:text-slate-400">
+                                                    {formatPrice(effectiveUnitPrice)} each
+                                                </span>
+                                                <div className="flex items-center gap-1 rounded-xl bg-slate-100 p-1 dark:bg-slate-900">
                                                 <button
+                                                    type="button"
                                                     onClick={() =>
                                                         handleUpdateQty(
                                                             item.id,
@@ -1168,41 +1136,42 @@ export default function Index({
                                                             )
                                                         )
                                                     }
-                                                    disabled={item.qty <= 1}
-                                                    className="w-6 h-6 rounded flex items-center justify-center bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-300 disabled:opacity-50 text-xs"
+                                                    disabled={item.qty <= 1 || updatingCartId === item.id || removingItemId === item.id}
+                                                    className="flex h-8 w-8 items-center justify-center rounded-lg bg-white text-base font-semibold text-slate-600 shadow-sm transition hover:bg-primary-50 hover:text-primary-700 disabled:cursor-not-allowed disabled:opacity-40 dark:bg-slate-800 dark:text-slate-200"
+                                                    aria-label="Decrease quantity"
                                                 >
-                                                    -
+                                                    −
                                                 </button>
-                                                <span className="w-6 text-center text-xs font-medium">
-                                                    {item.qty}
+                                                <span className="min-w-8 text-center text-sm font-bold tabular-nums text-slate-800 dark:text-white" aria-live="polite">
+                                                    {updatingCartId === item.id ? "..." : item.qty}
                                                 </span>
                                                 <button
+                                                    type="button"
                                                     onClick={() =>
                                                         handleUpdateQty(
                                                             item.id,
                                                             item.qty + 1
                                                         )
                                                     }
-                                                    className="w-6 h-6 rounded flex items-center justify-center bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-300 text-xs"
+                                                    disabled={updatingCartId === item.id || removingItemId === item.id}
+                                                    className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary-600 text-base font-semibold text-white shadow-sm transition hover:bg-primary-700 disabled:cursor-not-allowed disabled:opacity-50"
+                                                    aria-label="Increase quantity"
                                                 >
                                                     +
                                                 </button>
-                                                <button
-                                                    onClick={() =>
-                                                        handleRemoveFromCart(
-                                                            item.id
-                                                        )
-                                                    }
-                                                    className="w-6 h-6 rounded flex items-center justify-center text-slate-400 hover:text-danger-500 hover:bg-danger-50 dark:hover:bg-danger-950/50 ml-1"
-                                                >
-                                                    <IconTrash size={12} />
-                                                </button>
+                                                </div>
+                                                </div>
                                             </div>
-                                            <p className="text-xs font-semibold text-primary-600 dark:text-primary-400 w-16 text-right">
-                                                {formatPrice(
-                                                    effectiveLineTotal
+                                            <div className="mt-2 flex items-center justify-end gap-2">
+                                                {effectiveLineTotal < baseLineTotal && (
+                                                    <span className="text-xs text-slate-400 line-through">
+                                                        {formatPrice(baseLineTotal)}
+                                                    </span>
                                                 )}
-                                            </p>
+                                                <span className="text-base font-extrabold tabular-nums text-primary-700 dark:text-primary-300">
+                                                    {formatPrice(effectiveLineTotal)}
+                                                </span>
+                                            </div>
                                         </div>
                                             );
                                         })()
@@ -1241,6 +1210,7 @@ export default function Index({
                                         onChange={(e) => {
                                             setPayLater(e.target.checked);
                                             if (e.target.checked) {
+                                                setSplitMode(false);
                                                 setSelectedBankAccount(null);
                                                 setPaymentMethod("cash");
                                             }
@@ -1367,6 +1337,37 @@ export default function Index({
                                 </div>
 
                                 <div>
+                                    <label
+                                        htmlFor="checkout-tax-rate"
+                                        className="mb-2 block text-xs font-medium text-slate-600 dark:text-slate-400"
+                                    >
+                                        Tax Rate Override (%)
+                                    </label>
+                                    <div className="relative">
+                                        <input
+                                            id="checkout-tax-rate"
+                                            type="number"
+                                            min="0"
+                                            max="100"
+                                            step="0.01"
+                                            inputMode="decimal"
+                                            value={taxRateInput}
+                                            onChange={(e) =>
+                                                setTaxRateInput(e.target.value)
+                                            }
+                                            placeholder="Use payment method rate"
+                                            className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 pr-9 text-sm text-slate-800 focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
+                                        />
+                                        <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-sm text-slate-400">
+                                            %
+                                        </span>
+                                    </div>
+                                    <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
+                                        Cash uses {taxRates.cash}% and card uses {taxRates.card}% on all products; other methods use standard VAT. Enter a rate to override.
+                                    </p>
+                                </div>
+
+                                <div>
                                     <label className="mb-2 block text-xs font-medium text-slate-600 dark:text-slate-400">
                                         {t("transactions.note")}
                                     </label>
@@ -1383,6 +1384,27 @@ export default function Index({
 
                             {/* Payment Method Selection */}
                             <div>
+                                {!payLater && (
+                                    <label className="mb-3 inline-flex items-center gap-2 text-xs font-medium text-slate-600 dark:text-slate-400">
+                                        <input
+                                            type="checkbox"
+                                            checked={splitMode}
+                                            onChange={(e) => {
+                                                setSplitMode(e.target.checked);
+                                                if (!e.target.checked) {
+                                                    setSplitTenders([
+                                                        { ...emptyTender },
+                                                        { ...emptyTender },
+                                                    ]);
+                                                }
+                                            }}
+                                            className="rounded border-slate-300 text-primary-600 focus:ring-primary-500"
+                                        />
+                                        Split cash + card payment
+                                    </label>
+                                )}
+                                {!splitMode && (
+                                    <>
                                 <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-2">
                                     {t("transactions.paymentMethod")}
                                 </label>
@@ -1436,30 +1458,7 @@ export default function Index({
                                         </button>
                                     ))}
                                 </div>
-                                {!payLater && (
-                                    <button
-                                        type="button"
-                                        onClick={() => {
-                                            if (splitMode) {
-                                                resetSplitTenders();
-                                            } else {
-                                                setSplitMode(true);
-                                                setSplitTenders([
-                                                    { ...emptyTender, method: "cash" },
-                                                    { ...emptyTender },
-                                                ]);
-                                            }
-                                        }}
-                                        className={`mt-2 w-full rounded-xl border-2 border-dashed p-2 text-xs font-semibold transition-colors ${
-                                            splitMode
-                                                ? "border-primary-400 bg-primary-50 text-primary-700 dark:border-primary-700 dark:bg-primary-950/30 dark:text-primary-300"
-                                                : "border-slate-300 text-slate-500 hover:border-primary-300 hover:text-primary-600 dark:border-slate-700 dark:text-slate-400"
-                                        }`}
-                                    >
-                                        {splitMode
-                                            ? t("transactions.cancelSplitPayment")
-                                            : t("transactions.splitPaymentLabel")}
-                                    </button>
+                                    </>
                                 )}
                             </div>
 
@@ -1500,7 +1499,7 @@ export default function Index({
                                                 <option value="">
                                                     Select a payment method...
                                                 </option>
-                                                {paymentOptions.map((option) => (
+                                                {splitPaymentOptions.map((option) => (
                                                     <option
                                                         key={option.value}
                                                         value={option.value}
@@ -1941,7 +1940,14 @@ export default function Index({
                         )}
                         {taxTotal > 0 && (
                             <div className="flex justify-between items-center mb-2 text-sm">
-                                <span className="text-slate-500">VAT</span>
+                                <span className="text-slate-500">
+                                    VAT
+                                    {pricingPreview?.summary?.tax_rate != null
+                                        ? ` (${Number(
+                                              pricingPreview.summary.tax_rate
+                                          )}%)`
+                                        : ""}
+                                </span>
                                 <span className="font-medium">
                                     +{formatPrice(taxTotal)}
                                 </span>
@@ -1956,7 +1962,8 @@ export default function Index({
                             </span>
                         </div>
 
-                        {paymentMethod === "cash" &&
+                        {!splitMode &&
+                            paymentMethod === "cash" &&
                             !payLater &&
                             cash >= payable &&
                             payable > 0 && (
@@ -1976,17 +1983,15 @@ export default function Index({
                             disabled={
                                 !carts.length ||
                                 !selectedCustomer ||
-                                (!payLater &&
-                                    paymentMethod === "cash" &&
-                                    cash < payable) ||
+                                (!payLater && !paymentIsValid) ||
                                 isLoadingPricing ||
                                 isSubmitting
                             }
                             className={`w-full h-12 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 transition-all ${
                                 carts.length &&
                                 selectedCustomer &&
-                                (paymentMethod !== "cash" || cash >= payable)
-                                    && !isLoadingPricing
+                                (payLater || paymentIsValid) &&
+                                !isLoadingPricing
                                     ? "bg-gradient-to-r from-primary-500 to-primary-600 hover:from-primary-600 hover:to-primary-700 text-white shadow-lg shadow-primary-500/30"
                                     : "bg-slate-200 dark:bg-slate-800 text-slate-400 cursor-not-allowed"
                             }`}
@@ -2001,7 +2006,9 @@ export default function Index({
                                             ? "Cart is Empty"
                                             : !selectedCustomer
                                             ? "Select a Customer"
-                                            : paymentMethod === "cash" &&
+                                            : !payLater &&
+                                              !splitMode &&
+                                              paymentMethod === "cash" &&
                                               cash < payable
                                             ? `${t("transactions.insufficientMessage", { amount: formatPrice(payable - cash) })}`
                                             : isLoadingPricing

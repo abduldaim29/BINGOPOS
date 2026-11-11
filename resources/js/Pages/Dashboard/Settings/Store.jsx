@@ -28,9 +28,11 @@ export default function Store({ settings }) {
         store_email: settings.store_email || "",
         store_website: settings.store_website || "",
         store_city: settings.store_city || "",
-        store_npwp: settings.store_npwp || "",
-        store_nib: settings.store_nib || "",
-        tax_default_rate: settings.tax_default_rate || "11.00",
+        brand_ntn: settings.brand_ntn || "",
+        brand_strn: settings.brand_strn || "",
+        tax_default_rate: settings.tax_default_rate || "18.00",
+        tax_cash_rate: settings.tax_cash_rate || "16.00",
+        tax_card_rate: settings.tax_card_rate || "6.00",
     });
 
     const [logoPreview, setLogoPreview] = useState(
@@ -51,7 +53,7 @@ export default function Store({ settings }) {
         post(route("settings.store.update"), {
             preserveScroll: true,
             onSuccess: (page) => {
-                toast.success("Store profile saved successfully");
+                toast.success("Brand profile saved successfully");
                 reset("store_logo");
 
                 if (page.props.settings.store_logo) {
@@ -68,15 +70,15 @@ export default function Store({ settings }) {
 
     return (
         <>
-            <Head title="Store Profile" />
+            <Head title="Brand Profile" />
 
             <div className="space-y-6">
                 <div>
                     <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
-                        Store Settings
+                        Brand Settings
                     </h1>
                     <p className="text-sm text-slate-500 dark:text-slate-400">
-                        Manage the store information displayed on receipts and reports.
+                        Manage the brand information displayed on receipts and reports.
                     </p>
                 </div>
 
@@ -85,19 +87,20 @@ export default function Store({ settings }) {
                     className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 space-y-6"
                 >
                     <div className="flex flex-col lg:flex-row gap-6">
-                        {/* Store Logo */}
+                        {/* Brand Logo */}
                         <div className="lg:w-1/3">
                             <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-3 flex items-center gap-2">
                                 <IconPhoto size={18} />
-                                Store Logo
+                                Brand Logo
                             </label>
 
                             <div className="w-32 h-32 rounded-2xl border-2 border-dashed border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 flex items-center justify-center overflow-hidden mb-3">
                                 {logoPreview ? (
                                     <img
                                         src={getImageUrl(logoPreview, "")}
-                                        alt="Store Logo"
+                                        alt="Brand Logo"
                                         className="w-full h-full object-cover"
+                                        decoding="async"
                                         onError={(e) => {
                                             e.target.style.display = "none";
                                         }}
@@ -135,13 +138,13 @@ export default function Store({ settings }) {
                         {/* Store Information */}
                         <div className="lg:flex-1 space-y-4">
                             <Input
-                                label="Store Name"
+                                label="Brand Name"
                                 value={data.store_name}
                                 errors={errors.store_name}
                                 onChange={(e) =>
                                     setData("store_name", e.target.value)
                                 }
-                                placeholder="Enter store name"
+                                placeholder="Enter brand name"
                             />
 
                             <Textarea
@@ -229,48 +232,61 @@ export default function Store({ settings }) {
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <Input
-                                label="Store Tax ID (NPWP)"
-                                value={data.store_npwp}
-                                errors={errors.store_npwp}
+                                label="NTN (National Tax Number / CNIC for individuals)"
+                                value={data.brand_ntn}
+                                errors={errors.brand_ntn}
                                 onChange={(e) =>
-                                    setData("store_npwp", e.target.value)
+                                    setData("brand_ntn", e.target.value)
                                 }
-                                placeholder="Enter tax identification number"
+                                placeholder="Enter NTN or CNIC"
                                 icon={<IconFileCertificate size={16} />}
                             />
 
                             <Input
-                                label="Business Identification Number (NIB)"
-                                value={data.store_nib}
-                                errors={errors.store_nib}
+                                label="STRN (Sales Tax Registration Number)"
+                                value={data.brand_strn}
+                                errors={errors.brand_strn}
                                 onChange={(e) =>
-                                    setData("store_nib", e.target.value)
+                                    setData("brand_strn", e.target.value)
                                 }
-                                placeholder="Enter business identification number"
+                                placeholder="Enter STRN (if registered)"
                             />
                         </div>
 
-                        <div className="mt-4">
+                        <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4">
                             <Input
-                                label="Default VAT Rate (%)"
+                                label="VAT default rate (%)"
                                 type="number"
-                                step="0.01"
                                 min="0"
                                 max="100"
+                                step="0.01"
                                 value={data.tax_default_rate}
                                 errors={errors.tax_default_rate}
-                                onChange={(e) =>
-                                    setData(
-                                        "tax_default_rate",
-                                        e.target.value
-                                    )
-                                }
-                                placeholder="11.00"
+                                onChange={(e) => setData("tax_default_rate", e.target.value)}
+                                placeholder="18"
                             />
-
-                            <p className="mt-1 text-xs text-slate-400">
-                                Default tax rate for new products. You can change it for individual products.
-                            </p>
+                            <Input
+                                label="Cash payment VAT (%)"
+                                type="number"
+                                min="0"
+                                max="100"
+                                step="0.01"
+                                value={data.tax_cash_rate}
+                                errors={errors.tax_cash_rate}
+                                onChange={(e) => setData("tax_cash_rate", e.target.value)}
+                                placeholder="16"
+                            />
+                            <Input
+                                label="Card payment VAT (%)"
+                                type="number"
+                                min="0"
+                                max="100"
+                                step="0.01"
+                                value={data.tax_card_rate}
+                                errors={errors.tax_card_rate}
+                                onChange={(e) => setData("tax_card_rate", e.target.value)}
+                                placeholder="6"
+                            />
                         </div>
                     </div>
 

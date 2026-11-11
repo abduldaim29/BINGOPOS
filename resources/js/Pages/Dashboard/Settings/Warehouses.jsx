@@ -21,6 +21,7 @@ export default function Warehouses({ warehouses = [] }) {
 
     const [showForm, setShowForm] = useState(false);
     const [editing, setEditing] = useState(null);
+    const [deletingId, setDeletingId] = useState(null);
     const [form, setForm] = useState({
         code: "",
         name: "",
@@ -78,7 +79,23 @@ export default function Warehouses({ warehouses = [] }) {
 
     const handleDelete = (w) => {
         if (!confirm(`Delete warehouse ${w.name}?`)) return;
-        router.delete(route("settings.warehouses.destroy", w.id));
+        setDeletingId(w.id);
+        router.delete(route("settings.warehouses.destroy", w.id), {
+            preserveScroll: true,
+            onError: (requestErrors) => {
+                const message = Object.values(requestErrors).flat().join(" ");
+                toast.error(message || "Unable to delete this warehouse.");
+            },
+            onHttpException: (response) => {
+                toast.error(`Unable to delete this warehouse (server error ${response.status}).`);
+                return false;
+            },
+            onNetworkError: () => {
+                toast.error("The delete request could not reach the server. Please try again.");
+                return false;
+            },
+            onFinish: () => setDeletingId(null),
+        });
     };
 
     const typeLabel = (type) => {
@@ -165,9 +182,12 @@ export default function Warehouses({ warehouses = [] }) {
                                         {canDelete && w.type !== "main" && (
                                             <button
                                                 onClick={() => handleDelete(w)}
+                                                disabled={deletingId === w.id}
+                                                aria-label={`Delete warehouse ${w.name}`}
+                                                title={`Delete warehouse ${w.name}`}
                                                 className="p-2 rounded-lg text-danger-500 hover:bg-danger-50 dark:hover:bg-danger-900/20 transition-colors"
                                             >
-                                                <IconTrash size={18} />
+                                                <IconTrash size={18} className={deletingId === w.id ? "animate-pulse" : ""} />
                                             </button>
                                         )}
                                     </div>
@@ -211,6 +231,7 @@ export default function Warehouses({ warehouses = [] }) {
                                         onChange={(e) => setForm({ ...form, type: e.target.value })}
                                         className="w-full h-11 px-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-sm text-slate-700 dark:text-slate-200 focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500"
                                     >
+                                        <option value="main">Main</option>
                                         <option value="branch">Branch</option>
                                         <option value="warehouse">Warehouse</option>
                                     </select>

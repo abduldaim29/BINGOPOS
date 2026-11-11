@@ -1,11 +1,9 @@
 import { Link } from "@inertiajs/react";
 import {
 IconShoppingCart,
-IconStar,
 } from "@tabler/icons-react";
 
 const APP_NAME = "BINGOPOS";
-const GITHUB_URL = "https://github.com/abduldaim29/BINGOPOS";
 
 export const NAV_LINKS = [
 { label: "Features", href: "/features" },
@@ -50,19 +48,6 @@ return (
                 </div>
 
                 <div className="flex items-center gap-3">
-                    <a
-                        href={GITHUB_URL}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="hidden items-center gap-1.5 rounded-xl border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 transition-colors hover:border-primary-300 dark:border-slate-700 dark:text-slate-300 dark:hover:border-primary-700 sm:flex"
-                    >
-                        <IconStar
-                            size={15}
-                            className="text-amber-400"
-                        />
-                        Star on GitHub
-                    </a>
-
                     <Link
                         href="/login"
                         className="px-5 py-2 text-sm font-medium text-slate-700 transition-colors hover:text-primary-500 dark:text-slate-300"
@@ -70,14 +55,12 @@ return (
                         Log In
                     </Link>
 
-                    <a
-                        href={GITHUB_URL}
-                        target="_blank"
-                        rel="noopener noreferrer"
+                    <Link
+                        href="/setup"
                         className="rounded-xl bg-gradient-to-r from-primary-500 to-primary-600 px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-primary-500/25 transition-all hover:from-primary-600 hover:to-primary-700"
                     >
-                        View Source Code
-                    </a>
+                        Get Started
+                    </Link>
                 </div>
             </div>
         </nav>
@@ -104,7 +87,7 @@ return (
                         </div>
 
                         <div className="text-xs text-slate-500">
-                            An open-source POS solution for small and medium-sized businesses.
+                            A modern POS solution for small and medium-sized businesses.
                         </div>
                     </div>
                 </div>
@@ -138,23 +121,6 @@ return (
                         Contribute
                     </Link>
 
-                    <a
-                        href={GITHUB_URL}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="transition-colors hover:text-primary-500"
-                    >
-                        GitHub
-                    </a>
-
-                    <a
-                        href={`${GITHUB_URL}/blob/main/LICENSE`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="transition-colors hover:text-primary-500"
-                    >
-                        MIT License
-                    </a>
                 </div>
 
                 <p className="text-center text-sm text-slate-500">

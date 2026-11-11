@@ -346,21 +346,6 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Flash Messages - WhatsApp
-    |--------------------------------------------------------------------------
-    */
-    'whatsapp' => [
-        'test_sent' => 'Pesan test berhasil dikirim.',
-        'test_failed' => 'Gagal mengirim pesan test.',
-        'connected' => 'WhatsApp berhasil terhubung.',
-        'disconnected' => 'WhatsApp berhasil disconnected.',
-        'qr_generated' => 'QR code berhasil di-generate.',
-        'start_failed' => 'Gagal memulai WhatsApp service.',
-        'not_connected' => 'WhatsApp belum terhubung.',
-    ],
-
-    /*
-    |--------------------------------------------------------------------------
     | Flash Messages - Users & Roles
     |--------------------------------------------------------------------------
     */

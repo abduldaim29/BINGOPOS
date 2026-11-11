@@ -33,10 +33,6 @@ return [
         'callback_token' => env('XENDIT_CALLBACK_TOKEN'),
     ],
 
-    'whatsapp' => [
-        'service_url' => env('WA_SERVICE_URL', 'http://localhost:3001'),
-    ],
-
     'midtrans' => [
         'server_key' => env('MIDTRANS_SERVER_KEY'),
     ],

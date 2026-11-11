@@ -61,9 +61,15 @@ export default function Index({ areas }) {
     };
 
     const handleDelete = (area) => {
-        if (!confirm(`Delete area "${area.name}"?`)) return;
+        const tableCount = area.tables?.length ?? 0;
+        const warning =
+            tableCount > 0
+                ? `Delete area "${area.name}" and its ${tableCount} table${tableCount === 1 ? "" : "s"}? Any dine-in orders linked to those tables will also be deleted.`
+                : `Delete area "${area.name}"?`;
+
+        if (!confirm(warning)) return;
         router.delete(route("dine-areas.destroy", area.id), {
-            onSuccess: () => toast.success("Area deleted successfully."),
+            onSuccess: () => toast.success("Area and its tables deleted successfully."),
             onError: () => toast.error("Failed to delete area."),
         });
     };

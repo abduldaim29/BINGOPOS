@@ -12,6 +12,11 @@ export default function PriceListItems({ priceList, products }) {
 
     const filtered = products.filter(p => p.title.toLowerCase().includes(search.toLowerCase()) || (p.sku || "").includes(search));
     const existingProductIds = priceList.items.map(i => i.product_id);
+    const groupedItems = priceList.items.reduce((groups, item) => {
+        const category = item.product?.category?.name || "Uncategorized";
+        (groups[category] ??= []).push(item);
+        return groups;
+    }, {});
 
     const addPrice = (product) => {
         const price = prompt(`Price for ${product.title}:`, String(product.sell_price));
@@ -41,8 +46,8 @@ export default function PriceListItems({ priceList, products }) {
                     <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search products..." className="h-11 w-full rounded-xl border border-slate-200 px-4 text-sm mb-3" />
                     {search && filtered.filter(p => !existingProductIds.includes(p.id)).slice(0, 10).map(p => (
                         <button key={p.id} type="button" onClick={() => addPrice(p)} className="flex w-full items-center justify-between px-4 py-3 rounded-lg hover:bg-slate-50 text-sm transition">
-                            <span>{p.title} <span className="text-slate-400">({p.sku || "-"})</span></span>
-                            <span className="text-primary-500 font-medium">{formatPrice(p.sell_price)}</span>
+                            <span>{p.title} <span className="text-slate-400">({p.category?.name || "Uncategorized"} • {p.sku || "-"})</span></span>
+                            <span className="text-primary-500 font-medium">{formatCurrency(p.sell_price)}</span>
                         </button>
                     ))}
                 </div>
@@ -50,15 +55,22 @@ export default function PriceListItems({ priceList, products }) {
                 <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden">
                     {priceList.items.length > 0 ? (
                         <div className="divide-y">
-                            {priceList.items.map(item => (
-                                <div key={item.id} className="p-4 flex items-center gap-4">
-                                    <div className="flex-1">
-                                        <p className="font-semibold">{item.product?.title || "-"}</p>
-                                        <p className="text-sm text-slate-500">{item.product?.sku || "-"} • Regular price: {formatPrice(item.product?.sell_price)}</p>
-                                    </div>
-                                    <span className="font-bold text-primary-600">{formatPrice(item.price)}</span>
-                                    <button onClick={() => removeItem(item)} className="p-2 rounded-lg text-danger-500 hover:bg-danger-50"><IconTrash size={18} /></button>
-                                </div>
+                            {Object.entries(groupedItems).sort(([a], [b]) => a.localeCompare(b)).map(([category, items]) => (
+                                <section key={category}>
+                                    <h2 className="bg-slate-50 px-4 py-2 text-sm font-semibold text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+                                        {category} <span className="font-normal text-slate-400">({items.length})</span>
+                                    </h2>
+                                    {items.map(item => (
+                                        <div key={item.id} className="p-4 flex items-center gap-4">
+                                            <div className="flex-1">
+                                                <p className="font-semibold">{item.product?.title || "-"}</p>
+                                                <p className="text-sm text-slate-500">{item.product?.sku || "-"} • Regular price: {formatCurrency(item.product?.sell_price)}</p>
+                                            </div>
+                                            <span className="font-bold text-primary-600">{formatCurrency(item.price)}</span>
+                                            <button onClick={() => removeItem(item)} className="p-2 rounded-lg text-danger-500 hover:bg-danger-50"><IconTrash size={18} /></button>
+                                        </div>
+                                    ))}
+                                </section>
                             ))}
                         </div>
                     ) : (

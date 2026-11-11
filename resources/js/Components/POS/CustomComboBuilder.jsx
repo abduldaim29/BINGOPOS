@@ -285,7 +285,7 @@ export default function CustomComboBuilder({ onBack, onSubmit, submitting = fals
                                         <div className="flex gap-3 p-3">
                                             <div className="h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-slate-100 dark:bg-slate-800">
                                                 {product.image ? (
-                                                    <img src={getProductImageUrl(product.image)} alt={product.title} className="h-full w-full object-cover" />
+                                                    <img src={getProductImageUrl(product.image, { thumbnail: true })} alt={product.title} className="h-full w-full object-cover" loading="lazy" decoding="async" />
                                                 ) : (
                                                     <div className="flex h-full items-center justify-center text-slate-400"><IconPhoto size={22} /></div>
                                                 )}

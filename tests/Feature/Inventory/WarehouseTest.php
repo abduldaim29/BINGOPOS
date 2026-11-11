@@ -4,6 +4,8 @@ namespace Tests\Feature\Inventory;
 
 use App\Models\Category;
 use App\Models\Product;
+use App\Models\SalesReturn;
+use App\Models\Transaction;
 use App\Models\User;
 use App\Models\Warehouse;
 use App\Services\CashierShiftService;
@@ -11,6 +13,7 @@ use Database\Seeders\PermissionSeeder;
 use Database\Seeders\RoleSeeder;
 use Database\Seeders\UserSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Str;
 use Tests\TestCase;
 
 class WarehouseTest extends TestCase
@@ -32,7 +35,7 @@ class WarehouseTest extends TestCase
         // Seed default warehouse
         $pusat = Warehouse::create([
             'code' => 'PUSAT',
-            'name' => 'Gudang Pusat',
+            'name' => 'Main Warehouse',
             'type' => 'main',
             'is_active' => true,
             'sort_order' => 0,
@@ -77,7 +80,7 @@ class WarehouseTest extends TestCase
         $response = $this->from(route('settings.warehouses.index'))
             ->post(route('settings.warehouses.store'), [
                 'code' => 'CABANG-A',
-                'name' => 'Cabang A',
+                'name' => 'Branch A',
                 'type' => 'branch',
                 'address' => 'Jl. Merdeka No. 1',
                 'phone' => '021-123456',
@@ -96,7 +99,7 @@ class WarehouseTest extends TestCase
         $this->from(route('settings.warehouses.index'))
             ->post(route('settings.warehouses.store'), [
                 'code' => 'CABANG-B',
-                'name' => 'Cabang B',
+                'name' => 'Branch B',
                 'type' => 'branch',
                 'sort_order' => 2,
             ]);
@@ -106,20 +109,72 @@ class WarehouseTest extends TestCase
         $this->assertEquals($productCount, $warehouse->products()->count());
     }
 
+    public function test_creating_a_main_warehouse_demotes_the_previous_main_warehouse()
+    {
+        $previousMain = Warehouse::where('code', 'PUSAT')->firstOrFail();
+
+        $this->from(route('settings.warehouses.index'))
+            ->post(route('settings.warehouses.store'), [
+                'code' => 'NEW-MAIN',
+                'name' => 'New Main Warehouse',
+                'type' => 'main',
+                'is_active' => true,
+                'sort_order' => 0,
+            ])
+            ->assertSessionHas('success');
+
+        $this->assertDatabaseHas('warehouses', [
+            'code' => 'NEW-MAIN',
+            'type' => 'main',
+        ]);
+        $this->assertDatabaseHas('warehouses', [
+            'id' => $previousMain->id,
+            'type' => 'branch',
+        ]);
+    }
+
     public function test_admin_can_update_warehouse()
     {
-        $warehouse = Warehouse::factory()->create(['code' => 'GUDANG-1', 'name' => 'Gudang 1']);
+        $warehouse = Warehouse::factory()->create(['code' => 'GUDANG-1', 'name' => 'Warehouse 1']);
 
         $this->from(route('settings.warehouses.index'))
             ->put(route('settings.warehouses.update', $warehouse->id), [
                 'code' => 'GUDANG-1',
-                'name' => 'Gudang 1 Updated',
+                'name' => 'Warehouse 1 Updated',
                 'type' => 'warehouse',
                 'sort_order' => 0,
                 'is_active' => true,
             ])->assertSessionHas('success');
 
-        $this->assertDatabaseHas('warehouses', ['name' => 'Gudang 1 Updated']);
+        $this->assertDatabaseHas('warehouses', ['name' => 'Warehouse 1 Updated']);
+    }
+
+    public function test_updating_a_warehouse_to_main_demotes_the_previous_main_warehouse()
+    {
+        $previousMain = Warehouse::where('code', 'PUSAT')->firstOrFail();
+        $selectedWarehouse = Warehouse::factory()->create([
+            'code' => 'NEW-MAIN',
+            'type' => 'branch',
+        ]);
+
+        $this->from(route('settings.warehouses.index'))
+            ->put(route('settings.warehouses.update', $selectedWarehouse), [
+                'code' => $selectedWarehouse->code,
+                'name' => $selectedWarehouse->name,
+                'type' => 'main',
+                'sort_order' => 0,
+                'is_active' => true,
+            ])
+            ->assertSessionHas('success');
+
+        $this->assertDatabaseHas('warehouses', [
+            'id' => $selectedWarehouse->id,
+            'type' => 'main',
+        ]);
+        $this->assertDatabaseHas('warehouses', [
+            'id' => $previousMain->id,
+            'type' => 'branch',
+        ]);
     }
 
     public function test_cannot_delete_main_warehouse()
@@ -146,11 +201,47 @@ class WarehouseTest extends TestCase
     {
         $warehouse = Warehouse::factory()->create(['code' => 'KOSONG', 'type' => 'branch']);
 
-        $this->from(route('settings.warehouses.index'))
+        $response = $this->from(route('settings.warehouses.index'))
             ->delete(route('settings.warehouses.destroy', $warehouse->id))
             ->assertSessionHas('success');
 
         $this->assertDatabaseMissing('warehouses', ['id' => $warehouse->id]);
+        $response->assertRedirect(route('settings.warehouses.index'));
+
+        $this->get(route('settings.warehouses.index'))
+            ->assertInertia(fn ($page) => $page
+                ->where('flash.success', 'Warehouse deleted successfully.')
+                ->where('flash.error', null)
+            );
+    }
+
+    public function test_cannot_delete_warehouse_referenced_by_a_sales_return(): void
+    {
+        $warehouse = Warehouse::factory()->create(['code' => 'RETURN-WH', 'type' => 'branch']);
+        $transaction = Transaction::create([
+            'cashier_id' => $this->admin->id,
+            'invoice' => 'TRX-'.Str::upper(Str::random(10)),
+            'cash' => 10000,
+            'change' => 0,
+            'discount' => 0,
+            'grand_total' => 10000,
+        ]);
+        SalesReturn::create([
+            'code' => 'SR-'.Str::upper(Str::random(10)),
+            'transaction_id' => $transaction->id,
+            'warehouse_id' => $warehouse->id,
+            'status' => 'draft',
+            'return_type' => 'refund_cash',
+            'refund_amount' => 0,
+            'credited_amount' => 0,
+            'total_return_amount' => 0,
+        ]);
+
+        $this->from(route('settings.warehouses.index'))
+            ->delete(route('settings.warehouses.destroy', $warehouse->id))
+            ->assertSessionHas('error', 'A warehouse with operational history cannot be deleted. Deactivate the warehouse instead.');
+
+        $this->assertDatabaseHas('warehouses', ['id' => $warehouse->id]);
     }
 
     public function test_cannot_delete_warehouse_with_operational_history(): void

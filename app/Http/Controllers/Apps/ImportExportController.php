@@ -8,6 +8,10 @@ use App\Exports\TransactionsExport;
 use App\Http\Controllers\Controller;
 use App\Imports\CustomersImport;
 use App\Imports\ProductsImport;
+use App\Models\CashierShift;
+use App\Models\Product;
+use App\Models\ProductWarehouse;
+use App\Models\Warehouse;
 use Illuminate\Http\Request;
 use Maatwebsite\Excel\Concerns\FromArray;
 use Maatwebsite\Excel\Concerns\WithHeadings;
@@ -37,8 +41,9 @@ class ImportExportController extends Controller
                 'file' => ['required', 'file', 'mimes:xlsx,xls,csv', 'max:5120'],
             ]);
 
-            $import = new ProductsImport;
+            $import = new ProductsImport(app(\App\Services\CategoryMergeService::class));
             Excel::import($import, $request->file('file'));
+            $this->syncImportedProductsToDefaultWarehouse();
 
             $successCount = $import->getRowCount();
 
@@ -49,10 +54,45 @@ class ImportExportController extends Controller
                 return "Row {$failure->row()}: " . implode(', ', $failure->errors());
             })->implode('; ');
 
-            return back()->with('error', "Validation failed: {$errorMessages}");
+            return back()->withErrors([
+                'file' => "Validation failed: {$errorMessages}",
+            ]);
         } catch (\Exception $e) {
-            return back()->with('error', "Import failed: " . $e->getMessage());
+            return back()->withErrors([
+                'file' => "Import failed: " . $e->getMessage(),
+            ]);
         }
+    }
+
+    private function syncImportedProductsToDefaultWarehouse(): void
+    {
+        $warehouse = CashierShift::query()
+            ->where('user_id', auth()->id())
+            ->where('status', CashierShift::STATUS_OPEN)
+            ->latest('opened_at')
+            ->with('warehouse')
+            ->first()
+            ?->warehouse;
+
+        $warehouse ??= Warehouse::active()
+            ->where('type', 'main')
+            ->orderBy('sort_order')
+            ->orderBy('code')
+            ->first()
+            ?? Warehouse::active()->orderBy('sort_order')->orderBy('code')->first();
+
+        if (! $warehouse) {
+            return;
+        }
+
+        Product::query()
+            ->whereDoesntHave('warehouses')
+            ->each(function (Product $product) use ($warehouse): void {
+                ProductWarehouse::updateOrCreate(
+                    ['product_id' => $product->id, 'warehouse_id' => $warehouse->id],
+                    ['stock' => (int) $product->stock]
+                );
+            });
     }
 
     public function importCustomers(Request $request)
@@ -70,7 +110,7 @@ class ImportExportController extends Controller
     public function downloadTemplate(string $type)
     {
         $headings = match ($type) {
-            'products' => ['Category', 'Sub Category', 'Product Image', 'Product Name', 'Description', 'Purchase Price', 'Selling Price', 'Stock', 'Minimum Stock', 'Maximum Stock', 'Units'],
+            'products' => ['Barcode', 'SKU', 'Name', 'Description', 'Category', 'Purchase Price', 'Selling Price', 'Stock', 'Minimum Stock', 'Maximum Stock', 'Tax Type', 'Tax Rate', 'Image URL'],
             'customers' => ['name', 'phone', 'address'],
             default => abort(404),
         };

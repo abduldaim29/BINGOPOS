@@ -174,10 +174,13 @@ export default function SearchBar({
                                         {product.image ? (
                                             <img
                                                 src={getProductImageUrl(
-                                                    product.image
+                                                    product.image,
+                                                    { thumbnail: true }
                                                 )}
                                                 alt={product.title}
                                                 className="w-full h-full object-cover"
+                                                loading="lazy"
+                                                decoding="async"
                                             />
                                         ) : (
                                             <div className="w-full h-full flex items-center justify-center">
@@ -195,8 +198,10 @@ export default function SearchBar({
                                             {product.title}
                                         </p>
                                         <p className="text-xs text-slate-500 dark:text-slate-400">
-                                            {product.barcode} • Stock:{" "}
-                                            {product.stock}
+                                            {product.barcode} •{" "}
+                                            {product.is_live_cooking
+                                                ? "Made to order"
+                                                : `Stock: ${product.stock}`}
                                         </p>
                                     </div>
 
@@ -205,7 +210,7 @@ export default function SearchBar({
                                         <p className="text-sm font-semibold text-primary-600 dark:text-primary-400">
                                             {formatCurrency(product.sell_price)}
                                         </p>
-                                        {product.stock <= 0 && (
+                                        {product.stock <= 0 && !product.is_live_cooking && (
                                             <span className="text-xs text-danger-500 font-medium">
                                                 Out of Stock
                                             </span>

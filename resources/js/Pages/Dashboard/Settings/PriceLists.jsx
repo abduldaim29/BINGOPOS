@@ -1,26 +1,35 @@
 import React, { useState } from "react";
 import { Head, Link, router, usePage } from "@inertiajs/react";
 import DashboardLayout from "@/Layouts/DashboardLayout";
-import { IconListDetails, IconPlus, IconPencil, IconTrash, IconEye } from "@tabler/icons-react";
+import { IconListDetails, IconPlus, IconPencil, IconArchive, IconEye } from "@tabler/icons-react";
 import toast from "react-hot-toast";
 
 export default function PriceLists({ priceLists }) {
     const { flash } = usePage().props;
     const [showForm, setShowForm] = useState(false);
     const [editing, setEditing] = useState(null);
-    const [form, setForm] = useState({ name: "", slug: "", customer_scope: "registered", notes: "", priority: 0 });
+    const emptyForm = {
+        name: "",
+        slug: "",
+        customer_scope: "registered",
+        notes: "",
+        priority: 0,
+        include_all_products: true,
+        is_active: true,
+    };
+    const [form, setForm] = useState(emptyForm);
 
     if (flash?.success) toast.success(flash.success);
 
     const resetForm = () => {
-        setForm({ name: "", slug: "", customer_scope: "registered", notes: "", priority: 0 });
+        setForm(emptyForm);
         setEditing(null);
         setShowForm(false);
     };
 
     const openEdit = (pl) => {
         setEditing(pl);
-        setForm({ name: pl.name, slug: pl.slug, customer_scope: pl.customer_scope, notes: pl.notes || "", priority: pl.priority });
+        setForm({ ...emptyForm, name: pl.name, slug: pl.slug, customer_scope: pl.customer_scope, notes: pl.notes || "", priority: pl.priority, include_all_products: false, is_active: pl.is_active });
         setShowForm(true);
     };
 
@@ -34,7 +43,7 @@ export default function PriceLists({ priceLists }) {
     };
 
     const handleDelete = (pl) => {
-        if (!confirm(`Delete price list ${pl.name}?`)) return;
+        if (!confirm(`Deactivate price list ${pl.name}? Its transaction history will be preserved.`)) return;
         router.delete(route("price-lists.destroy", pl.id));
     };
 
@@ -91,6 +100,26 @@ export default function PriceLists({ priceLists }) {
                                 <label className="block text-sm font-medium mb-1">Notes</label>
                                 <textarea value={form.notes} onChange={e => setForm({...form, notes: e.target.value})} className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm" rows={2} />
                             </div>
+                            {editing && (
+                                <label className="flex items-center gap-2 text-sm">
+                                    <input type="checkbox" checked={form.is_active} onChange={e => setForm({ ...form, is_active: e.target.checked })} className="rounded border-slate-300 text-primary-500 focus:ring-primary-500" />
+                                    Price list active
+                                </label>
+                            )}
+                            {!editing && (
+                                <label className="flex items-start gap-3 rounded-xl border border-slate-200 p-3 text-sm dark:border-slate-700">
+                                    <input
+                                        type="checkbox"
+                                        checked={form.include_all_products}
+                                        onChange={e => setForm({ ...form, include_all_products: e.target.checked })}
+                                        className="mt-0.5 rounded border-slate-300 text-primary-500 focus:ring-primary-500"
+                                    />
+                                    <span>
+                                        <span className="block font-medium">Fetch all products by category</span>
+                                        <span className="text-xs text-slate-500">Adds every active product, grouped by its category, using its current selling price as the starting price. Replaces items in an existing list with the same slug.</span>
+                                    </span>
+                                </label>
+                            )}
                             <div className="flex gap-3">
                                 <button type="submit" className="px-4 py-2 rounded-xl bg-primary-500 text-white text-sm font-medium">{editing ? "Update" : "Save"}</button>
                                 <button type="button" onClick={resetForm} className="px-4 py-2 rounded-xl border text-sm font-medium">Cancel</button>
@@ -105,12 +134,12 @@ export default function PriceLists({ priceLists }) {
                             {priceLists.map(pl => (
                                 <div key={pl.id} className="p-4 flex items-center gap-4">
                                     <div className="flex-1">
-                                        <p className="font-semibold">{pl.name} <span className="text-xs text-slate-400">({pl.slug})</span></p>
+                                        <p className="font-semibold">{pl.name} <span className="text-xs text-slate-400">({pl.slug})</span> <span className={`rounded px-2 py-0.5 text-xs ${pl.is_active ? "bg-success-100 text-success-700" : "bg-slate-100 text-slate-500"}`}>{pl.is_active ? "Active" : "Inactive"}</span></p>
                                         <p className="text-sm text-slate-500">{scopeLabel[pl.customer_scope] || pl.customer_scope} • {pl.items_count} products • Priority {pl.priority}</p>
                                     </div>
                                     <Link href={route("price-lists.show", pl.id)} className="p-2 rounded-lg text-slate-500 hover:bg-slate-100"><IconEye size={18} /></Link>
                                     <button onClick={() => openEdit(pl)} className="p-2 rounded-lg text-slate-500 hover:bg-slate-100"><IconPencil size={18} /></button>
-                                    <button onClick={() => handleDelete(pl)} className="p-2 rounded-lg text-danger-500 hover:bg-danger-50"><IconTrash size={18} /></button>
+                                    {pl.is_active && <button title="Deactivate price list" onClick={() => handleDelete(pl)} className="p-2 rounded-lg text-amber-600 hover:bg-amber-50"><IconArchive size={18} /></button>}
                                 </div>
                             ))}
                         </div>

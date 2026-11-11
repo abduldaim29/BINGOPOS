@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useState } from "react";
 import { Head, useForm } from "@inertiajs/react";
 import Button from "@/Components/Dashboard/Button";
 import { IconArrowLeft, IconBroadcast, IconDeviceFloppy } from "@tabler/icons-react";
@@ -8,7 +8,7 @@ export default function Form({ mode = "create", campaign = null, audienceOptions
     const { data, setData, post, put, processing } = useForm({
         name: campaign?.name ?? "",
         type: campaign?.type ?? "promo_broadcast",
-        channel: campaign?.channel ?? "whatsapp_link",
+        channel: "internal",
         message_template: campaign?.message_template ?? "Hello {{name}}, we have a special promotion for you.",
         save_as_draft: true,
         audience_filters: {
@@ -50,7 +50,7 @@ export default function Form({ mode = "create", campaign = null, audienceOptions
                         {isEdit ? "Edit CRM Campaign" : "Create CRM Campaign"}
                     </h1>
                     <p className="text-sm text-slate-500 dark:text-slate-400">
-                        Build an audience from segments and prepare WhatsApp/manual follow-ups.
+                        Build an audience from segments and prepare internal/manual follow-ups.
                     </p>
                 </div>
 
@@ -85,17 +85,6 @@ export default function Form({ mode = "create", campaign = null, audienceOptions
                                     <option value="promo_broadcast">Promo Broadcast</option>
                                     <option value="due_date_reminder">Due Date Reminder</option>
                                     <option value="repeat_order_reminder">Repeat Order Reminder</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label className="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-300">Channel</label>
-                                <select
-                                    value={data.channel}
-                                    onChange={(event) => setData("channel", event.target.value)}
-                                    className="h-11 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
-                                >
-                                    <option value="internal">Internal</option>
-                                    <option value="whatsapp_link">WhatsApp Link</option>
                                 </select>
                             </div>
                             <label className="inline-flex items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 dark:border-slate-700 dark:bg-slate-800">

@@ -16,6 +16,7 @@ use App\Http\Controllers\Apps\DiscountApprovalController;
 use App\Http\Controllers\Apps\GoodsReceivingController;
 use App\Http\Controllers\Apps\ImportExportController;
 use App\Http\Controllers\Apps\MemberController;
+use App\Http\Controllers\Apps\ManualSalesReportController;
 use App\Http\Controllers\Apps\OutletController;
 use App\Http\Controllers\Apps\PayableController;
 use App\Http\Controllers\Apps\PaymentSettingController;
@@ -41,6 +42,7 @@ use App\Http\Controllers\Apps\UnitController;
 use App\Http\Controllers\Apps\WarehouseController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DineMenuController;
+use App\Http\Controllers\DigitalMenuController;
 use App\Http\Controllers\DineOrderController;
 use App\Http\Controllers\DocumentController;
 use App\Http\Controllers\LanguageController;
@@ -48,6 +50,7 @@ use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\OutletContextController;
 use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\PublicImageController;
 use App\Http\Controllers\PublicPortalController;
 use App\Http\Controllers\RegionController;
 use App\Http\Controllers\Reports\AdvancedSalesInsightsController;
@@ -93,6 +96,10 @@ Route::get('/features', fn () => Inertia::render('Public/Features'))
 Route::get('/documentation', fn () => Inertia::render('Public/Documentation'))
     ->name('documentation.index');
 
+Route::get('/storage/{path}', [PublicImageController::class, 'show'])
+    ->where('path', '.*')
+    ->name('images.show');
+
 Route::get('/roadmap', fn () => Inertia::render('Public/Roadmap'))
     ->name('roadmap.index');
 
@@ -125,6 +132,11 @@ Route::post('/portal/receivables/{receivable}/pay', [PublicPortalController::cla
 // Language switching
 Route::post('/language/switch', [LanguageController::class, 'switch'])
     ->name('language.switch');
+
+// Compatibility alias for cached product edit bundles.
+Route::get('/products/{product}/recipe-cost', [ProductController::class, 'recipeCost'])
+    ->middleware(['auth', 'verified', 'permission:products-access'])
+    ->name('products.recipe-cost.compatibility');
 
 Route::group(['prefix' => 'dashboard', 'middleware' => ['auth', 'verified']], function () {
     Route::post('/outlet', [OutletContextController::class, 'switch'])
@@ -209,6 +221,9 @@ Route::group(['prefix' => 'dashboard', 'middleware' => ['auth', 'verified']], fu
         ->middlewareFor(['create', 'store'], 'permission:products-create')
         ->middlewareFor(['edit', 'update'], 'permission:products-edit')
         ->middlewareFor('destroy', 'permission:products-delete');
+    Route::get('/products/{product}/recipe-cost', [ProductController::class, 'recipeCost'])
+        ->middleware('permission:products-access')
+        ->name('products.recipe-cost');
     Route::patch('/products/{id}/restore', [ProductController::class, 'restore'])
         ->middleware('permission:products-delete')
         ->name('products.restore');
@@ -216,9 +231,15 @@ Route::group(['prefix' => 'dashboard', 'middleware' => ['auth', 'verified']], fu
         ->middleware('permission:products-delete')
         ->name('products.forceDestroy');
 
+    Route::get('recipes/template', [RecipeController::class, 'downloadTemplate'])
+        ->middleware('permission:recipes-create')
+        ->name('recipes.template');
+    Route::post('recipes/import-preview', [RecipeController::class, 'previewImport'])
+        ->middleware('permission:recipes-create')
+        ->name('recipes.import-preview');
     Route::resource('recipes', RecipeController::class)
-        ->except(['show'])
         ->middlewareFor('index', 'permission:recipes-access')
+        ->middlewareFor('show', 'permission:recipes-access')
         ->middlewareFor(['create', 'store'], 'permission:recipes-create')
         ->middlewareFor(['edit', 'update'], 'permission:recipes-edit')
         ->middlewareFor('destroy', 'permission:recipes-delete');
@@ -254,6 +275,7 @@ Route::group(['prefix' => 'dashboard', 'middleware' => ['auth', 'verified']], fu
         ->name('import.customers');
 
     Route::get('/import/template/{type}', [ImportExportController::class, 'downloadTemplate'])
+        ->middleware('permission:products-import')
         ->name('import.template');
 
     // Pricing rules
@@ -499,11 +521,26 @@ Route::group(['prefix' => 'dashboard', 'middleware' => ['auth', 'verified']], fu
         ->middleware('permission:transactions-access')
         ->name('transactions.history');
 
-    Route::post('/transactions/{transaction}/share-campaign', [CrmCampaignController::class, 'shareTransaction'])
-        ->middleware('permission:crm-campaigns-create')
-        ->name('transactions.share-campaign');
+    // Sales reports and returns
+    Route::get('/sales-report/manual-reports/create', [ManualSalesReportController::class, 'create'])
+        ->middleware('permission:sales-returns-create')
+        ->name('manual-sales-reports.create');
 
-    // Sales returns
+    Route::post('/sales-report/manual-reports', [ManualSalesReportController::class, 'store'])
+        ->middleware('permission:sales-returns-create')
+        ->name('manual-sales-reports.store');
+
+    Route::get('/sales-report/manual-reports/{manualSalesReport}/print', [ManualSalesReportController::class, 'print'])
+        ->middleware('permission:sales-returns-access')
+        ->name('manual-sales-reports.print');
+
+    Route::get('/manual-sales-reports/create', fn () => to_route('manual-sales-reports.create'))
+        ->middleware('permission:sales-returns-create');
+    Route::post('/manual-sales-reports', [ManualSalesReportController::class, 'store'])
+        ->middleware('permission:sales-returns-create');
+    Route::get('/manual-sales-reports/{manualSalesReport}/print', fn (string $manualSalesReport) => to_route('manual-sales-reports.print', $manualSalesReport))
+        ->middleware('permission:sales-returns-access');
+
     Route::get('/transactions/history/{transaction}/sales-return/create', [SalesReturnController::class, 'create'])
         ->middleware('permission:sales-returns-create')
         ->name('sales-returns.create');
@@ -512,9 +549,21 @@ Route::group(['prefix' => 'dashboard', 'middleware' => ['auth', 'verified']], fu
         ->middleware('permission:sales-returns-create')
         ->name('sales-returns.store');
 
-    Route::get('/sales-returns', [SalesReturnController::class, 'index'])
+    Route::get('/sales-report', [SalesReturnController::class, 'index'])
         ->middleware('permission:sales-returns-access')
         ->name('sales-returns.index');
+
+    Route::get('/sales-report/daily-sales/print', [SalesReturnController::class, 'printDailySales'])
+        ->middleware('permission:sales-returns-access')
+        ->name('sales-returns.daily-sales.print');
+
+    Route::get('/sales-returns', fn () => redirect()->route('sales-returns.index', request()->query(), 301));
+    Route::get('/sales-returns/daily-sales/print', fn () => redirect()->route('sales-returns.daily-sales.print', request()->query(), 301))
+        ->middleware('permission:sales-returns-access');
+
+    Route::get('/sales-returns/{salesReturn}/print', [SalesReturnController::class, 'printInvoice'])
+        ->middleware('permission:sales-returns-access')
+        ->name('sales-returns.print');
 
     Route::get('/sales-returns/{salesReturn}', [SalesReturnController::class, 'show'])
         ->middleware('permission:sales-returns-access')
@@ -682,10 +731,6 @@ Route::group(['prefix' => 'dashboard', 'middleware' => ['auth', 'verified']], fu
         ->middleware('permission:receivables-pay')
         ->name('receivables.pay');
 
-    Route::post('/receivables/{receivable}/share-campaign', [CrmCampaignController::class, 'shareReceivable'])
-        ->middleware('permission:crm-campaigns-create')
-        ->name('receivables.share-campaign');
-
     // Suppliers and payables
     Route::get('/suppliers', [SupplierController::class, 'index'])
         ->middleware('permission:suppliers-access')
@@ -793,31 +838,6 @@ Route::group(['prefix' => 'dashboard', 'middleware' => ['auth', 'verified']], fu
     Route::post('/settings/loyalty', [SettingController::class, 'updateLoyalty'])
         ->middleware('permission:dashboard-access')
         ->name('settings.loyalty.update');
-
-    // WhatsApp settings
-    Route::get('/settings/whatsapp', [SettingController::class, 'whatsapp'])
-        ->middleware('permission:whatsapp-settings-access')
-        ->name('settings.whatsapp');
-
-    Route::post('/settings/whatsapp', [SettingController::class, 'updateWhatsapp'])
-        ->middleware('permission:whatsapp-settings-update')
-        ->name('settings.whatsapp.update');
-
-    Route::post('/settings/whatsapp/test', [SettingController::class, 'testWhatsapp'])
-        ->middleware('permission:whatsapp-settings-update')
-        ->name('settings.whatsapp.test');
-
-    Route::post('/settings/whatsapp/start', [SettingController::class, 'startWhatsapp'])
-        ->middleware('permission:whatsapp-settings-update')
-        ->name('settings.whatsapp.start');
-
-    Route::get('/settings/whatsapp/status', [SettingController::class, 'whatsappStatus'])
-        ->middleware('permission:whatsapp-settings-access')
-        ->name('settings.whatsapp.status');
-
-    Route::post('/settings/whatsapp/disconnect', [SettingController::class, 'disconnectWhatsapp'])
-        ->middleware('permission:whatsapp-settings-update')
-        ->name('settings.whatsapp.disconnect');
 
     // Bank accounts
     Route::get('/settings/bank-accounts', [BankAccountController::class, 'index'])
@@ -990,6 +1010,9 @@ Route::group(['prefix' => 'dashboard', 'middleware' => ['auth', 'verified']], fu
 });
 
 // Public dine-in routes
+Route::get('/menu', [DigitalMenuController::class, 'index'])
+    ->name('digital-menu');
+
 Route::get('/dine/{token}', [DineMenuController::class, 'show'])
     ->name('dine.menu');
 

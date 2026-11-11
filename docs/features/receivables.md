@@ -15,7 +15,6 @@ Records customer receivables arising from `pay_later` transactions and provides 
 - Statuses: `unpaid`, `partial`, `paid`, `overdue`.
 - Receivable PDF.
 - Due-date and overdue reminders through CRM automation.
-- Direct delivery via WhatsApp when the service is enabled and the device is connected.
 
 ## Pages and Routes
 
@@ -53,7 +52,7 @@ Records customer receivables arising from `pay_later` transactions and provides 
 
 Reminders can be created for upcoming due dates, overdue payments, and repeat orders. The scheduler command periodically generates reminder tasks.
 
-Delivery can use the WhatsApp Gateway when `wa_enabled=true` and the device is connected. Otherwise, campaigns can be handled through WhatsApp links or manual follow-ups.
+Campaign reminders are queued for manual follow-up and can be tracked from the CRM campaign screens.
 
 There is no separate approval workflow for recording receivable payments.
 

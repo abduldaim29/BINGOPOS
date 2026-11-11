@@ -25,10 +25,9 @@ const releases = [
     },
     {
         version: "v2.1",
-        tag: "Communication",
+        tag: "CRM Improvements",
         date: "2025",
         items: [
-            "WhatsApp Gateway using whatsapp-web.js",
             "Centralized application versioning (APP_VERSION)",
             "Low-stock and aging notifications",
         ],

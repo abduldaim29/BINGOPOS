@@ -59,7 +59,8 @@ class AuthenticationTest extends TestCase
 
     public function test_users_can_logout(): void
     {
-        $user = User::factory()->create();
+        /** @var User $user */
+        $user = User::factory()->createOne();
 
         $response = $this->actingAs($user)->post('/logout');
 
@@ -113,7 +114,8 @@ class AuthenticationTest extends TestCase
         config()->set('app.url', 'http://localhost');
         config()->set('session.secure', false);
 
-        $user = User::factory()->create();
+        /** @var User $user */
+        $user = User::factory()->createOne();
         $user->assignRole(Role::create([
             'name' => 'super-admin',
             'guard_name' => 'web',
@@ -130,7 +132,8 @@ class AuthenticationTest extends TestCase
 
     public function test_absolute_session_lifetime_forces_reauthentication(): void
     {
-        $user = User::factory()->create();
+        /** @var User $user */
+        $user = User::factory()->createOne();
 
         $response = $this
             ->withSession([

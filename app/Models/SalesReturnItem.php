@@ -18,6 +18,9 @@ class SalesReturnItem extends Model
         'qty_return',
         'unit_price',
         'subtotal',
+        'cost_total',
+        'net_sales_total',
+        'tax_refund_total',
         'return_reason',
         'restock_to_inventory',
     ];
@@ -31,6 +34,9 @@ class SalesReturnItem extends Model
         'qty_return' => 'integer',
         'unit_price' => 'integer',
         'subtotal' => 'integer',
+        'cost_total' => 'integer',
+        'net_sales_total' => 'integer',
+        'tax_refund_total' => 'integer',
         'restock_to_inventory' => 'boolean',
     ];
 

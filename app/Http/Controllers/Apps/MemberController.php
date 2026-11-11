@@ -106,7 +106,7 @@ class MemberController extends Controller
     public function create()
     {
         return Inertia::render('Dashboard/Members/Create', [
-            'provinces' => Province::select('code', 'name')->orderBy('name')->get(),
+            'provinces' => $this->provinceOptions(),
             'tierOptions' => $this->loyaltyService->tierOptions(),
         ]);
     }
@@ -120,7 +120,7 @@ class MemberController extends Controller
             ...$this->memberPayloadFromRequest($request),
             ...$regionPayload,
             'name' => $validated['name'],
-            'no_telp' => $validated['no_telp'],
+            'no_telp' => $validated['no_telp'] ?? null,
             'address' => $validated['address'],
         ]);
 
@@ -172,7 +172,7 @@ class MemberController extends Controller
         return Inertia::render('Dashboard/Members/Edit', [
             'member' => $member,
             'tierOptions' => $this->loyaltyService->tierOptions(),
-            'provinces' => Province::select('code', 'name')->orderBy('name')->get(),
+            'provinces' => $this->provinceOptions(),
             'regencies' => $member->province_id
                 ? City::where('province_code', $member->province_id)->select('code', 'name')->orderBy('name')->get()
                 : [],
@@ -194,7 +194,7 @@ class MemberController extends Controller
             ...$this->memberPayloadFromRequest($request, $member),
             ...$regionPayload,
             'name' => $validated['name'],
-            'no_telp' => $validated['no_telp'],
+            'no_telp' => $validated['no_telp'] ?? null,
             'address' => $validated['address'],
         ]);
 
@@ -205,34 +205,88 @@ class MemberController extends Controller
     {
         return $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'no_telp' => ['required', 'string', Rule::unique('customers', 'no_telp')->ignore($customer?->id)],
-            'address' => ['required', 'string'],
+            'is_walkin' => ['nullable', 'boolean'],
+            'no_telp' => [
+                'nullable',
+                'string',
+                Rule::requiredIf(fn (): bool => ! ($request->boolean('is_walkin') || $this->isWalkInCustomer($customer))),
+                Rule::unique('customers', 'no_telp')->ignore($customer?->id),
+            ],
+            'address' => ['nullable', 'string'],
             'is_loyalty_member' => ['nullable', 'boolean'],
             'loyalty_tier' => ['nullable', 'string', Rule::in(array_keys($this->loyaltyService->tiers()))],
-            'province_id' => ['required', 'string'],
-            'regency_id' => ['required', 'string'],
-            'district_id' => ['required', 'string'],
-            'village_id' => ['required', 'string'],
+            'province_id' => ['nullable', 'string'],
+            'regency_id' => ['nullable', 'string'],
+            'district_id' => ['nullable', 'string'],
+            'village_id' => ['nullable', 'string'],
         ]);
     }
 
     private function resolveRegionPayload(array $validated): array
     {
-        $province = Province::where('code', $validated['province_id'])->first();
-        $regency = City::where('code', $validated['regency_id'])->first();
-        $district = District::where('code', $validated['district_id'])->first();
-        $village = Village::where('code', $validated['village_id'])->first();
+        $provinceId = $validated['province_id'] ?? null;
+        $regencyId = $validated['regency_id'] ?? null;
+        $districtId = $validated['district_id'] ?? null;
+        $villageId = $validated['village_id'] ?? null;
+
+        if (! $provinceId) {
+            return [
+                'province_id' => null,
+                'province_name' => null,
+                'regency_id' => null,
+                'regency_name' => null,
+                'district_id' => null,
+                'district_name' => null,
+                'village_id' => null,
+                'village_name' => null,
+            ];
+        }
+
+        if (str_starts_with($provinceId, 'PK-')) {
+            $province = collect(config('pakistan_regions'))
+                ->firstWhere('code', $provinceId);
+
+            return [
+                'province_id' => $provinceId,
+                'province_name' => $province['name'] ?? $provinceId,
+                'regency_id' => $regencyId,
+                'regency_name' => $regencyId,
+                'district_id' => $districtId,
+                'district_name' => $districtId,
+                'village_id' => $villageId,
+                'village_name' => $villageId,
+            ];
+        }
+
+        $province = Province::where('code', $provinceId)->first();
+        $regency = $regencyId ? City::where('code', $regencyId)->first() : null;
+        $district = $districtId ? District::where('code', $districtId)->first() : null;
+        $village = $villageId ? Village::where('code', $villageId)->first() : null;
 
         return [
-            'province_id' => $validated['province_id'],
+            'province_id' => $provinceId,
             'province_name' => $province?->name,
-            'regency_id' => $validated['regency_id'],
+            'regency_id' => $regencyId,
             'regency_name' => $regency?->name,
-            'district_id' => $validated['district_id'],
+            'district_id' => $districtId,
             'district_name' => $district?->name,
-            'village_id' => $validated['village_id'],
+            'village_id' => $villageId,
             'village_name' => $village?->name,
         ];
+    }
+
+    private function provinceOptions(): array
+    {
+        return collect(config('pakistan_regions'))
+            ->concat(Province::select('code', 'name')->orderBy('name')->get())
+            ->values()
+            ->all();
+    }
+
+    private function isWalkInCustomer(?Customer $customer): bool
+    {
+        return (bool) ($customer?->is_walkin
+            || preg_match('/^walk[- ]in customer$/i', trim((string) $customer?->name)));
     }
 
     private function memberPayloadFromRequest(Request $request, ?Customer $customer = null): array

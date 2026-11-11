@@ -1,25 +1,25 @@
 # Contributing to Point of Sales
 
-Terima kasih sudah tertarik untuk berkontribusi! 🎉
+Thank you for your interest in contributing! 🎉
 
 ## Git Workflow
 
-Repo ini menggunakan **Git Flow** dengan branch sebagai berikut:
+This repository uses **Git Flow** with the following branches:
 
-| Branch | Fungsi |
+| Branch | Purpose |
 |--------|--------|
-| `main` | Production. Hanya diisi dari PR `development` |
-| `development` | Integrasi. Feature branch merge via PR |
-| `feature/*` | Kerja fitur. Branch dari `development`, PR ke `development` |
-| `fix/*` | Hotfix. Branch dari `main`, PR ke `main` + `development` |
-| `release/*` | Release candidate. Dari `development`, merge ke `main` |
+| `main` | Production. Updated only through PRs from `development` |
+| `development` | Integration. Feature branches are merged via PR |
+| `feature/*` | Feature work. Branch from `development`, then open a PR to `development` |
+| `fix/*` | Hotfix. Branch from `main`, then open PRs to `main` and `development` |
+| `release/*` | Release candidate. Branch from `development`, then merge into `main` |
 
-## Cara Berkontribusi
+## How to Contribute
 
-### 1. Clone & Setup
+### 1. Clone and Set Up
 
 ```bash
-git clone https://github.com/aryadwiputra/point-of-sales.git
+git clone https://github.com/abduldaim29/bingo_pos
 cd point-of-sales
 cp .env.example .env
 composer install && PUPPETEER_SKIP_DOWNLOAD=true npm install
@@ -27,33 +27,33 @@ php artisan key:generate
 php artisan migrate --seed
 php artisan storage:link
 composer run dev
-# Setelah server berjalan, buka http://localhost:8000.
-# Pada instalasi pertama, aplikasi otomatis mengarahkan ke /setup.
+# Once the server is running, open http://localhost:8000.
+# On the first installation, the application automatically redirects to /setup.
 ```
 
-### 2. Buat Branch Fitur
+### 2. Create a Feature Branch
 
 ```bash
 git checkout development
-git checkout -b feature/nama-fitur-anda
+git checkout -b feature/your-feature-name
 ```
 
-### 3. Kerja & Commit
+### 3. Work and Commit
 
-Gunakan **Conventional Commits**:
+Use **Conventional Commits**:
 
 ```
-feat: tambah fitur X
-fix: perbaiki bug Y
-docs: update dokumentasi Z
+feat: add feature X
+fix: fix bug Y
+docs: update documentation Z
 chore: update dependency
-refactor: refactor fungsi A
-test: tambah test untuk B
+refactor: refactor function A
+test: add tests for B
 ```
 
-### 4. Sebelum Pull Request
+### 4. Before Opening a Pull Request
 
-Pastikan semua lulus:
+Make sure all checks pass:
 
 ```bash
 vendor/bin/pint                    # PHP formatter
@@ -61,33 +61,33 @@ php artisan test                   # All tests pass
 npm run build                      # Production build OK
 ```
 
-### 5. Pull Request
+### 5. Open a Pull Request
 
-1. Push branch ke GitHub
-2. Buat PR ke branch `development`
-3. Deskripsikan perubahan:
-   - **Apa yang diubah**
-   - **Kenapa diubah**
-   - **Cara testing**
-4. Pastikan PR title mengikuti conventional commits
+1. Push your branch to GitHub
+2. Open a PR to the `development` branch
+3. Describe the changes:
+   - **What changed**
+   - **Why it changed**
+   - **How it was tested**
+4. Make sure the PR title follows Conventional Commits
 
-### 6. Setelah PR
+### 6. After Opening a PR
 
-- PR akan direview oleh maintainer
-- Jika ada perubahan yang diminta, push ke branch yang sama
-- Setelah approved, maintainer akan merge
+- The maintainer will review the PR
+- If changes are requested, push them to the same branch
+- Once approved, the maintainer will merge the PR
 
 ## Development Tips
 
-- Set `tax_rate=0` pada `Product::create` di test untuk menghindari perubahan grand_total
-- Jalankan `php artisan migrate` jika modul baru belum punya tabel
-- Baca `AGENTS.md` untuk informasi developer commands
-- Lihat `docs/` untuk dokumentasi fitur
+- Set `tax_rate=0` in `Product::create` within tests to avoid changing the grand total
+- Run `php artisan migrate` if a new module does not have its tables yet
+- Read `AGENTS.md` for developer command information
+- See `docs/` for feature documentation
 
-## Reporting Bugs
+## Report Bugs
 
-Buka issue baru di GitHub dengan template Bug Report.
+Open a new issue on GitHub using the Bug Report template.
 
-## Feature Request
+## Request a Feature
 
-Buka issue baru di GitHub dengan template Feature Request.
+Open a new issue on GitHub using the Feature Request template.

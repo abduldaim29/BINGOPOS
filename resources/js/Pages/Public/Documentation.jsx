@@ -11,8 +11,8 @@ const categories = [
         title: "Getting Started",
         docs: [
             { file: "getting-started.md", title: "Getting Started", desc: "Complete setup guide, from initial installation to logging in and accessing the dashboard." },
-            { file: "configuration.md", title: "Configuration", desc: "Environment settings, payment gateways, taxes, thermal printers, and WhatsApp integration." },
-            { file: "architecture-overview.md", title: "Architecture Overview", desc: "Code structure, service layer, middleware, and Node.js services." },
+            { file: "configuration.md", title: "Configuration", desc: "Environment settings, payment gateways, taxes, and thermal printers." },
+            { file: "architecture-overview.md", title: "Architecture Overview", desc: "Code structure, service layer, and middleware." },
             { file: "feature-index.md", title: "Feature Index", desc: "List of features, documentation, and their implementation status." },
             { file: "CHANGELOG.md", href: `${REPO_BASE}/CHANGELOG.md`, title: "Changelog", desc: "Application release history, including the latest version." },
         ],
@@ -64,7 +64,6 @@ const categories = [
             { file: "features/settings-payments.md", title: "Payment Settings", desc: "Configure Midtrans, Xendit, and bank accounts." },
             { file: "features/import-export.md", title: "Import & Export", desc: "Import and export products and customers using Excel." },
             { file: "features/reports-documents.md", title: "Reports & Documents", desc: "Generate reports and PDF documents." },
-            { file: "features/whatsapp-gateway.md", title: "WhatsApp Gateway", desc: "WhatsApp integration using whatsapp-web.js." },
             { file: "features/discount-approval.md", title: "Discount Approval", desc: "Manage discount approvals, permissions, and audit trails." },
             { file: "features/app-versioning.md", title: "Application Versioning", desc: "Configure APP_VERSION, user interface versioning, and release policies." },
         ],

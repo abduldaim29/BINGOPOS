@@ -4,15 +4,19 @@ namespace App\Imports;
 
 use App\Models\Category;
 use App\Models\Product;
+use App\Services\CategoryMergeService;
 use Maatwebsite\Excel\Concerns\ToModel;
 use Maatwebsite\Excel\Concerns\WithBatchInserts;
 use Maatwebsite\Excel\Concerns\WithChunkReading;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
+use Maatwebsite\Excel\Concerns\WithUpserts;
 use Maatwebsite\Excel\Concerns\WithValidation;
 
-class ProductsImport implements ToModel, WithBatchInserts, WithChunkReading, WithHeadingRow, WithValidation
+class ProductsImport implements ToModel, WithBatchInserts, WithChunkReading, WithHeadingRow, WithUpserts, WithValidation
 {
     private int $rowCount = 0;
+
+    public function __construct(private readonly CategoryMergeService $categories) {}
 
     public function model(array $row)
     {
@@ -20,45 +24,56 @@ class ProductsImport implements ToModel, WithBatchInserts, WithChunkReading, Wit
 
         // Handle both naming conventions: 'category' and 'Category'
         $categoryName = trim($row['category'] ?? $row['Category'] ?? 'General');
-        $category = Category::firstOrCreate(
-            ['name' => $categoryName],
-            ['description' => '', 'image' => 'default.png']
-        );
+        $category = $this->categories->findOrCreate($categoryName);
 
         // Handle both naming conventions: 'barcode' and 'Barcode'
-        $barcode = (string) ($row['barcode'] ?? $row['Barcode'] ?? '');
+        $barcode = trim((string) ($row['barcode'] ?? $row['Barcode'] ?? ''));
         if (empty($barcode)) {
-            // Generate barcode if not provided
-            $barcode = '20' . substr((string) time(), -10) . str_pad((string) rand(0, 9999), 4, '0', STR_PAD_LEFT);
+            do {
+                $barcode = '20' . substr((string) time(), -10) . str_pad((string) random_int(0, 9999), 4, '0', STR_PAD_LEFT);
+            } while (Product::where('barcode', $barcode)->exists());
         }
+        $existingProduct = Product::where('barcode', $barcode)->first();
 
         // Handle both naming conventions for other fields
-        $sku = $row['sku'] ?? $row['SKU'] ?? $barcode;
-        $name = $row['name'] ?? $row['Product Name'] ?? $row['Name'] ?? '';
-        $description = $row['description'] ?? $row['Description'] ?? '';
-        $purchasePrice = $row['purchase_price'] ?? $row['Purchase Price'] ?? 0;
-        $sellingPrice = $row['selling_price'] ?? $row['Selling Price'] ?? 0;
-        $stock = $row['stock'] ?? $row['Stock'] ?? 0;
-        $minStock = $row['min_stock'] ?? $row['Minimum Stock'] ?? 0;
-        $maxStock = $row['max_stock'] ?? $row['Maximum Stock'] ?? 0;
+        $sku = trim((string) ($row['sku'] ?? $row['SKU'] ?? ''));
+        $sku = $sku !== '' ? $sku : $barcode;
+        $name = $row['name'] ?? $row['Product Name'] ?? $row['Name'] ?? $existingProduct?->title ?? '';
+        $description = $row['description'] ?? $row['Description'] ?? $existingProduct?->description ?? '';
+        $purchasePrice = $row['purchase_price'] ?? $row['Purchase Price'] ?? $existingProduct?->buy_price ?? 0;
+        $sellingPrice = $row['selling_price'] ?? $row['Selling Price'] ?? $existingProduct?->sell_price ?? 0;
+        $stock = $row['stock'] ?? $row['Stock'] ?? $existingProduct?->stock ?? 0;
+        $minStock = $row['min_stock'] ?? $row['Minimum Stock'] ?? $existingProduct?->min_stock ?? 0;
+        $maxStock = $row['max_stock'] ?? $row['Maximum Stock'] ?? $existingProduct?->max_stock ?? 0;
+        $image = trim((string) (
+            $row['image_url']
+            ?? $row['Image URL']
+            ?? $row['product_image']
+            ?? $row['Product Image']
+            ?? $row['image']
+            ?? ''
+        ));
+        if ($image === '') {
+            $image = 'default.png';
+        }
 
-        return Product::updateOrCreate(
-            ['barcode' => $barcode],
-            [
-                'sku' => $sku,
-                'title' => $name,
-                'description' => $description,
-                'category_id' => $category->id,
-                'buy_price' => (int) $purchasePrice,
-                'sell_price' => (int) $sellingPrice,
-                'stock' => (int) $stock,
-                'min_stock' => (int) $minStock,
-                'max_stock' => (int) $maxStock,
-                'tax_type' => $row['tax_type'] ?? $row['Tax Type'] ?? 'exclusive',
-                'tax_rate' => (float) ($row['tax_rate'] ?? $row['Tax Rate'] ?? 18.00),
-                'image' => 'default.png', // Use default image since import doesn't handle base64 images
-            ]
-        );
+        return new Product([
+            'barcode' => $barcode,
+            'sku' => $sku,
+            'title' => $name,
+            'description' => $description,
+            'category_id' => $categoryName !== 'General'
+                ? $category->id
+                : ($existingProduct?->category_id ?? $category->id),
+            'buy_price' => (float) $purchasePrice,
+            'sell_price' => (float) $sellingPrice,
+            'stock' => (int) $stock,
+            'min_stock' => (int) $minStock,
+            'max_stock' => (int) $maxStock,
+            'tax_type' => $row['tax_type'] ?? $row['Tax Type'] ?? $existingProduct?->tax_type ?? 'exclusive',
+            'tax_rate' => (float) ($row['tax_rate'] ?? $row['Tax Rate'] ?? $existingProduct?->tax_rate ?? 18.00),
+            'image' => $image !== 'default.png' ? $image : ($existingProduct?->image ?? $image),
+        ]);
     }
 
     public function rules(): array
@@ -67,6 +82,7 @@ class ProductsImport implements ToModel, WithBatchInserts, WithChunkReading, Wit
             'name' => ['required', 'string', 'max:255'],
             'purchase_price' => ['nullable', 'numeric', 'min:0'],
             'selling_price' => ['nullable', 'numeric', 'min:0'],
+            'image_url' => ['nullable', 'url', 'max:2048'],
         ];
     }
 
@@ -80,6 +96,11 @@ class ProductsImport implements ToModel, WithBatchInserts, WithChunkReading, Wit
     public function batchSize(): int
     {
         return 100;
+    }
+
+    public function uniqueBy(): string
+    {
+        return 'barcode';
     }
 
     public function chunkSize(): int

@@ -15,9 +15,11 @@ import {
     IconTrash,
     IconPackages,
     IconRulerMeasure,
+    IconRefresh,
 } from "@tabler/icons-react";
 import { getProductImageUrl } from "@/Utils/imageUrl";
 import { formatCurrency } from "@/Utils/currency";
+import VariationRecipeEditor from "@/Components/Dashboard/Products/VariationRecipeEditor";
 
 // Universal variation options for different product types
 const variationOptions = {
@@ -101,11 +103,14 @@ const variationOptions = {
     ],
 };
 
-export default function Edit({ categories, productTypes = [], subCategories = [], product, products = [], units = [] }) {
+export default function Edit({ categories, productTypes = [], subCategories = [], product, products = [], units = [], recipeCost = null, variationRecipes = {} }) {
     const { errors } = usePage().props;
 
     const { data, setData, put, processing, transform } = useForm({
         image: "",
+        image_url: /^https?:\/\//i.test(String(product.image || ""))
+            ? product.image
+            : "",
         barcode: product.barcode,
         sku: product.sku,
         title: product.title,
@@ -117,8 +122,9 @@ export default function Edit({ categories, productTypes = [], subCategories = []
         sell_price: product.sell_price,
         min_stock: product.min_stock ?? "",
         max_stock: product.max_stock ?? "",
+        stock_mode: product.stock_mode || "stock",
         tax_type: product.tax_type ?? "exclusive",
-        tax_rate: product.tax_rate ?? "11",
+        tax_rate: product.tax_rate ?? "18",
         is_composite: product.is_composite ?? false,
         components: (product.components ?? []).map((c) => ({
             component_product_id: c.id,
@@ -134,6 +140,7 @@ export default function Edit({ categories, productTypes = [], subCategories = []
         })),
         variations: product.variations || [],
         variation_prices: product.variation_prices || {},
+        variation_recipes: variationRecipes || {},
     });
 
     const [selectedCategory, setSelectedCategory] = useState(null);
@@ -141,9 +148,38 @@ export default function Edit({ categories, productTypes = [], subCategories = []
     const [selectedSubCategory, setSelectedSubCategory] = useState(null);
     const [availableSubCategories, setAvailableSubCategories] = useState(subCategories);
     const [selectedVariationTemplate, setSelectedVariationTemplate] = useState(null);
+    const [currentRecipeCost, setCurrentRecipeCost] = useState(recipeCost);
+    const [recipeLoading, setRecipeLoading] = useState(false);
     const [imagePreview, setImagePreview] = useState(
         product.image ? getProductImageUrl(product.image) : null
     );
+
+    const refreshRecipeCost = async () => {
+        setRecipeLoading(true);
+        try {
+            const response = await fetch(`/dashboard/products/${product.id}/recipe-cost`, {
+                headers: { Accept: "application/json" },
+            });
+            if (!response.ok) {
+                throw new Error("Recipe cost could not be loaded.");
+            }
+            const payload = await response.json();
+            setCurrentRecipeCost(payload.recipe ?? null);
+            if (!payload.recipe) {
+                toast("No active recipe is linked to this product.", { icon: "ℹ️" });
+            }
+        } catch (error) {
+            toast.error(error.message || "Recipe cost could not be loaded.");
+        } finally {
+            setRecipeLoading(false);
+        }
+    };
+
+    const applyRecipeCost = () => {
+        if (!currentRecipeCost) return;
+        setData("buy_price", String(currentRecipeCost.cost_per_yield));
+        toast.success("Recipe unit cost applied to purchase price.");
+    };
     const [hasVariations, setHasVariations] = useState(false);
     const [selectedVariations, setSelectedVariations] = useState([]);
     const [availableVariations, setAvailableVariations] = useState({});
@@ -292,7 +328,10 @@ export default function Edit({ categories, productTypes = [], subCategories = []
 
     const toggleComposite = (checked) => {
         setData("is_composite", checked);
-        if (checked) setData("units", []);
+        if (checked) {
+            setData("units", []);
+            setData("stock_mode", "stock");
+        }
     };
 
     const addUnitRow = () => {
@@ -389,6 +428,12 @@ export default function Edit({ categories, productTypes = [], subCategories = []
         }
     };
 
+    const handleImageUrlChange = (e) => {
+        const value = e.target.value;
+        setData("image_url", value);
+        if (!data.image) setImagePreview(value || null);
+    };
+
     // Update one variation price without losing prices entered for other variations.
     const updateVariationPrice = (variationId, value) => {
         setData("variation_prices", {
@@ -404,21 +449,22 @@ export default function Edit({ categories, productTypes = [], subCategories = []
             setData("sell_price", 0);
         }
 
-        // Include selected variations and their prices in the form data
-        if (hasVariations && selectedVariations.length > 0) {
-            setData("variations", selectedVariations);
-            setData("variation_prices", data.variation_prices || {});
-        }
+        setData("variations", hasVariations ? selectedVariations : []);
+        setData("variation_prices", data.variation_prices || {});
 
-        transform((formData) => ({
-            ...formData,
-            variation_prices: Object.fromEntries(
-                Object.entries(formData.variation_prices || {}).map(([id, value]) => [
-                    id,
-                    value === "" ? 0 : Number(value),
-                ])
-            ),
-        }));
+        transform((formData) => {
+            return {
+                ...formData,
+                stock_mode: formData.is_composite ? "stock" : formData.stock_mode,
+                variations: hasVariations ? selectedVariations : [],
+                variation_prices: Object.fromEntries(
+                    Object.entries(formData.variation_prices || {}).map(([id, value]) => [
+                        id,
+                        value === "" ? 0 : Number(value),
+                    ])
+                ),
+            };
+        });
         put(route("products.update", product.id), {
             onSuccess: () => toast.success("Product updated successfully"),
             onError: (errors) => {
@@ -482,6 +528,16 @@ export default function Edit({ categories, productTypes = [], subCategories = []
                                 errors={errors.image}
                                 accept="image/*"
                             />
+                            <div className="mt-3">
+                                <Input
+                                    type="url"
+                                    label="Or Image URL"
+                                    value={data.image_url}
+                                    onChange={handleImageUrlChange}
+                                    errors={errors.image_url}
+                                    placeholder="https://example.com/product.jpg"
+                                />
+                            </div>
                         </div>
                     </div>
 
@@ -507,15 +563,18 @@ export default function Edit({ categories, productTypes = [], subCategories = []
                                 </div>
                                 <div className="md:col-span-2">
                                     <InputSelect
-                                        label="Item"
+                                        label="Product Type"
                                         data={productTypes}
                                         selected={selectedProductType}
                                         setSelected={setSelectedProductTypeHandler}
-                                        placeholder="Select an item (optional)"
+                                        placeholder="Select a product type (optional)"
                                         errors={errors.product_type_id}
                                         searchable={true}
                                         displayKey="name"
                                     />
+                                    <p className="mt-1 text-xs text-slate-500">
+                                        Use this to group the product. Recipe ingredients and costing are managed in Recipe Management.
+                                    </p>
                                 </div>
                                 <div className="md:col-span-2">
                                     <InputSelect
@@ -669,6 +728,19 @@ export default function Edit({ categories, productTypes = [], subCategories = []
                                                     </div>
                                                 </div>
                                             )}
+                                            {selectedVariations.length > 0 && (
+                                                <VariationRecipeEditor
+                                                    variations={selectedVariations
+                                                        .map((variationId) =>
+                                                            Object.values(availableVariations)
+                                                                .flat()
+                                                                .find((variation) => variation.id === variationId) ||
+                                                            { id: variationId, name: String(variationId).replace(/^[a-z]+_/, "").replace(/_/g, " ") }
+                                                        )}
+                                                        products={products}
+                                                        value={data.variation_recipes}
+                                                />
+                                            )}
                                         </div>
                                     )}
                                 </div>
@@ -703,8 +775,8 @@ export default function Edit({ categories, productTypes = [], subCategories = []
                                 />
                                 <div className="md:col-span-2">
                                     <Textarea
-                                        label="Description"
-                                        placeholder="Product description"
+                                        label="Description (Optional)"
+                                        placeholder="Product description (optional)"
                                         errors={errors.description}
                                         onChange={(e) =>
                                             setData(
@@ -896,16 +968,34 @@ export default function Edit({ categories, productTypes = [], subCategories = []
                                     package)
                                 </span>
                             </label>
+                            {!data.is_composite && (
+                                <label className="mb-4 block max-w-sm">
+                                    <span className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">
+                                        Stocking Type
+                                    </span>
+                                    <select
+                                        value={data.stock_mode}
+                                        onChange={(e) => setData("stock_mode", e.target.value)}
+                                        className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-slate-800 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 dark:border-slate-700 dark:bg-slate-950 dark:text-white"
+                                    >
+                                        <option value="stock">Stock</option>
+                                        <option value="made_to_order">Made to Order</option>
+                                    </select>
+                                    {errors.stock_mode && (
+                                        <span className="mt-1 block text-xs text-danger-500">{errors.stock_mode}</span>
+                                    )}
+                                </label>
+                            )}
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <Input
                                     type="number"
-                                    label="Purchase Price"
+                                    label="Purchase Price (Optional)"
                                     value={data.buy_price}
                                     onChange={(e) =>
                                         setData("buy_price", e.target.value)
                                     }
                                     errors={errors.buy_price}
-                                    placeholder="0"
+                                    placeholder="Leave blank if unknown"
                                 />
                                 <Input
                                     type="number"
@@ -926,6 +1016,56 @@ export default function Edit({ categories, productTypes = [], subCategories = []
                                 />
                             </div>
 
+                            {!(product.variations || []).length && (
+                                <div className="mt-4 rounded-xl border border-emerald-200 bg-emerald-50/70 px-4 py-3 dark:border-emerald-900 dark:bg-emerald-950/30">
+                                    <div className="flex flex-wrap items-start justify-between gap-3">
+                                        <div>
+                                            <p className="text-xs font-semibold uppercase tracking-wide text-emerald-700 dark:text-emerald-300">
+                                                Recipe Cost
+                                            </p>
+                                            {currentRecipeCost ? (
+                                                <>
+                                                    <p className="mt-1 text-sm font-semibold text-slate-900 dark:text-slate-100">
+                                                        {currentRecipeCost.name || "Active recipe"}
+                                                    </p>
+                                                    <p className="mt-1 text-xs text-slate-600 dark:text-slate-300">
+                                                        Unit cost: {formatCurrency(currentRecipeCost.cost_per_yield)}
+                                                        {" "}({currentRecipeCost.ingredient_count} ingredients, yield {currentRecipeCost.batch_yield})
+                                                    </p>
+                                                    <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                                                        Includes packaging, labour, overhead and ingredient wastage.
+                                                    </p>
+                                                </>
+                                            ) : (
+                                                <p className="mt-1 text-xs text-slate-600 dark:text-slate-300">
+                                                    No active recipe is linked to this finished product.
+                                                </p>
+                                            )}
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            <button
+                                                type="button"
+                                                onClick={refreshRecipeCost}
+                                                disabled={recipeLoading}
+                                                className="inline-flex items-center gap-1 rounded-lg border border-emerald-300 px-3 py-2 text-xs font-semibold text-emerald-700 hover:bg-emerald-100 disabled:opacity-50 dark:border-emerald-700 dark:text-emerald-300"
+                                            >
+                                                <IconRefresh size={15} className={recipeLoading ? "animate-spin" : ""} />
+                                                Refresh
+                                            </button>
+                                            {currentRecipeCost && (
+                                                <button
+                                                    type="button"
+                                                    onClick={applyRecipeCost}
+                                                    className="rounded-lg bg-emerald-600 px-3 py-2 text-xs font-semibold text-white hover:bg-emerald-700"
+                                                >
+                                                    Use as purchase price
+                                                </button>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
                             <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 dark:border-slate-700 dark:bg-slate-800">
                                 <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
                                     {data.is_composite
@@ -935,14 +1075,18 @@ export default function Edit({ categories, productTypes = [], subCategories = []
                                 <p className="mt-1 text-lg font-bold text-slate-900 dark:text-slate-100">
                                     {data.is_composite
                                         ? "Calculated from component stock"
+                                        : data.stock_mode === "made_to_order"
+                                        ? "Made to order — ingredient stock tracked separately"
                                         : product.stock}
                                 </p>
                                 <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                                    Stock changes are managed through
-                                    transactions or stocktaking.
+                                    {data.stock_mode === "made_to_order"
+                                        ? "Finished-product stock is not tracked; recipe ingredients are deducted when sold."
+                                        : "Stock changes are managed through transactions or stocktaking."}
                                 </p>
                             </div>
 
+                            {data.stock_mode === "stock" && (
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
                                 <Input
                                     type="number"
@@ -971,6 +1115,7 @@ export default function Edit({ categories, productTypes = [], subCategories = []
                                     order (daily reorder:generate command).
                                 </p>
                             </div>
+                            )}
 
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
                                 <div>
@@ -1059,7 +1204,7 @@ export default function Edit({ categories, productTypes = [], subCategories = []
                                                 {(
                                                     ((data.sell_price -
                                                         data.buy_price) /
-                                                        data.buy_price) *
+                                                        data.sell_price) *
                                                     100
                                                 ).toFixed(1)}
                                                 %

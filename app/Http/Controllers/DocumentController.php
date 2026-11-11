@@ -8,9 +8,11 @@ use App\Models\Outlet;
 use App\Models\SalesInvoice;
 use App\Models\Setting;
 use App\Models\Transaction;
+use App\Services\ImageStorageService;
 use App\Services\ThermalPrintService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Picqer\Barcode\BarcodeGeneratorPNG;
 
 class DocumentController extends Controller
@@ -26,22 +28,24 @@ class DocumentController extends Controller
     private function storeProfile(?Outlet $outlet = null): array
     {
         $logo = Setting::getForOutlet('store_logo', $outlet);
-        if ($logo && ! str_starts_with($logo, 'http') && ! str_starts_with($logo, '/storage')) {
-            $logo = asset('storage/'.ltrim($logo, '/'));
-        }
-
         $logoData = null;
         if ($logo) {
-            $localPath = null;
-            if (str_starts_with($logo, asset('storage'))) {
-                $localPath = public_path(str_replace(asset(''), '', $logo));
-            } elseif (str_starts_with($logo, '/storage')) {
-                $localPath = public_path($logo);
+            $imageStorage = app(ImageStorageService::class);
+            try {
+                $logoPath = $imageStorage->normalizePath($logo, 'store');
+            } catch (\InvalidArgumentException) {
+                $logoPath = null;
             }
 
-            if ($localPath && file_exists($localPath)) {
-                $logoData = 'data:image/png;base64,'.base64_encode(file_get_contents($localPath));
+            $disk = Storage::disk(config('filesystems.image_disk', 'public'));
+            if ($logoPath && $disk->exists($logoPath)) {
+                $mimeType = $disk->mimeType($logoPath);
+                if ($mimeType && str_starts_with($mimeType, 'image/')) {
+                    $logoData = 'data:'.$mimeType.';base64,'.base64_encode($disk->get($logoPath));
+                }
             }
+
+            $logo = $imageStorage->url($logo, 'store');
         }
 
         return [

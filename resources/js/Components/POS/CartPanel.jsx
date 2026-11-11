@@ -78,7 +78,7 @@ function CartItem({ item, onUpdateQty, onRemove, isRemoving }) {
                 )}
                 {item.product?.image && !imageError ? (
                     <img
-                        src={getProductImageUrl(item.product.image)}
+                        src={getProductImageUrl(item.product.image, { thumbnail: true })}
                         alt={item.product.title}
                         className={`w-full h-full object-cover transition-opacity duration-300 ${
                             imageLoaded ? "opacity-100" : "opacity-0"
@@ -86,6 +86,7 @@ function CartItem({ item, onUpdateQty, onRemove, isRemoving }) {
                         onLoad={() => setImageLoaded(true)}
                         onError={() => setImageError(true)}
                         loading="lazy"
+                        decoding="async"
                     />
                 ) : (
                     <div className="w-full h-full flex items-center justify-center">

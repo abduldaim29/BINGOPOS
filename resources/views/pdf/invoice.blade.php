@@ -240,8 +240,8 @@
             <tr>
                 <th class="produk">Product Name</th>
                 <th class="qty">Qty</th>
-                <th class="right">Price</th>
-                <th class="right">Subtotal</th>
+                <th class="right">Unit Price</th>
+                <th class="right">Line Total</th>
             </tr>
         </thead>
         <tbody>
@@ -277,7 +277,8 @@
         $loyaltyDiscount = $transaction->loyalty_discount_total ?? 0;
         $shipping = $transaction->shipping_cost ?? 0;
         $grandTotal = $transaction->grand_total ?? 0;
-        $subtotal = $grandTotal + $discount - $shipping + $promoDiscount + $voucherDiscount + $loyaltyDiscount;
+        $taxTotal = $transaction->tax_total ?? 0;
+        $subtotal = $grandTotal + $discount - $shipping - $taxTotal + $promoDiscount + $voucherDiscount + $loyaltyDiscount;
     @endphp
 
     <table style="width:100%; margin-top:8px;">
@@ -286,26 +287,29 @@
             <td style="width:45%;">
                 <table style="width:100%; border-collapse:separate; border-spacing:0 6px; font-size:12px;">
                     <tr>
-                        <td style="color:#475569;">Subtotal</td>
+                        <td style="color:#475569;">
+                            Items subtotal
+                            <div style="font-size:10px;color:#94a3b8;">Before discounts and tax</div>
+                        </td>
                         <td class="right" style="font-weight:600;">
                             {{ number_format($subtotal, 0, ',', ',') }}
                         </td>
                     </tr>
-                    <tr>
-                        <td style="color:#475569;">Automatic Promotion</td>
-                        <td class="right" style="font-weight:600;">
-                            - {{ number_format($promoDiscount, 0, ',', ',') }}
-                        </td>
-                    </tr>
-                    <tr>
-                        <td style="color:#475569;">Manual Discount</td>
-                        <td class="right" style="font-weight:600;">
-                            - {{ number_format($discount, 0, ',', ',') }}
-                        </td>
-                    </tr>
+                    @if ($promoDiscount > 0)
+                        <tr>
+                            <td style="color:#475569;">Promotion discount</td>
+                            <td class="right" style="font-weight:600;">- {{ number_format($promoDiscount, 0, ',', ',') }}</td>
+                        </tr>
+                    @endif
+                    @if ($discount > 0)
+                        <tr>
+                            <td style="color:#475569;">Manual discount</td>
+                            <td class="right" style="font-weight:600;">- {{ number_format($discount, 0, ',', ',') }}</td>
+                        </tr>
+                    @endif
                     @if ($voucherDiscount > 0)
                         <tr>
-                            <td style="color:#475569;">Customer Voucher</td>
+                            <td style="color:#475569;">Voucher discount</td>
                             <td class="right" style="font-weight:600;">
                                 - {{ number_format($voucherDiscount, 0, ',', ',') }}
                             </td>
@@ -313,28 +317,33 @@
                     @endif
                     @if ($loyaltyDiscount > 0)
                         <tr>
-                            <td style="color:#475569;">Redeem Points</td>
+                            <td style="color:#475569;">Loyalty points discount</td>
                             <td class="right" style="font-weight:600;">
                                 - {{ number_format($loyaltyDiscount, 0, ',', ',') }}
                             </td>
                         </tr>
                     @endif
-                    <tr>
-                        <td style="color:#475569;">Shipping</td>
-                        <td class="right" style="font-weight:600;">
-                            + {{ number_format($shipping, 0, ',', ',') }}
-                        </td>
-                    </tr>
-                    @if (($transaction->tax_total ?? 0) > 0)
+                    @if ($shipping > 0)
                         <tr>
-                            <td style="color:#475569;">VAT {{ number_format($transaction->tax_rate ?? 11, 0) }}%</td>
+                            <td style="color:#475569;">Shipping / delivery</td>
+                            <td class="right" style="font-weight:600;">+ {{ number_format($shipping, 0, ',', ',') }}</td>
+                        </tr>
+                    @endif
+                    @if ($taxTotal > 0)
+                        <tr>
+                            <td style="color:#475569;">
+                                Tax
+                                <div style="font-size:10px;color:#94a3b8;">
+                                    {{ $transaction->tax_rate !== null ? number_format($transaction->tax_rate, 2) . '% rate' : 'Recorded tax' }}
+                                </div>
+                            </td>
                             <td class="right" style="font-weight:600;">
-                                + {{ number_format($transaction->tax_total, 0, ',', ',') }}
+                                + {{ number_format($taxTotal, 0, ',', ',') }}
                             </td>
                         </tr>
                     @endif
                     <tr>
-                        <td style="font-weight:700; font-size:13px;">Total</td>
+                        <td style="font-weight:700; font-size:13px;">Amount due</td>
                         <td class="right" style="font-weight:800; font-size:13px;">
                             {{ number_format($grandTotal, 0, ',', ',') }}
                         </td>
@@ -342,6 +351,33 @@
                 </table>
             </td>
         </tr>
+    </table>
+
+    @php
+        $paymentMethod = strtolower($transaction->payment_method ?? 'cash');
+        $cashReceived = $transaction->cash ?? 0;
+        $change = $transaction->change ?? 0;
+    @endphp
+    <table style="width:45%; margin:8px 0 0 auto; border-collapse:separate; border-spacing:0 6px; font-size:12px;">
+        <tr>
+            <td style="color:#475569;">Payment method</td>
+            <td class="right" style="font-weight:600;">{{ ucwords(str_replace('_', ' ', $paymentMethod)) }}</td>
+        </tr>
+        @if ($paymentMethod === 'cash')
+            <tr>
+                <td style="color:#475569;">Amount received</td>
+                <td class="right" style="font-weight:600;">{{ number_format($cashReceived, 0, ',', ',') }}</td>
+            </tr>
+            <tr>
+                <td style="color:#15803d;font-weight:600;">Change returned</td>
+                <td class="right" style="color:#15803d;font-weight:700;">{{ number_format($change, 0, ',', ',') }}</td>
+            </tr>
+        @elseif ($paymentMethod === 'pay_later')
+            <tr>
+                <td style="color:#b45309;font-weight:600;">Balance due</td>
+                <td class="right" style="color:#b45309;font-weight:700;">{{ number_format($grandTotal, 0, ',', ',') }}</td>
+            </tr>
+        @endif
     </table>
 
     <div class="footer">

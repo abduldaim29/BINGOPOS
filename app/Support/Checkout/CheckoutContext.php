@@ -27,6 +27,7 @@ class CheckoutContext
         public readonly array $tenderInput,
         public readonly ?Outlet $outlet,
         public readonly ?int $bankAccountId,
+        public readonly ?float $taxRateOverride = null,
     ) {}
 
     public function isSplit(): bool

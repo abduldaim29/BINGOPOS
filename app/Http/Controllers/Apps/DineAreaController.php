@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\DineArea;
 use App\Services\OutletAccessService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 
 class DineAreaController extends Controller
@@ -60,13 +61,13 @@ class DineAreaController extends Controller
     public function destroy(DineArea $dineArea)
     {
         abort_unless($this->ownsArea($dineArea, request()), 404);
-        if ($dineArea->tables()->exists()) {
-            return back()->with('error', 'This area contains tables. Please delete or move the tables first.');
-        }
 
-        $dineArea->delete();
+        DB::transaction(function () use ($dineArea) {
+            $dineArea->tables()->delete();
+            $dineArea->delete();
+        });
 
-        return back()->with('success', 'Area deleted successfully.');
+        return back()->with('success', 'Area and its tables deleted successfully.');
     }
 
     private function ownsArea(DineArea $area, Request $request): bool

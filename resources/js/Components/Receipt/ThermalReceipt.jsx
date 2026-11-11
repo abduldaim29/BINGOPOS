@@ -873,8 +873,8 @@ export default function ThermalReceipt({
                 <ReceiptDivider />
 
                 <section className="receipt-customer">
-                    <h3 className="receipt-section-heading">Bill To:</h3>
                     <p className="receipt-customer-name">
+                        <strong>Bill To:</strong>{" "}
                         {transaction?.customer?.name || "Walk-in Customer"}
                     </p>
                     {transaction?.customer?.address && (
@@ -1027,8 +1027,8 @@ export function ThermalReceipt58mm({
                 <ReceiptDivider />
 
                 <section className="receipt-customer">
-                    <h3 className="receipt-section-heading">Bill To:</h3>
                     <p className="receipt-customer-name">
+                        <strong>Bill To:</strong>{" "}
                         {transaction?.customer?.name || "Walk-in Customer"}
                     </p>
                     {transaction?.customer?.address && (

@@ -5,8 +5,6 @@ namespace App\Http\Controllers\Apps;
 use App\Http\Controllers\Controller;
 use App\Models\CustomerCampaign;
 use App\Models\CustomerCampaignLog;
-use App\Models\Receivable;
-use App\Models\Transaction;
 use App\Services\CrmAutomationService;
 use App\Services\OutletAccessService;
 use Illuminate\Http\Request;
@@ -157,24 +155,6 @@ class CrmCampaignController extends Controller
         return back()->with('success', 'Campaign log skipped successfully.');
     }
 
-    public function shareTransaction(Transaction $transaction, Request $request)
-    {
-        $campaign = $this->crmAutomationService->createInvoiceShareCampaignForTransaction($transaction, $request->user()->id);
-
-        return redirect()
-            ->route('crm-campaigns.show', $campaign)
-            ->with('success', 'Transaction invoice-sharing campaign created successfully.');
-    }
-
-    public function shareReceivable(Receivable $receivable, Request $request)
-    {
-        $campaign = $this->crmAutomationService->createInvoiceShareCampaignForReceivable($receivable, $request->user()->id);
-
-        return redirect()
-            ->route('crm-campaigns.show', $campaign)
-            ->with('success', 'Receivable-sharing campaign created successfully.');
-    }
-
     private function validateCampaign(Request $request): array
     {
         return $request->validate([
@@ -187,7 +167,6 @@ class CrmCampaignController extends Controller
             ])],
             'channel' => ['required', Rule::in([
                 CustomerCampaign::CHANNEL_INTERNAL,
-                CustomerCampaign::CHANNEL_WHATSAPP_LINK,
             ])],
             'message_template' => ['nullable', 'string', 'max:4000'],
             'audience_filters' => ['nullable', 'array'],

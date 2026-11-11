@@ -44,6 +44,7 @@ class Transaction extends Model
         'note',
         'bank_account_id',
         'tax_rate',
+        'taxable_amount',
         'tax_total',
         'customer_npwp',
         'price_list_id',
@@ -70,6 +71,7 @@ class Transaction extends Model
         'grand_total' => 'integer',
         'bank_account_id' => 'integer',
         'tax_rate' => 'decimal:2',
+        'taxable_amount' => 'integer',
         'tax_total' => 'integer',
         'discount_approved_at' => 'datetime',
     ];

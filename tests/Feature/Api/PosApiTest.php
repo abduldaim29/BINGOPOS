@@ -34,16 +34,16 @@ class PosApiTest extends TestCase
         $this->cashier = User::factory()->create();
         $this->warehouse = Warehouse::create([
             'code' => 'WH-1',
-            'name' => 'Gudang Utama',
+            'name' => 'Main Warehouse',
             'status' => 'active',
         ]);
         $this->category = Category::create([
-            'name' => 'Kategori Test',
+            'name' => 'Test Category',
             'image' => '',
             'description' => '',
         ]);
         $this->product = Product::create([
-            'title' => 'Produk Kasir',
+            'title' => 'Cashier Product',
             'barcode' => 'POS-001',
             'sku' => 'SKU-POS-001',
             'image' => '',
@@ -107,7 +107,7 @@ class PosApiTest extends TestCase
 
         $this->postJson('/api/v1/pos/products/scan', ['barcode' => 'POS-001'])
             ->assertOk()
-            ->assertJsonPath('data.title', 'Produk Kasir')
+            ->assertJsonPath('data.title', 'Cashier Product')
             ->assertJsonPath('data.stock', 50);
     }
 
@@ -132,9 +132,9 @@ class PosApiTest extends TestCase
 
         $response = $this->getJson('/api/v1/pos/cart');
         $response->assertOk()
-            ->assertJsonPath('data.items.0.product.title', 'Produk Kasir')
+            ->assertJsonPath('data.items.0.product.title', 'Cashier Product')
             ->assertJsonPath('data.items.0.qty', 2)
-            ->assertJsonPath('data.summary.grand_total', 20000);
+            ->assertJsonPath('data.summary.grand_total', 23200);
     }
 
     public function test_add_to_cart_rejects_insufficient_stock(): void
@@ -216,8 +216,8 @@ class PosApiTest extends TestCase
             ->assertJsonPath('success', true)
             ->assertJsonPath('data.payment_method', 'cash')
             ->assertJsonPath('data.payment_status', 'paid')
-            ->assertJsonPath('data.grand_total', 20000)
-            ->assertJsonPath('data.change', 30000);
+            ->assertJsonPath('data.grand_total', 23200)
+            ->assertJsonPath('data.change', 26800);
 
         // Stock decremented
         $this->assertDatabaseHas('products', [
@@ -291,7 +291,7 @@ class PosApiTest extends TestCase
 
         $this->postJson('/api/v1/pos/checkout', [
             'payment_method' => 'cash',
-            'cash' => 10000,
+            'cash' => 11600,
         ]);
 
         $this->getJson('/api/v1/pos/transactions')

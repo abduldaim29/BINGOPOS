@@ -18,7 +18,6 @@ import {
     IconCheck,
     IconBuildingBank,
     IconAlertCircle,
-    IconBrandWhatsapp,
     IconDownload,
 } from "@tabler/icons-react";
 import { formatCurrency } from "@/Utils/currency";
@@ -35,7 +34,6 @@ const History = ({ transactions, filters, warehouses = [] }) => {
     const { can } = useAuthorization();
     const canCreateSalesReturn = can("sales-returns-create");
     const canConfirmPayment = can("transactions-confirm-payment");
-    const canCreateCrmCampaign = can("crm-campaigns-create");
     const [filterData, setFilterData] = useState({
         ...defaultFilters,
         ...filters,
@@ -381,39 +379,6 @@ const History = ({ transactions, filters, warehouses = [] }) => {
                                                         </span>
                                                         )
                                                     ) : null}
-                                                    <a
-                                                        href={`https://wa.me/?text=${encodeURIComponent(
-                                                            `Invoice ${transaction.invoice}: ${route(
-                                                                "transactions.public",
-                                                                transaction.invoice,
-                                                                { token: transaction.access_token }
-                                                            )}`
-                                                        )}`}
-                                                        target="_blank"
-                                                        rel="noopener noreferrer"
-                                                        className="inline-flex items-center justify-center w-9 h-9 rounded-lg text-green-600 hover:text-green-700 bg-green-50 hover:bg-green-100 dark:bg-green-900/30 dark:hover:bg-green-900/50 transition-colors"
-                                                        title="Share to WhatsApp"
-                                                    >
-                                                        <IconBrandWhatsapp
-                                                            size={18}
-                                                        />
-                                                    </a>
-                                                    {canCreateCrmCampaign && (
-                                                        <Link
-                                                            href={route(
-                                                                "transactions.share-campaign",
-                                                                transaction.id
-                                                            )}
-                                                            method="post"
-                                                            as="button"
-                                                            className="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-primary-50 text-primary-600 transition-colors hover:bg-primary-100 hover:text-primary-700 dark:bg-primary-950/30 dark:hover:bg-primary-950/50"
-                                                            title="Create sharing campaign"
-                                                        >
-                                                            <IconBuildingBank
-                                                                size={18}
-                                                            />
-                                                        </Link>
-                                                    )}
                                                     <Link
                                                         href={route(
                                                             "transactions.print",
@@ -601,19 +566,6 @@ const History = ({ transactions, filters, warehouses = [] }) => {
                                             <IconDownload size={16} />
                                             Invoice
                                         </a>
-                                        {canCreateCrmCampaign && (
-                                            <Link
-                                                href={route(
-                                                    "transactions.share-campaign",
-                                                    transaction.id
-                                                )}
-                                                method="post"
-                                                as="button"
-                                                className="inline-flex items-center justify-center gap-1 rounded-lg bg-primary-50 px-3 py-2 text-xs font-semibold text-primary-700 hover:bg-primary-100 dark:bg-primary-900/30 dark:text-primary-300"
-                                            >
-                                                WhatsApp Campaign
-                                            </Link>
-                                        )}
                                         <a
                                             href={route(
                                                 "pdf.transactions.shipping",

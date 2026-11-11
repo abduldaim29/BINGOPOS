@@ -12,7 +12,7 @@ class Recipe extends Model
     use HasFactory;
 
     protected $fillable = [
-        'product_id', 'product_type_id', 'code', 'name', 'recipe_type', 'batch_yield', 'yield_unit_id',
+        'product_id', 'product_type_id', 'variation_id', 'variation_name', 'code', 'name', 'recipe_type', 'batch_yield', 'yield_unit_id',
         'packaging_cost', 'labour_cost', 'overhead_cost', 'notes', 'status', 'created_by',
     ];
 

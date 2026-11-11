@@ -6,19 +6,55 @@ use App\Models\Product;
 use App\Models\PurchaseOrderItem;
 use App\Models\Recipe;
 use App\Models\RecipeIngredient;
+use Illuminate\Support\Collection;
 
 class RecipeCostingService
 {
+    public function basePurchaseCostsFor(Collection $products): array
+    {
+        $productIds = $products->pluck('id')->all();
+        if (! $productIds) {
+            return [];
+        }
+
+        $latestPurchaseIds = PurchaseOrderItem::query()
+            ->whereIn('product_id', $productIds)
+            ->whereHas('purchaseOrder', fn ($query) => $query->whereIn('status', ['received', 'completed']))
+            ->selectRaw('MAX(id)')
+            ->groupBy('product_id');
+        $latestPurchases = PurchaseOrderItem::query()
+            ->whereIn('id', $latestPurchaseIds)
+            ->get(['product_id', 'unit_price'])
+            ->keyBy('product_id');
+
+        return $products->mapWithKeys(function (Product $product) use ($latestPurchases) {
+            $baseUnit = $product->units->firstWhere('pivot.is_base', true);
+            $unitPrice = $baseUnit?->pivot->buy_price;
+            $purchase = $latestPurchases->get($product->id);
+            $price = $unitPrice !== null
+                ? (float) $unitPrice
+                : ($purchase ? (float) $purchase->unit_price : (float) $product->buy_price);
+
+            return [$product->id => $price];
+        })->all();
+    }
+
     public function purchaseCost(Product $product, ?int $unitId = null): array
     {
+        $units = $product->units;
         $unit = $unitId
-            ? $product->units()->where('unit_id', $unitId)->first()
-            : null;
+            ? $units->firstWhere('id', $unitId)
+            : $units->firstWhere('pivot.is_base', true);
         $unitPrice = $unit?->pivot->buy_price;
 
         if ($unitPrice !== null) {
             return ['price' => (float) $unitPrice, 'source' => 'product_unit', 'tax_available' => false];
         }
+
+        $baseUnit = $units->firstWhere('pivot.is_base', true);
+        $baseFactor = max(0.000001, (float) ($baseUnit?->pivot->conversion_factor ?? 1));
+        $selectedFactor = (float) ($unit?->pivot->conversion_factor ?? $baseFactor);
+        $unitFactor = $selectedFactor / $baseFactor;
 
         $latestPurchase = PurchaseOrderItem::query()
             ->where('product_id', $product->id)
@@ -28,13 +64,17 @@ class RecipeCostingService
 
         if ($latestPurchase) {
             return [
-                'price' => (float) $latestPurchase->unit_price,
+                'price' => (float) $latestPurchase->unit_price * $unitFactor,
                 'source' => 'latest_purchase',
                 'tax_available' => false,
             ];
         }
 
-        return ['price' => (float) $product->buy_price, 'source' => 'product_buy_price', 'tax_available' => false];
+        return [
+            'price' => (float) $product->buy_price * $unitFactor,
+            'source' => 'product_buy_price',
+            'tax_available' => false,
+        ];
     }
 
     private function ingredientCost(RecipeIngredient $ingredient): array
@@ -80,6 +120,9 @@ class RecipeCostingService
                 'product' => $ingredient->product,
                 'unit' => $ingredient->unit,
                 'quantity' => $netQuantity,
+                'unit_conversion_factor' => $ingredient->product && $ingredient->unit_id
+                    ? (float) ($ingredient->product->units->firstWhere('id', $ingredient->unit_id)?->pivot->conversion_factor ?? 1)
+                    : 1,
                 'gross_quantity' => $grossQuantity,
                 'wastage_percent' => $wastage,
                 'purchase_price' => $cost['price'],
@@ -95,7 +138,11 @@ class RecipeCostingService
         $total = $beforeTax + $tax + $additional;
         $yield = max(0.0001, (float) $recipe->batch_yield);
         $perYield = $total / $yield;
-        $sellingPrice = (float) ($recipe->product?->sell_price ?? 0);
+        $product = $recipe->product;
+        $variationPrices = $product?->variation_prices ?? [];
+        $sellingPrice = (float) ($recipe->variation_id
+            ? ($variationPrices[$recipe->variation_id] ?? $product?->sell_price ?? 0)
+            : ($product?->sell_price ?? 0));
         $profit = $sellingPrice - $perYield;
 
         return [

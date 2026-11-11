@@ -11,13 +11,17 @@ class PermissionController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
+        $perPage = in_array((int) $request->input('per_page', 10), [10, 25, 50], true)
+            ? (int) $request->input('per_page', 10)
+            : 10;
+
         $permissions = Permission::query()
-            ->when(request()->search, fn ($query) => $query->where('name', 'like', '%'.request()->search.'%'))
+            ->when($request->search, fn ($query) => $query->where('name', 'like', '%'.$request->search.'%'))
             ->select('id', 'name')
             ->latest()
-            ->paginate(7)
+            ->paginate($perPage)
             ->withQueryString();
 
         // render view

@@ -173,10 +173,6 @@ class PermissionSeeder extends Seeder
         $create('units-update');
         $create('units-delete');
 
-        // whatsapp
-        $create('whatsapp-settings-access');
-        $create('whatsapp-settings-update');
-
         // dine-in
         $create('dine-tables-access');
         $create('dine-tables-create');

@@ -13,6 +13,49 @@ class TaxService
         $this->defaultRate = (float) (Setting::get('tax_default_rate', '18.00'));
     }
 
+    public function paymentRates(): array
+    {
+        return [
+            'vat' => $this->defaultRate,
+            'cash' => (float) Setting::get('tax_cash_rate', '16.00'),
+            'card' => (float) Setting::get('tax_card_rate', '6.00'),
+        ];
+    }
+
+    public function rateForPaymentMethod(?string $method): ?float
+    {
+        if ($method === null || $method === '') {
+            return null;
+        }
+
+        return match (strtolower($method)) {
+            'cash' => (float) Setting::get('tax_cash_rate', '16.00'),
+            'card' => (float) Setting::get('tax_card_rate', '6.00'),
+            default => $this->defaultRate,
+        };
+    }
+
+    public function rateForTenders(array $tenders): ?float
+    {
+        $total = array_sum(array_map(
+            static fn (array $tender): int => max(0, (int) ($tender['amount'] ?? 0)),
+            $tenders
+        ));
+
+        if ($total === 0) {
+            return null;
+        }
+
+        $weightedRate = 0.0;
+        foreach ($tenders as $tender) {
+            $amount = max(0, (int) ($tender['amount'] ?? 0));
+            $rate = $this->rateForPaymentMethod($tender['method'] ?? null) ?? $this->defaultRate;
+            $weightedRate += $amount * $rate;
+        }
+
+        return round($weightedRate / $total, 4);
+    }
+
     public function getDefaultRate(): float
     {
         return $this->defaultRate;
@@ -24,6 +67,7 @@ class TaxService
             return [
                 'tax_amount' => 0,
                 'tax_rate' => $taxRate,
+                'taxable_amount' => $lineTotal,
                 'line_total_before_tax' => $lineTotal,
                 'line_total_after_tax' => $lineTotal,
             ];
@@ -40,6 +84,7 @@ class TaxService
         return [
             'tax_amount' => $taxAmount,
             'tax_rate' => $taxRate,
+            'taxable_amount' => $beforeTax,
             'line_total_before_tax' => $beforeTax,
             'line_total_after_tax' => $beforeTax + $taxAmount,
         ];

@@ -14,7 +14,7 @@ class UpdateSalesReturnRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'return_type' => ['required', 'in:refund_cash,store_credit'],
+            'return_type' => ['required', 'in:refund_cash,store_credit,replacement'],
             'notes' => ['nullable', 'string'],
             'items' => ['required', 'array', 'min:1'],
             'items.*.transaction_detail_id' => ['required', 'integer', 'exists:transaction_details,id'],

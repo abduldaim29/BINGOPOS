@@ -30,16 +30,16 @@ class PosApiCashValidationTest extends TestCase
         $this->cashier = User::factory()->create();
         $this->warehouse = Warehouse::create([
             'code' => 'WH-1',
-            'name' => 'Gudang Utama',
+            'name' => 'Main Warehouse',
             'status' => 'active',
         ]);
         $category = Category::create([
-            'name' => 'Kategori Test',
+            'name' => 'Test Category',
             'image' => '',
             'description' => '',
         ]);
         $this->product = Product::create([
-            'title' => 'Produk Kasir',
+            'title' => 'Cashier Product',
             'barcode' => 'CASH-'.uniqid(),
             'sku' => 'SKU-CASH-'.uniqid(),
             'image' => '',
@@ -115,7 +115,7 @@ class PosApiCashValidationTest extends TestCase
 
         $this->postJson('/api/v1/pos/checkout', [
             'payment_method' => 'cash',
-            'cash' => 10000,
+            'cash' => 11600,
         ])->assertCreated()
             ->assertJsonPath('success', true)
             ->assertJsonPath('data.payment_status', 'paid')
@@ -132,7 +132,7 @@ class PosApiCashValidationTest extends TestCase
             'payment_method' => 'cash',
             'cash' => 50000,
         ])->assertCreated()
-            ->assertJsonPath('data.change', 40000);
+            ->assertJsonPath('data.change', 38400);
 
         $this->assertEquals(49, $this->pivotStock());
     }

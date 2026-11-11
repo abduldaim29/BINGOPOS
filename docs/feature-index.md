@@ -59,7 +59,7 @@
 | Bank Accounts | `docs/features/settings-payments.md` | ✅ |
 | Store Profile | `docs/features/settings-payments.md` | ✅ |
 | Sales Target | `docs/features/settings-payments.md` | ✅ |
-| Tax Settings (VAT, NPWP, NIB) | `docs/features/tax-management.md` | ✅ |
+| Tax Settings (VAT, NTN/CNIC, STRN) | `docs/features/tax-management.md` | ✅ |
 | Printer Settings | `docs/features/thermal-printer.md` | ✅ |
 | Users & Roles | `docs/features/rbac-users-roles.md` | ✅ |
 | Permissions | `docs/features/rbac-users-roles.md` | ✅ |
@@ -83,7 +83,6 @@
 | Mobile POS / PWA | `docs/features/mobile-pos.md` | ✅ |
 | Thermal Printer | `docs/features/thermal-printer.md` | ✅ (ESC/POS WebUSB + auto-print) |
 | Offline Mode | `docs/features/offline-mode.md` | ✅ (queue + auto-sync with cart limitations) |
-| **WhatsApp Gateway** | `docs/features/whatsapp-gateway.md` | ✅ |
 
 ## App Versioning
 

@@ -119,6 +119,7 @@ export default function Print({ transaction }) {
     const paymentMethodLabel = paymentLabels[paymentMethodKey] ?? "Cash";
     const tenderLabels = {
         cash: "Cash",
+        card: "Card",
         bank_transfer: "Bank Transfer",
         midtrans: "Midtrans",
         xendit: "Xendit",
@@ -682,13 +683,13 @@ export default function Print({ transaction }) {
                                                     Product
                                                 </th>
                                                 <th className="pb-3 text-right text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
-                                                    Price
+                                                Unit Price
                                                 </th>
                                                 <th className="pb-3 text-center text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
                                                     Qty
                                                 </th>
                                                 <th className="pb-3 text-right text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
-                                                    Subtotal
+                                                Line Total
                                                 </th>
                                             </tr>
                                         </thead>
@@ -789,12 +790,17 @@ export default function Print({ transaction }) {
                             <div className="bg-slate-50 dark:bg-slate-800/50 px-6 py-6">
                                 <div className="max-w-xs ml-auto space-y-2 text-sm">
                                     <div className="flex justify-between text-slate-600 dark:text-slate-400">
-                                        <span>Subtotal</span>
+                                        <span>
+                                            Items subtotal
+                                            <small className="block text-[10px] font-normal text-slate-400">
+                                                Before discounts and tax
+                                            </small>
+                                        </span>
                                         <span>{formatPrice(baseSubtotal)}</span>
                                     </div>
                                     {promoDiscountTotal > 0 && (
                                         <div className="flex justify-between text-slate-600 dark:text-slate-400">
-                                            <span>Automatic Promotion</span>
+                                            <span>Promotion discount</span>
                                             <span>
                                                 -{" "}
                                                 {formatPrice(
@@ -803,16 +809,27 @@ export default function Print({ transaction }) {
                                             </span>
                                         </div>
                                     )}
-                                    <div className="flex justify-between text-slate-600 dark:text-slate-400">
-                                        <span>Manual Discount</span>
-                                        <span>
-                                            -{" "}
-                                            {formatPrice(transaction.discount)}
-                                        </span>
-                                    </div>
+                                    {Number(transaction.discount || 0) > 0 && (
+                                        <div className="flex justify-between text-slate-600 dark:text-slate-400">
+                                            <span>Manual discount</span>
+                                            <span>- {formatPrice(transaction.discount)}</span>
+                                        </div>
+                                    )}
+                                    {voucherDiscountTotal > 0 && (
+                                        <div className="flex justify-between text-slate-600 dark:text-slate-400">
+                                            <span>Voucher discount</span>
+                                            <span>- {formatPrice(voucherDiscountTotal)}</span>
+                                        </div>
+                                    )}
+                                    {loyaltyDiscountTotal > 0 && (
+                                        <div className="flex justify-between text-slate-600 dark:text-slate-400">
+                                            <span>Loyalty points discount</span>
+                                            <span>- {formatPrice(loyaltyDiscountTotal)}</span>
+                                        </div>
+                                    )}
                                     {transaction.shipping_cost > 0 && (
                                         <div className="flex justify-between text-slate-600 dark:text-slate-400">
-                                            <span>Shipping Cost</span>
+                                            <span>Shipping / delivery</span>
                                             <span>
                                                 +{" "}
                                                 {formatPrice(
@@ -823,7 +840,14 @@ export default function Print({ transaction }) {
                                     )}
                                     {transaction.tax_total > 0 && (
                                         <div className="flex justify-between text-slate-600 dark:text-slate-400">
-                                            <span>VAT {transaction.tax_rate ? Number(transaction.tax_rate).toFixed(0) : "11"}%</span>
+                                            <span>
+                                                Tax
+                                                <small className="block text-[10px] font-normal text-slate-400">
+                                                    {transaction.tax_rate == null
+                                                        ? "Recorded tax"
+                                                        : `${Number(transaction.tax_rate ?? 0).toFixed(2)}% rate`}
+                                                </small>
+                                            </span>
                                             <span>
                                                 +{" "}
                                                 {formatPrice(transaction.tax_total)}
@@ -831,7 +855,7 @@ export default function Print({ transaction }) {
                                         </div>
                                     )}
                                     <div className="flex justify-between text-lg font-bold text-slate-900 dark:text-white pt-2 border-t border-slate-200 dark:border-slate-700">
-                                        <span>Total</span>
+                                        <span>Amount due</span>
                                         <span>
                                             {formatPrice(
                                                 transaction.grand_total
@@ -841,7 +865,7 @@ export default function Print({ transaction }) {
                                     {paymentMethodKey === "cash" && (
                                         <>
                                             <div className="flex justify-between text-slate-600 dark:text-slate-400 pt-2">
-                                                <span>Cash</span>
+                                                <span>Amount received</span>
                                                 <span>
                                                     {formatPrice(
                                                         transaction.cash
@@ -849,7 +873,7 @@ export default function Print({ transaction }) {
                                                 </span>
                                             </div>
                                             <div className="flex justify-between text-success-600 dark:text-success-400 font-medium">
-                                                <span>Change</span>
+                                                <span>Change returned</span>
                                                 <span>
                                                     {formatPrice(
                                                         transaction.change
@@ -858,8 +882,17 @@ export default function Print({ transaction }) {
                                             </div>
                                         </>
                                     )}
+                                    {paymentMethodKey === "pay_later" && (
+                                        <div className="flex justify-between text-amber-700 dark:text-amber-400 font-medium pt-2">
+                                            <span>Balance due</span>
+                                            <span>{formatPrice(transaction.grand_total)}</span>
+                                        </div>
+                                    )}
                                     {transaction.tenders?.length > 0 && (
                                         <div className="mt-3 space-y-1 border-t border-slate-200 pt-3 dark:border-slate-700">
+                                            <p className="text-[10px] uppercase tracking-wider text-slate-400">
+                                                Payment breakdown
+                                            </p>
                                             {transaction.tenders.map((tender) => (
                                                 <div key={tender.id} className="flex justify-between text-slate-600 dark:text-slate-400">
                                                     <span>{tenderLabels[tender.method] ?? tender.method}</span>

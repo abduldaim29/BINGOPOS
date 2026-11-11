@@ -4,13 +4,19 @@ namespace App\Http\Controllers\Apps;
 
 use App\Http\Controllers\Controller;
 use App\Models\Category;
+use App\Services\ImageStorageService;
+use App\Services\CategoryMergeService;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
-use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 
 class CategoryController extends Controller
 {
+    public function __construct(
+        private readonly ImageStorageService $imageStorage,
+        private readonly CategoryMergeService $categoryMergeService
+    ) {}
+
     /**
      * Display a listing of the resource.
      *
@@ -18,6 +24,8 @@ class CategoryController extends Controller
      */
     public function index()
     {
+        $this->categoryMergeService->mergeDuplicates();
+
         // get categories
         $categories = Category::when(request()->search, function ($categories) {
             $categories = $categories->where('name', 'like', '%'.request()->search.'%');
@@ -50,18 +58,18 @@ class CategoryController extends Controller
          * validate
          */
         $request->validate([
-            'image' => 'required|image|mimes:jpeg,jpg,png|max:2048',
+            'image' => 'required|image|mimes:jpeg,jpg,png,webp|max:2048',
             'name' => 'required',
             'description' => 'required',
         ]);
 
         // upload image
         $image = $request->file('image');
-        $imagePath = $image->store('category', config('filesystems.image_disk', 'public'));
+        $imagePath = $this->imageStorage->store($image, 'category');
 
         // create category
         Category::create([
-            'image' => basename($imagePath),
+            'image' => $imagePath,
             'name' => $request->name,
             'description' => $request->description,
         ]);
@@ -95,29 +103,27 @@ class CategoryController extends Controller
          * validate
          */
         $request->validate([
-            'image' => 'nullable|image|mimes:jpeg,jpg,png|max:2048',
+            'image' => 'nullable|image|mimes:jpeg,jpg,png,webp|max:2048',
             'name' => 'required',
             'description' => 'required',
         ]);
 
         // check image update
         if ($request->file('image')) {
-
-            // remove old image
-            if ($category->image) {
-                Storage::disk(config('filesystems.image_disk', 'public'))->delete('category/'.basename($category->image));
-            }
-
-            // upload new image
+            $oldImage = $category->getRawOriginal('image');
             $image = $request->file('image');
-            $imagePath = $image->store('category', config('filesystems.image_disk', 'public'));
+            $imagePath = $this->imageStorage->store($image, 'category');
 
             // update category with new image
             $category->update([
-                'image' => basename($imagePath),
+                'image' => $imagePath,
                 'name' => $request->name,
                 'description' => $request->description,
             ]);
+
+            if ($oldImage) {
+                $this->imageStorage->delete($oldImage, 'category');
+            }
         } else {
             // update category without image
             $category->update([
@@ -144,12 +150,14 @@ class CategoryController extends Controller
         $category = Category::findOrFail($id);
 
         // remove image
-        if ($category->image) {
-            Storage::disk(config('filesystems.image_disk', 'public'))->delete('category/'.basename($category->image));
-        }
+        $image = $category->getRawOriginal('image');
 
         // delete
         $category->delete();
+
+        if ($image) {
+            $this->imageStorage->delete($image, 'category');
+        }
 
         // redirect
         return to_route('categories.index');

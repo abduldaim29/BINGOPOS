@@ -12,6 +12,7 @@ class TransactionTenderService
 {
     public const METHODS = [
         TransactionTender::METHOD_CASH,
+        TransactionTender::METHOD_CARD,
         TransactionTender::METHOD_BANK_TRANSFER,
         TransactionTender::METHOD_MIDTRANS,
         TransactionTender::METHOD_XENDIT,
@@ -125,7 +126,8 @@ class TransactionTenderService
                 'change' => $change,
                 'bank_account_id' => $bankAccountId,
                 'payment_status' => $method === TransactionTender::METHOD_CASH
-                || $method === TransactionTender::METHOD_BANK_TRANSFER
+                    || $method === TransactionTender::METHOD_CARD
+                    || $method === TransactionTender::METHOD_BANK_TRANSFER
                     ? TransactionTender::STATUS_PAID
                     : TransactionTender::STATUS_PENDING,
             ];

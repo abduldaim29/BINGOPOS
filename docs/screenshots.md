@@ -70,7 +70,7 @@ The following are all screenshots of the Point of Sale features.
 
 | Screenshot | Description |
 |------------|-----------|
-| ![Store Profile](screenshots/23-store-profile.png) | Store profile — NPWP, NIB, and VAT rate |
+| ![Store Profile](screenshots/23-store-profile.png) | Brand profile — NTN/CNIC and STRN |
 | ![Payment Settings](screenshots/24-payment-settings.png) | Payment gateway configuration |
 | ![Bank Accounts](screenshots/25-bank-accounts.png) | Bank accounts for transfers |
 | ![Loyalty Settings](screenshots/26-loyalty-settings.png) | Loyalty settings — tiers and points |

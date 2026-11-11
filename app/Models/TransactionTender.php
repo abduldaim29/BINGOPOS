@@ -9,6 +9,8 @@ class TransactionTender extends Model
 {
     public const METHOD_CASH = 'cash';
 
+    public const METHOD_CARD = 'card';
+
     public const METHOD_BANK_TRANSFER = 'bank_transfer';
 
     public const METHOD_MIDTRANS = 'midtrans';

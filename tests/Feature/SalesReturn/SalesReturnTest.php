@@ -10,6 +10,7 @@ use App\Models\Receivable;
 use App\Models\SalesReturn;
 use App\Models\Transaction;
 use App\Models\User;
+use App\Models\Warehouse;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
 use Spatie\Permission\Models\Permission;
@@ -74,6 +75,73 @@ class SalesReturnTest extends TestCase
         $this->assertSame(60000, $salesReturn->refund_amount);
     }
 
+    public function test_replacement_settlement_is_persisted_without_refund_or_credit(): void
+    {
+        $user = $this->createUserWithPermissions([
+            'transactions-access',
+            'sales-returns-access',
+            'sales-returns-create',
+        ]);
+        [$transaction, $detail] = $this->createTransaction($user);
+
+        $this->actingAs($user)->post(route('sales-returns.store', $transaction), [
+            'return_type' => 'replacement',
+            'items' => [[
+                'transaction_detail_id' => $detail->id,
+                'qty_return' => 1,
+                'return_reason' => 'Replacement requested',
+                'restock_to_inventory' => true,
+            ]],
+        ])->assertRedirect();
+
+        $salesReturn = SalesReturn::firstOrFail();
+        $this->assertSame('replacement', $salesReturn->return_type);
+        $this->assertSame(0, $salesReturn->refund_amount);
+        $this->assertSame(0, $salesReturn->credited_amount);
+    }
+
+    public function test_draft_snapshots_return_value_after_invoice_discount_and_inclusive_tax(): void
+    {
+        $user = $this->createUserWithPermissions([
+            'transactions-access',
+            'sales-returns-access',
+            'sales-returns-create',
+        ]);
+        [$transaction, $detail] = $this->createTransaction($user, qty: 2);
+        $transaction->update([
+            'discount' => 12000,
+            'grand_total' => 108000,
+            'taxable_amount' => 102000,
+            'tax_total' => 18000,
+        ]);
+        $detail->update([
+            'cost_total' => 90000,
+            'tax_total' => 18000,
+            'tax_type' => 'inclusive',
+        ]);
+
+        $this->actingAs($user)
+            ->post(route('sales-returns.store', $transaction), [
+                'return_type' => 'refund_cash',
+                'notes' => 'Partial quantity return',
+                'items' => [
+                    [
+                        'transaction_detail_id' => $detail->id,
+                        'qty_return' => 1,
+                        'return_reason' => 'Partial return',
+                        'restock_to_inventory' => true,
+                    ],
+                ],
+            ])
+            ->assertSessionDoesntHaveErrors();
+
+        $returnItem = SalesReturn::firstOrFail()->items()->firstOrFail();
+        $this->assertSame(60000, $returnItem->subtotal);
+        $this->assertSame(45000, $returnItem->cost_total);
+        $this->assertSame(45000, $returnItem->net_sales_total);
+        $this->assertSame(9000, $returnItem->tax_refund_total);
+    }
+
     public function test_qty_return_cannot_exceed_remaining_quantity(): void
     {
         $user = $this->createUserWithPermissions([
@@ -91,6 +159,7 @@ class SalesReturnTest extends TestCase
             'customer_id' => $transaction->customer_id,
             'cashier_id' => $user->id,
             'status' => 'completed',
+            'return_type' => 'refund_cash',
             'return_type' => 'refund_cash',
             'refund_amount' => 60000,
             'credited_amount' => 0,
@@ -161,6 +230,9 @@ class SalesReturnTest extends TestCase
             'qty_return' => 1,
             'unit_price' => 60000,
             'subtotal' => 60000,
+            'cost_total' => 45000,
+            'net_sales_total' => 60000,
+            'tax_refund_total' => 0,
             'return_reason' => 'Barang dikembalikan',
             'restock_to_inventory' => true,
         ]);
@@ -189,6 +261,63 @@ class SalesReturnTest extends TestCase
         $this->assertDatabaseHas('profits', [
             'transaction_id' => $transaction->id,
             'total' => -15000,
+        ]);
+    }
+
+    public function test_complete_waste_return_reverses_revenue_without_restoring_cost(): void
+    {
+        $user = $this->createUserWithPermissions([
+            'transactions-access',
+            'sales-returns-access',
+            'sales-returns-create',
+            'sales-returns-complete',
+        ]);
+        [$transaction, $detail, $product] = $this->createTransaction($user, qty: 1, stock: 4);
+        $detail->update([
+            'cost_total' => 45000,
+            'tax_total' => 0,
+            'tax_type' => 'exclusive',
+        ]);
+        $shift = $this->openShiftFor($user);
+        $salesReturn = SalesReturn::create([
+            'code' => 'SR-TEST-WASTE',
+            'transaction_id' => $transaction->id,
+            'customer_id' => $transaction->customer_id,
+            'cashier_id' => $user->id,
+            'status' => 'draft',
+            'return_type' => 'refund_cash',
+            'refund_amount' => 60000,
+            'credited_amount' => 0,
+            'total_return_amount' => 60000,
+        ]);
+        $salesReturn->items()->create([
+            'transaction_detail_id' => $detail->id,
+            'product_id' => $product->id,
+            'qty_sold' => 1,
+            'qty_returned_before' => 0,
+            'qty_return' => 1,
+            'unit_price' => 60000,
+            'subtotal' => 60000,
+            'net_sales_total' => 60000,
+            'tax_refund_total' => 0,
+            'return_reason' => 'Written off as waste',
+            'restock_to_inventory' => false,
+        ]);
+
+        $this->actingAs($user)
+            ->post(route('sales-returns.complete', $salesReturn))
+            ->assertSessionDoesntHaveErrors();
+
+        $this->assertSame(4, $product->fresh()->stock);
+        $this->assertSame(-45000, (int) $transaction->profits()->sum('total'));
+        $this->assertDatabaseMissing('stock_mutations', [
+            'reference_type' => 'sales_return',
+            'reference_id' => $salesReturn->id,
+        ]);
+        $this->assertDatabaseHas('sales_returns', [
+            'id' => $salesReturn->id,
+            'status' => 'completed',
+            'cashier_shift_id' => $shift->id,
         ]);
     }
 
@@ -334,6 +463,163 @@ class SalesReturnTest extends TestCase
         $response->assertInvalid(['sales_return']);
     }
 
+    public function test_sales_returns_page_lists_filtered_returns(): void
+    {
+        $user = $this->createUserWithPermissions(['sales-returns-access']);
+        [$transaction] = $this->createTransaction($user, qty: 2);
+        $salesReturn = SalesReturn::create([
+            'code' => 'RET-INDEX-001',
+            'transaction_id' => $transaction->id,
+            'warehouse_id' => $transaction->warehouse_id,
+            'cashier_id' => $user->id,
+            'status' => 'completed',
+            'total_return_amount' => 50000,
+            'refund_amount' => 50000,
+        ]);
+
+        $this->actingAs($user)
+            ->get(route('sales-returns.index', ['code' => $salesReturn->code]))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->component('Dashboard/SalesReturns/Index')
+                ->where('filters.code', $salesReturn->code)
+                ->where('summary.returns_count', 1)
+                ->where('summary.refunded_total', 50000)
+                ->where('salesReturns.data.0.code', $salesReturn->code)
+            );
+    }
+
+    public function test_sales_returns_page_is_empty_without_returns(): void
+    {
+        $user = $this->createUserWithPermissions(['sales-returns-access']);
+
+        $this->actingAs($user)
+            ->get(route('sales-returns.index'))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->where('summary.returns_count', 0)
+                ->where('salesReturns.total', 0)
+            );
+    }
+
+    public function test_sales_returns_page_exposes_return_summary(): void
+    {
+        $user = $this->createUserWithPermissions(['sales-returns-access']);
+        $warehouse = Warehouse::factory()->create([
+            'code' => 'REPORT-WH',
+            'name' => 'Warehouse Before Rename',
+            'type' => 'main',
+        ]);
+        [$transaction] = $this->createTransaction($user);
+        $transaction->update(['warehouse_id' => $warehouse->id]);
+        $warehouse->update(['name' => 'Updated Main Warehouse']);
+
+        $this->actingAs($user)
+            ->get(route('sales-returns.index'))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->has('salesReturns')
+                ->has('summary.returned_total')
+            );
+
+        $this->get(route('sales-returns.daily-sales.print', [
+            'date' => now()->toDateString(),
+        ]))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->where('sales.0.warehouse.name', 'Updated Main Warehouse')
+            );
+    }
+
+    public function test_daily_sales_print_includes_every_sale_for_the_selected_day(): void
+    {
+        $user = $this->createUserWithPermissions(['sales-returns-access']);
+        [$firstTransaction] = $this->createTransaction($user, qty: 2);
+        [$secondTransaction] = $this->createTransaction($user);
+        [$previousTransaction] = $this->createTransaction($user);
+
+        $firstTransaction->forceFill(['created_at' => now()->startOfDay()->addHours(9)])->save();
+        $secondTransaction->forceFill(['created_at' => now()->startOfDay()->addHours(11)])->save();
+        $previousTransaction->forceFill(['created_at' => now()->subDay()->startOfDay()->addHours(11)])->save();
+
+        $this->actingAs($user)
+            ->get(route('sales-returns.daily-sales.print', ['date' => now()->toDateString()]))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->component('Dashboard/SalesReturns/DailySalesPrint')
+                ->where('autoPrint', false)
+                ->where('summary.orders_count', 2)
+                ->where('summary.revenue_total', 180000)
+                ->where('summary.item_subtotal', 180000)
+                ->where('summary.promotion_discount_total', 0)
+                ->where('summary.discount_total', 0)
+                ->where('summary.tax_total', 0)
+                ->where('summary.shipping_total', 0)
+                ->has('sales', 2)
+                ->where('sales.0.invoice', $firstTransaction->invoice)
+                ->where('sales.0.details.0.product.title', $firstTransaction->details[0]->product->title)
+                ->where('sales.1.invoice', $secondTransaction->invoice)
+            );
+    }
+
+    public function test_daily_sales_report_only_auto_prints_when_requested(): void
+    {
+        $user = $this->createUserWithPermissions(['sales-returns-access']);
+
+        $this->actingAs($user)
+            ->get(route('sales-returns.daily-sales.print', [
+               'date' => now()->toDateString(),
+               'auto_print' => 1,
+            ]))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+               ->component('Dashboard/SalesReturns/DailySalesPrint')
+               ->where('autoPrint', true)
+            );
+    }
+
+    public function test_authorized_user_can_view_a_sales_return_invoice(): void
+    {
+        $user = $this->createUserWithPermissions(['sales-returns-access']);
+        [$transaction, $detail, $product] = $this->createTransaction($user);
+        $salesReturn = SalesReturn::create([
+            'code' => 'SR-PRINT-001',
+            'transaction_id' => $transaction->id,
+            'customer_id' => $transaction->customer_id,
+            'cashier_id' => $user->id,
+            'status' => 'completed',
+            'return_type' => 'refund_cash',
+            'refund_amount' => 60000,
+            'credited_amount' => 0,
+            'total_return_amount' => 60000,
+            'completed_at' => now(),
+        ]);
+        $salesReturn->items()->create([
+            'transaction_detail_id' => $detail->id,
+            'product_id' => $product->id,
+            'qty_sold' => 1,
+            'qty_returned_before' => 0,
+            'qty_return' => 1,
+            'unit_price' => 60000,
+            'subtotal' => 60000,
+            'return_reason' => 'Damaged item',
+            'restock_to_inventory' => true,
+        ]);
+
+        $this->actingAs($user)
+            ->get(route('sales-returns.print', $salesReturn))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->component('Dashboard/SalesReturns/Print')
+                ->where('salesReturn.code', 'SR-PRINT-001')
+                ->where('salesReturn.status', 'completed')
+                ->where('salesReturn.total_return_amount', 60000)
+                ->where('salesReturn.items.0.product.title', $product->title)
+                ->where('salesReturn.items.0.return_reason', 'Damaged item')
+                ->where('transaction.invoice', $transaction->invoice)
+            );
+    }
+
     private function createUserWithPermissions(array $permissions): User
     {
         $user = User::factory()->create();
@@ -398,7 +684,7 @@ class SalesReturnTest extends TestCase
         $detail = $transaction->details()->create([
             'product_id' => $product->id,
             'qty' => $qty,
-            'price' => 60000,
+            'price' => 60000 * $qty,
         ]);
 
         $transaction->profits()->create([

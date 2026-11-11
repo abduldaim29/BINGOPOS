@@ -31,6 +31,7 @@ function CategoryCard({ category, canUpdate, canDelete }) {
                         alt={category.name}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                         loading="lazy"
+                        decoding="async"
                         onError={(e) => {
                             e.target.style.display = 'none';
                         }}
@@ -207,6 +208,8 @@ export default function Index({ categories }) {
                                                             src={getImageUrl(category.image, "category")}
                                                             alt={category.name}
                                                             className="w-full h-full object-cover"
+                                                            loading="lazy"
+                                                            decoding="async"
                                                             onError={(e) => {
                                                                 e.target.style.display = 'none';
                                                             }}

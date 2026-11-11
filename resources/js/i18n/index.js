@@ -2,16 +2,17 @@ import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 
 import en from './locales/en.json';
+import id from './locales/id.json';
 
 const resources = {
     en: { translation: en },
+    id: { translation: id },
 };
 
-// Get the initial locale from localStorage first, then fall back to 'en'
 const getInitialLocale = () => {
     if (typeof window !== 'undefined') {
         const stored = localStorage.getItem('locale');
-        if (stored && stored === 'en') {
+        if (stored && ['en', 'id'].includes(stored)) {
             return stored;
         }
     }
@@ -24,7 +25,7 @@ i18n
         resources,
         lng: getInitialLocale(),
         fallbackLng: 'en',
-        supportedLngs: ['en'],
+        supportedLngs: ['en', 'id'],
         interpolation: {
             escapeValue: false,
         },
@@ -38,16 +39,14 @@ if (typeof window !== 'undefined') {
     // Initial sync on page load
     const syncLocaleFromBackend = () => {
         const backendLocale = window.page?.props?.locale?.current;
-        if (backendLocale && backendLocale !== i18n.language) {
-            // Only sync if backend locale is English, otherwise default to English
-            if (backendLocale === 'en') {
-                i18n.changeLanguage(backendLocale);
-                localStorage.setItem('locale', backendLocale);
-            } else {
-                i18n.changeLanguage('en');
-                localStorage.setItem('locale', 'en');
-            }
+        const storedLocale = localStorage.getItem('locale');
+        const targetLocale = ['en', 'id'].includes(storedLocale)
+            ? storedLocale
+            : (['en', 'id'].includes(backendLocale) ? backendLocale : 'en');
+        if (targetLocale !== i18n.language) {
+            i18n.changeLanguage(targetLocale);
         }
+        localStorage.setItem('locale', targetLocale);
     };
 
     // Sync immediately if page props are available
@@ -61,7 +60,7 @@ if (typeof window !== 'undefined') {
     // Listen for storage changes (for the language switcher)
     window.addEventListener('storage', (e) => {
         if (e.key === 'locale' && e.newValue && e.newValue !== i18n.language) {
-            if (e.newValue === 'en') {
+            if (['en', 'id'].includes(e.newValue)) {
                 i18n.changeLanguage(e.newValue);
             }
         }
@@ -72,4 +71,5 @@ export default i18n;
 
 export const languages = [
     { code: 'en', name: 'English', nativeName: 'English' },
+    { code: 'id', name: 'Bahasa Indonesia', nativeName: 'Bahasa Indonesia' },
 ];

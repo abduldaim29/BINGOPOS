@@ -55,7 +55,7 @@ class Category extends Model
     protected function image(): Attribute
     {
         return Attribute::make(
-            get: fn ($value) => $value ? asset('/storage/category/'.$value) : null,
+            get: fn ($value): ?string => app(\App\Services\ImageStorageService::class)->url($value, 'category'),
         );
     }
 }

@@ -22,9 +22,14 @@ export default function Form({ mode = "create", member = null }) {
         tierOptions = [],
     } = usePage().props;
 
+    const isWalkInCustomer =
+        Boolean(member?.is_walkin) ||
+        /^walk[- ]in customer$/i.test(String(member?.name || "").trim());
+
     const { data, setData, post, processing } = useForm({
         name: member?.name ?? "",
         no_telp: member?.no_telp ?? "",
+        is_walkin: isWalkInCustomer,
         address: member?.address ?? "",
         is_loyalty_member: Boolean(member?.is_loyalty_member ?? true),
         loyalty_tier: member?.loyalty_tier ?? "regular",
@@ -41,6 +46,7 @@ export default function Form({ mode = "create", member = null }) {
     const prevProvince = useRef(member?.province_id ?? null);
     const prevRegency = useRef(member?.regency_id ?? null);
     const prevDistrict = useRef(member?.district_id ?? null);
+    const isPakistanProvince = String(data.province_id || "").startsWith("PK-");
 
     const fetchRegencies = async (provinceId) => {
         if (!provinceId) {
@@ -79,6 +85,13 @@ export default function Form({ mode = "create", member = null }) {
     };
 
     useEffect(() => {
+        if (isPakistanProvince) {
+            setRegencyList([]);
+            setDistrictList([]);
+            setVillageList([]);
+            return;
+        }
+
         if (data.province_id) {
             if (
                 prevProvince.current &&
@@ -98,9 +111,11 @@ export default function Form({ mode = "create", member = null }) {
         }
 
         prevProvince.current = data.province_id;
-    }, [data.province_id]);
+    }, [data.province_id, isPakistanProvince]);
 
     useEffect(() => {
+        if (isPakistanProvince) return;
+
         if (data.regency_id) {
             if (prevRegency.current && prevRegency.current !== data.regency_id) {
                 setData("district_id", "");
@@ -114,9 +129,11 @@ export default function Form({ mode = "create", member = null }) {
         }
 
         prevRegency.current = data.regency_id;
-    }, [data.regency_id]);
+    }, [data.regency_id, isPakistanProvince]);
 
     useEffect(() => {
+        if (isPakistanProvince) return;
+
         if (data.district_id) {
             if (
                 prevDistrict.current &&
@@ -130,7 +147,7 @@ export default function Form({ mode = "create", member = null }) {
         }
 
         prevDistrict.current = data.district_id;
-    }, [data.district_id]);
+    }, [data.district_id, isPakistanProvince]);
 
     const submit = (event) => {
         event.preventDefault();
@@ -222,7 +239,7 @@ export default function Form({ mode = "create", member = null }) {
                             />
                             <Input
                                 type="text"
-                                label="Phone Number"
+                                label={`Phone Number${isWalkInCustomer ? " (Optional for Walk-in Customer)" : ""}`}
                                 placeholder="Enter phone number"
                                 errors={errors.no_telp}
                                 onChange={(event) =>
@@ -295,7 +312,7 @@ export default function Form({ mode = "create", member = null }) {
                         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                             <div>
                                 <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                                    Province
+                                    Province <span className="font-normal text-slate-400">(Optional)</span>
                                 </label>
                                 <select
                                     value={data.province_id}
@@ -323,9 +340,16 @@ export default function Form({ mode = "create", member = null }) {
 
                             <div>
                                 <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                                    City/Regency
+                                    {isPakistanProvince ? "City" : "City/Regency"} <span className="font-normal text-slate-400">(Optional)</span>
                                 </label>
-                                <select
+                                {isPakistanProvince ? (
+                                    <input
+                                        value={data.regency_id}
+                                        onChange={(event) => setData("regency_id", event.target.value)}
+                                        placeholder="e.g. Lahore, Karachi, Peshawar"
+                                        className="mt-2 h-11 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
+                                    />
+                                ) : <select
                                     value={data.regency_id}
                                     onChange={(event) =>
                                         setData("regency_id", event.target.value)
@@ -342,7 +366,7 @@ export default function Form({ mode = "create", member = null }) {
                                             {regency.name}
                                         </option>
                                     ))}
-                                </select>
+                                </select>}
                                 {errors.regency_id && (
                                     <p className="mt-1 text-xs text-rose-500">
                                         {errors.regency_id}
@@ -354,9 +378,16 @@ export default function Form({ mode = "create", member = null }) {
                         <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
                             <div>
                                 <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                                    District
+                                    District <span className="font-normal text-slate-400">(Optional)</span>
                                 </label>
-                                <select
+                                {isPakistanProvince ? (
+                                    <input
+                                        value={data.district_id}
+                                        onChange={(event) => setData("district_id", event.target.value)}
+                                        placeholder="Enter district"
+                                        className="mt-2 h-11 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
+                                    />
+                                ) : <select
                                     value={data.district_id}
                                     onChange={(event) =>
                                         setData("district_id", event.target.value)
@@ -373,7 +404,7 @@ export default function Form({ mode = "create", member = null }) {
                                             {district.name}
                                         </option>
                                     ))}
-                                </select>
+                                </select>}
                                 {errors.district_id && (
                                     <p className="mt-1 text-xs text-rose-500">
                                         {errors.district_id}
@@ -383,9 +414,16 @@ export default function Form({ mode = "create", member = null }) {
 
                             <div>
                                 <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                                    Village
+                                    Village <span className="font-normal text-slate-400">(Optional)</span>
                                 </label>
-                                <select
+                                {isPakistanProvince ? (
+                                    <input
+                                        value={data.village_id}
+                                        onChange={(event) => setData("village_id", event.target.value)}
+                                        placeholder="Enter area / town / village"
+                                        className="mt-2 h-11 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
+                                    />
+                                ) : <select
                                     value={data.village_id}
                                     onChange={(event) =>
                                         setData("village_id", event.target.value)
@@ -402,7 +440,7 @@ export default function Form({ mode = "create", member = null }) {
                                             {village.name}
                                         </option>
                                     ))}
-                                </select>
+                                </select>}
                                 {errors.village_id && (
                                     <p className="mt-1 text-xs text-rose-500">
                                         {errors.village_id}
@@ -413,7 +451,7 @@ export default function Form({ mode = "create", member = null }) {
 
                         <div className="mt-4">
                             <Textarea
-                                label="Full Address"
+                                label="Full Address (Optional)"
                                 placeholder="Enter the member's full address"
                                 errors={errors.address}
                                 onChange={(event) =>

@@ -32,7 +32,7 @@ export default function Index({ campaigns, filters }) {
                     <div>
                         <h1 className="text-2xl font-bold text-slate-900 dark:text-white">CRM Campaigns</h1>
                         <p className="text-sm text-slate-500 dark:text-slate-400">
-                            Manage promotional broadcasts, reminders, and invoice sharing based on CRM audiences.
+                            Manage promotional broadcasts, reminders, and customer follow-ups.
                         </p>
                     </div>
                     {can("crm-campaigns-create") && (

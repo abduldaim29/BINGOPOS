@@ -278,16 +278,18 @@
         },
         "items": {
             "dashboard": "Dashboard",
+            "digitalMenu": "Digital Menu",
             "categories": "Categories",
             "subCategories": "Sub Categories",
             "items": "Items",
+            "productTypes": "Product Types",
             "products": "Products",
             "customers": "Customers",
             "suppliers": "Suppliers",
             "transactions": "Transactions/Sales",
             "transactionHistory": "Transaction History",
             "salesInvoices": "Sales Invoices",
-            "salesReturns": "Sales Returns",
+            "salesReturns": "Sales Return",
             "receivables": "Receivables",
             "agingReminders": "Aging & Reminders",
             "discountApproval": "Discount Approval",
@@ -339,14 +341,13 @@
             "usersList": "User Data",
             "usersCreate": "Add User",
             "paymentGateway": "Payment Gateway",
-            "storeProfile": "Store Profile",
+            "storeProfile": "Brand Profile",
             "bankAccounts": "Bank Accounts",
             "loyalty": "Loyalty",
             "salesTarget": "Sales Target",
             "priceLists": "Price Lists",
             "warehouses": "Warehouses / Branches",
-            "units": "Units",
-            "whatsApp": "WhatsApp"
+            "units": "Units"
         },
         "menu": {
             "overview": "Overview",
@@ -359,7 +360,7 @@
             "sales": "Sales",
             "transactions": "Transactions",
             "transactionHistory": "Transaction History",
-            "salesReturns": "Sales Returns",
+            "salesReturns": "Sales Return",
             "receivables": "Receivables",
             "agingReminders": "Aging & Reminders",
             "approval": "Approval",
@@ -401,7 +402,6 @@
             "salesTarget": "Sales Target",
             "warehouses": "Warehouses",
             "outlets": "Outlets",
-            "whatsapp": "WhatsApp",
             "printers": "Printers",
             "taxSettings": "Tax"
         }
@@ -487,6 +487,7 @@
         "status": {
             "outOfStock": "Out of Stock",
             "lowStock": "Low Stock",
+            "liveCooking": "Made to Order",
             "composite": "Composite",
             "inStock": "In Stock"
         },
@@ -504,6 +505,35 @@
             "title": "No Products Yet",
             "description": "Start by adding your first product"
         }
+    },
+    "variationRecipes": {
+        "title": "Recipe Cost by Variation",
+        "description": "Set an independent ingredient list and quantity for each variation. Ingredient costs use the selected product unit and its configured purchase price.",
+        "unitConversionNote": "For POS stock consumption, set the ingredient's base unit to its smallest stockable unit (for example g or ml).",
+        "sellingPrice": "Selling price",
+        "copyFrom": "Copy recipe from...",
+        "copy": "Copy",
+        "ingredient": "Inventory ingredient",
+        "selectProduct": "Select product",
+        "quantity": "Quantity",
+        "unit": "Unit",
+        "selectUnit": "Select unit",
+        "noUnits": "No units configured",
+        "baseUnit": "Base unit",
+        "baseUnitFactor": "1 unit = {{factor}} base units",
+        "cost": "Cost",
+        "wastage": "Wastage (%)",
+        "addIngredient": "Add ingredient",
+        "batchYield": "Batch yield",
+        "packagingCost": "Packaging cost",
+        "labourCost": "Labour cost",
+        "overheadCost": "Overhead cost",
+        "recipeCost": "Recipe cost",
+        "selectRecipe": "Select recipe",
+        "editRecipe": "Edit recipe",
+        "grossProfit": "Gross profit",
+        "margin": "Margin",
+        "noMargin": "—"
     },
     "categories": {
         "title": "Categories",
@@ -785,7 +815,6 @@
         "download": "Download",
         "confirmPayment": "Confirm Payment",
         "salesReturn": "Sales Return",
-        "sendWhatsApp": "Send via WhatsApp",
         "noTransactions": "No transactions match the filter",
         "noTransactionsDefault": "Transactions will appear here",
         "downloadInvoice": "Download Invoice",
@@ -1146,20 +1175,6 @@
                 "branch": "Branch",
                 "stock": "Stock Warehouse"
             }
-        },
-        "whatsapp": {
-            "title": "WhatsApp",
-            "serviceUrl": "Service URL",
-            "enabled": "Enable",
-            "autoSend": "Auto Send",
-            "connect": "Connect",
-            "disconnect": "Disconnect",
-            "scanQR": "Scan QR Code",
-            "status": {
-                "connected": "Connected",
-                "disconnected": "Disconnected",
-                "connecting": "Connecting..."
-            }
         }
     },
     "reports": {
@@ -1234,11 +1249,6 @@
         "receipt": "Receipt",
         "shippingLabel": "Shipping Label",
         "printDocument": "Print Document"
-    },
-    "whatsapp": {
-        "sendTest": "Send Test",
-        "messageSent": "Message sent",
-        "messageFailed": "Failed to send message"
     },
     "language": {
         "title": "Language",

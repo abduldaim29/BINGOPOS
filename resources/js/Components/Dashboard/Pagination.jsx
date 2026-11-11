@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Link, router } from "@inertiajs/react";
 import {
     IconChevronRight,
@@ -11,17 +11,29 @@ import {
  * Handles Laravel paginator links: previous/next, ellipsis,
  * disabled states, and wraps gracefully on mobile.
  */
-export default function Pagination({ links }) {
+export default function Pagination({ links, perPage: perPageProp = null }) {
     if (!links || links.length <= 3) return null;
 
     const [perPage, setPerPage] = useState(
-        () => new URLSearchParams(window.location.search).get("per_page") || "10"
+        () =>
+            String(
+                perPageProp ||
+                    new URLSearchParams(window.location.search).get("per_page") ||
+                    "10"
+            )
     );
+
+    useEffect(() => {
+        if (perPageProp != null) {
+            setPerPage(String(perPageProp));
+        }
+    }, [perPageProp]);
 
     const changePerPage = (value) => {
         setPerPage(value);
         const url = new URL(window.location.href);
         url.searchParams.set("per_page", value);
+        url.searchParams.delete("page");
         router.get(url.pathname + url.search, {}, {
             preserveState: true,
             preserveScroll: true,

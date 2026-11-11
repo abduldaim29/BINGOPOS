@@ -21,6 +21,7 @@ class Product extends Model
         'buy_price' => 'integer',
         'sell_price' => 'integer',
         'stock' => 'integer',
+        'stock_mode' => 'string',
         'tax_rate' => 'decimal:2',
         'min_stock' => 'integer',
         'max_stock' => 'integer',
@@ -62,6 +63,7 @@ class Product extends Model
         'product_type_id',
         'sub_category_id',
         'stock',
+        'stock_mode',
         'tax_type',
         'tax_rate',
         'min_stock',
@@ -177,7 +179,7 @@ class Product extends Model
 
     public function isLowStock(?int $warehouseId = null): bool
     {
-        if ($this->min_stock <= 0) {
+        if ($this->stock_mode === 'made_to_order' || $this->min_stock <= 0) {
             return false;
         }
 
@@ -190,53 +192,17 @@ class Product extends Model
 
     public function suggestedOrderQty(): int
     {
-        if ($this->max_stock <= 0 || $this->min_stock <= 0) {
+        if ($this->stock_mode === 'made_to_order' || $this->max_stock <= 0 || $this->min_stock <= 0) {
             return 0;
         }
 
         return max(0, $this->max_stock - $this->stockTotal());
     }
 
-    protected function image(): Attribute
+protected function image(): Attribute
 {
     return Attribute::make(
-        get: function ($value): ?string {
-            if (! is_string($value) || trim($value) === '') {
-                return null;
-            }
-
-            // Preserve already complete image URLs.
-            if (preg_match('~^https?://~i', $value)) {
-                return $value;
-            }
-
-            // Normalize previously stored image paths.
-            $path = str_replace('\\', '/', trim($value));
-            $path = ltrim($path, '/');
-            $path = preg_replace('~^(?:public/)?storage/~i', '', $path) ?? $path;
-
-            if (! str_starts_with($path, 'products/')) {
-                $path = 'products/'.$path;
-            }
-
-            // Use the public Supabase bucket URL when S3 storage is enabled.
-            if (config('filesystems.image_disk', 'public') === 's3') {
-                $baseUrl = rtrim(
-                    (string) config('filesystems.image_url'),
-                    '/'
-                );
-
-                if ($baseUrl !== '') {
-                    return $baseUrl.'/'.$path;
-                }
-
-                // Leave the normalized path available for frontend URL handling.
-                return $path;
-            }
-
-            // Keep existing local development behavior.
-            return asset('storage/'.$path);
-        },
+        get: fn ($value): ?string => app(\App\Services\ImageStorageService::class)->url($value, 'products'),
     );
 }
 }

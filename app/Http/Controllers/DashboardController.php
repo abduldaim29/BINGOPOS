@@ -8,6 +8,8 @@ use App\Models\Customer;
 use App\Models\Outlet;
 use App\Models\Product;
 use App\Models\Profit;
+use App\Models\Receivable;
+use App\Models\SalesReturn;
 use App\Models\Setting;
 use App\Models\Transaction;
 use App\Models\TransactionDetail;
@@ -36,6 +38,7 @@ class DashboardController extends Controller
         $scopeTransactions = fn ($query) => $scope($query);
         $scopeProfits = fn ($query) => $query->whereHas('transaction', fn ($q) => $scope($q));
         $scopeDetails = fn ($query) => $query->whereHas('transaction', fn ($q) => $scope($q));
+        $scopeReceivables = fn ($query) => $query->whereHas('transaction', fn ($q) => $scope($q));
 
         $today = Carbon::today();
         $tomorrow = $today->copy()->addDay();
@@ -69,6 +72,21 @@ class DashboardController extends Controller
                 [$today, $tomorrow]
             )
             ->first();
+        $returnStats = SalesReturn::query()
+            ->where('status', 'completed')
+            ->whereHas('transaction', fn ($query) => $scope($query))
+            ->selectRaw('COALESCE(SUM(total_return_amount), 0) as returned_total')
+            ->selectRaw('COALESCE(SUM(refund_amount), 0) as refunded_total')
+            ->selectRaw('COALESCE(SUM(credited_amount), 0) as credited_total')
+            ->selectRaw(
+                'COALESCE(SUM(CASE WHEN sales_returns.completed_at >= ? AND sales_returns.completed_at < ? THEN total_return_amount ELSE 0 END), 0) as today_returns',
+                [$today, $tomorrow]
+            )
+            ->first();
+        $receivableStats = $scopeReceivables(Receivable::query())
+            ->selectRaw('COALESCE(SUM(receivables.total - receivables.paid), 0) as outstanding_total')
+            ->where('status', '!=', 'paid')
+            ->first();
 
         $totalTransactions = (int) $transactionStats->total_transactions;
         $totalRevenue = $transactionStats->total_revenue;
@@ -77,6 +95,11 @@ class DashboardController extends Controller
         $todaySales = $transactionStats->today_sales;
         $totalProfit = $profitStats->total_profit;
         $todayProfit = $profitStats->today_profit;
+        $totalLoss = max(0, -(int) $totalProfit);
+        $todayLoss = max(0, -(int) $todayProfit);
+        $completedReturns = (int) ($returnStats->returned_total ?? 0);
+        $todayReturns = (int) ($returnStats->today_returns ?? 0);
+        $outstandingReceivables = (int) ($receivableStats->outstanding_total ?? 0);
 
         // New: Monthly Target (from settings)
         $monthlyTarget = Setting::getForOutlet(
@@ -126,6 +149,7 @@ class DashboardController extends Controller
                 'warehouse_totals',
                 fn ($join) => $join->on('warehouse_totals.product_id', '=', 'products.id')
             )
+            ->where('products.stock_mode', '!=', 'made_to_order')
             ->where(function ($q) use ($includeLegacy) {
                 $q->where('warehouse_totals.warehouse_stock', '<', 10);
                 if ($includeLegacy) {
@@ -145,6 +169,24 @@ class DashboardController extends Controller
                 ];
             });
 
+        $inventoryValue = (int) Product::query()
+            ->joinSub(
+                DB::table('product_warehouse')
+                    ->select('product_id', DB::raw('SUM(stock) as warehouse_stock'))
+                    ->whereIn('warehouse_id', $warehouseIds)
+                    ->groupBy('product_id'),
+                'inventory_totals',
+                fn ($join) => $join->on('inventory_totals.product_id', '=', 'products.id')
+            )
+            ->where('products.stock_mode', '!=', 'made_to_order')
+            ->selectRaw('COALESCE(SUM(inventory_totals.warehouse_stock * COALESCE(products.buy_price, 0)), 0) as inventory_value')
+            ->value('inventory_value');
+        $overdueReceivables = $scopeReceivables(Receivable::query())
+            ->where('status', '!=', 'paid')
+            ->whereNotNull('due_date')
+            ->whereDate('due_date', '<', $today)
+            ->count();
+
         // New: Slow Moving Products (no sales in 30 days)
         $thirtyDaysAgo = Carbon::now()->subDays(30);
         $slowMovingProducts = Product::query()
@@ -156,6 +198,7 @@ class DashboardController extends Controller
                 'warehouse_totals',
                 fn ($join) => $join->on('warehouse_totals.product_id', '=', 'products.id')
             )
+            ->where('products.stock_mode', '!=', 'made_to_order')
             ->whereNotIn(
                 'products.id',
                 $scopeDetails(TransactionDetail::where('transaction_details.created_at', '>=', $thirtyDaysAgo))
@@ -253,6 +296,15 @@ class DashboardController extends Controller
             'todayTransactions' => (int) $todayTransactions,
             'todaySales' => (int) $todaySales,
             'todayProfit' => (int) $todayProfit,
+            'totalLoss' => $totalLoss,
+            'todayLoss' => $todayLoss,
+            'completedReturns' => $completedReturns,
+            'todayReturns' => $todayReturns,
+            'refundedReturns' => (int) ($returnStats->refunded_total ?? 0),
+            'creditedReturns' => (int) ($returnStats->credited_total ?? 0),
+            'outstandingReceivables' => $outstandingReceivables,
+            'overdueReceivables' => (int) $overdueReceivables,
+            'inventoryValue' => $inventoryValue,
             'monthlyTarget' => (int) $monthlyTarget,
             'currentMonthSales' => (int) $currentMonthSales,
             'topProducts' => $topProducts,

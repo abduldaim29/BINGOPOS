@@ -3,7 +3,12 @@ import { Head, Link, router, useForm } from "@inertiajs/react";
 import DashboardLayout from "@/Layouts/DashboardLayout";
 import Button from "@/Components/Dashboard/Button";
 import Table from "@/Components/Dashboard/Table";
-import { IconArrowLeft, IconCheck, IconDeviceFloppy } from "@tabler/icons-react";
+import {
+    IconArrowLeft,
+    IconCheck,
+    IconDeviceFloppy,
+    IconFileInvoice,
+} from "@tabler/icons-react";
 import toast from "react-hot-toast";
 
 const formatCurrency = (value = 0) =>
@@ -46,7 +51,8 @@ export default function SalesReturnForm({
 
     const form = useForm({
         return_type:
-            salesReturn?.return_type && transaction.customer
+            salesReturn?.return_type &&
+            (transaction.customer || salesReturn.return_type === "replacement")
                 ? salesReturn.return_type
                 : "refund_cash",
         notes: salesReturn?.notes ?? "",
@@ -56,7 +62,8 @@ export default function SalesReturnForm({
     useEffect(() => {
         form.setData({
             return_type:
-                salesReturn?.return_type && transaction.customer
+                salesReturn?.return_type &&
+                (transaction.customer || salesReturn.return_type === "replacement")
                     ? salesReturn.return_type
                     : "refund_cash",
             notes: salesReturn?.notes ?? "",
@@ -76,7 +83,19 @@ export default function SalesReturnForm({
                 restock_to_inventory: true,
             };
             const qtyReturn = Number(current.qty_return || 0);
-            const subtotal = qtyReturn * Number(detail.price || 0);
+            const qtySold = Math.max(1, Number(detail.qty || 0));
+            const qtyReturnedBefore = Number(detail.returned_completed_qty || 0);
+            const returnedThrough = Math.min(
+                qtySold,
+                qtyReturnedBefore + qtyReturn
+            );
+            const subtotal =
+                Math.round(
+                    (Number(detail.price || 0) * returnedThrough) / qtySold
+                ) -
+                Math.round(
+                    (Number(detail.price || 0) * qtyReturnedBefore) / qtySold
+                );
 
             return {
                 ...detail,
@@ -217,7 +236,16 @@ export default function SalesReturnForm({
                     </div>
 
                     {salesReturn && (
-                        <div className="flex items-center gap-2">
+                        <div className="flex flex-wrap items-center gap-2">
+                            <a
+                                href={route("sales-returns.print", salesReturn.id)}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="inline-flex h-10 items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
+                            >
+                                <IconFileInvoice size={17} />
+                                Return Invoice
+                            </a>
                             <span
                                 className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${
                                     salesReturn.status === "completed"
@@ -388,7 +416,7 @@ export default function SalesReturnForm({
                                     </label>
                                     <select
                                         value={form.data.return_type}
-                                        disabled={!canEdit || !transaction.customer}
+                                        disabled={!canEdit}
                                         onChange={(event) =>
                                             form.setData(
                                                 "return_type",
@@ -400,6 +428,9 @@ export default function SalesReturnForm({
                                         <option value="refund_cash">
                                             Cash Refund
                                         </option>
+                                        <option value="replacement">
+                                            Replacement
+                                        </option>
                                         {transaction.customer && (
                                             <option value="store_credit">
                                                 Store Credit
@@ -409,7 +440,13 @@ export default function SalesReturnForm({
                                     {!transaction.customer && (
                                         <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
                                             Transactions without a customer can
-                                            only use cash refunds.
+                                            use cash refunds or replacement.
+                                        </p>
+                                    )}
+                                    {form.data.return_type === "replacement" && (
+                                        <p className="mt-2 text-xs text-blue-600 dark:text-blue-400">
+                                            Replacement returns the item without
+                                            issuing cash or store credit.
                                         </p>
                                     )}
                                     {transaction.payment_method === "split" && (

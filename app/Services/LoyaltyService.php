@@ -183,6 +183,9 @@ class LoyaltyService
         $manualDiscountRequested = max(0, (int) ($options['manual_discount'] ?? 0));
         $shippingCost = max(0, (int) ($options['shipping_cost'] ?? 0));
         $requestedRedeemPoints = max(0, (int) ($options['redeem_points'] ?? 0));
+        $taxRateOverride = isset($options['tax_rate_override'])
+            ? (float) $options['tax_rate_override']
+            : null;
         $voucher = $options['voucher'] ?? null;
 
         $availablePoints = $customer?->is_loyalty_member ? (int) $customer->loyalty_points : 0;
@@ -207,6 +210,20 @@ class LoyaltyService
 
         // Calculate tax.
         $taxService = app(TaxService::class);
+        $tenders = $options['tenders'] ?? [];
+        $paymentTaxRate = $taxService->rateForTenders($tenders)
+            ?? $taxService->rateForPaymentMethod($options['payment_method'] ?? null);
+        $appliesPaymentRateToAllProducts = in_array(
+            strtolower((string) ($options['payment_method'] ?? '')),
+            ['cash', 'card'],
+            true
+        ) || collect($tenders)->contains(
+            static fn (array $tender): bool => in_array(
+                strtolower((string) ($tender['method'] ?? '')),
+                ['cash', 'card'],
+                true
+            )
+        );
         $items = data_get($pricingPreview, 'items', []);
         $productIds = collect($items)->pluck('product_id')->filter()->unique()->values();
         $productTaxes = Product::whereIn('id', $productIds)->pluck('tax_rate', 'id');
@@ -214,30 +231,54 @@ class LoyaltyService
 
         $effectiveRate = 0;
         $taxTotal = 0;
+        $taxToAdd = 0;
+        $taxableAmount = 0;
         $taxableItems = [];
 
         foreach ($items as $item) {
             $pid = $item['product_id'] ?? null;
-            $lineTotal = (int) ($item['line_total'] ?? 0);
-            if ($pid && $lineTotal > 0) {
-                $rate = (float) ($productTaxes[$pid] ?? 11.00);
-                $type = $productTaxTypes[$pid] ?? 'exclusive';
-                $taxResult = $taxService->calculateLineItem($lineTotal, $type, $rate);
-                $taxTotal += $taxResult['tax_amount'];
-                if ($rate > 0) {
-                    $effectiveRate = $rate;
-                }
-                $taxableItems[] = ['product_id' => $pid, 'line_total' => $lineTotal, 'tax_amount' => $taxResult['tax_amount']];
+            $lineTotal = max(0, (int) ($item['line_total'] ?? 0));
+            $productRate = (float) ($productTaxes[$pid] ?? $taxService->getDefaultRate());
+            $rate = $taxRateOverride
+                ?? ($paymentTaxRate !== null && ($appliesPaymentRateToAllProducts || $productRate > 0)
+                    ? $paymentTaxRate
+                    : $productRate);
+            $type = $productTaxTypes[$pid] ?? 'exclusive';
+            $taxResult = $taxService->calculateLineItem($lineTotal, $type, $rate);
+            $grossLineTotal = max(0, (int) ($item['line_base_total'] ?? $lineTotal));
+            $grossTaxResult = $taxService->calculateLineItem($grossLineTotal, $type, $rate);
+
+            $taxTotal += $taxResult['tax_amount'];
+            $taxableAmount += $taxResult['taxable_amount'];
+            if ($type !== 'inclusive') {
+                $taxToAdd += $taxResult['tax_amount'];
             }
+
+            $taxableItems[] = [
+                'cart_id' => $item['cart_id'] ?? null,
+                'product_id' => $pid,
+                'taxable_amount' => $taxResult['taxable_amount'],
+                'gross_sales_amount' => $grossTaxResult['taxable_amount'],
+                'tax_total' => $taxResult['tax_amount'],
+                'tax_rate' => $rate,
+                'tax_type' => $type,
+            ];
         }
 
-        // Also tax shipping if needed (simple: apply the effective tax rate).
-        if ($shippingCost > 0 && $effectiveRate > 0) {
-            $shippingTax = (int) round($shippingCost * $effectiveRate / 100);
+        $shippingTaxRate = $taxRateOverride
+            ?? $paymentTaxRate
+            ?? $taxService->getDefaultRate();
+        if ($shippingCost > 0) {
+            $shippingTax = (int) round($shippingCost * $shippingTaxRate / 100);
             $taxTotal += $shippingTax;
+            $taxToAdd += $shippingTax;
+            $taxableAmount += $shippingCost;
         }
 
-        $grandTotal = $baseGrandTotal + $taxTotal;
+        $effectiveRate = $taxableAmount > 0
+            ? round(($taxTotal / $taxableAmount) * 100, 2)
+            : null;
+        $grandTotal = $baseGrandTotal + $taxToAdd;
         $pointsEarnedPreview = $this->calculateEarnPoints(
             $customer,
             max(0, $grandTotal - $shippingCost),
@@ -246,6 +287,7 @@ class LoyaltyService
 
         return [
             'items' => data_get($pricingPreview, 'items', []),
+            'taxable_items' => $taxableItems,
             'applied_groups' => data_get($pricingPreview, 'applied_groups', []),
             'consumed_quantities' => data_get($pricingPreview, 'consumed_quantities', []),
             'unmatched_items' => data_get($pricingPreview, 'unmatched_items', []),
@@ -257,8 +299,9 @@ class LoyaltyService
                 'loyalty_discount_total' => $pointsDiscount,
                 'manual_discount_total' => $manualDiscountApplied,
                 'shipping_cost' => $shippingCost,
+                'taxable_amount' => $taxableAmount,
                 'tax_total' => $taxTotal,
-                'tax_rate' => $effectiveRate ?: null,
+                'tax_rate' => $effectiveRate,
                 'grand_total' => $grandTotal,
                 'available_loyalty_points' => $availablePoints,
                 'requested_redeem_points' => $requestedRedeemPoints,

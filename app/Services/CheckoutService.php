@@ -13,6 +13,7 @@ use App\Support\Checkout\CheckoutContext;
 use App\Support\Checkout\CheckoutResult;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
@@ -25,6 +26,7 @@ class CheckoutService
         private readonly PriceListService $priceListService,
         private readonly BatchService $batchService,
         private readonly TransactionTenderService $tenderService,
+        private readonly RecipeInventoryService $recipeInventory,
     ) {}
 
     public function execute(CheckoutContext $ctx): CheckoutResult
@@ -35,7 +37,7 @@ class CheckoutService
                 lockForUpdate: true,
             );
 
-            $carts = Cart::with('product')
+            $carts = Cart::with('product.units')
                 ->where('cashier_id', $ctx->userId)
                 ->active()
                 ->get();
@@ -52,6 +54,11 @@ class CheckoutService
                     'manual_discount' => $ctx->manualDiscount,
                     'shipping_cost' => $ctx->shippingCost,
                     'redeem_points' => $ctx->requestedRedeemPoints,
+                    'tax_rate_override' => $ctx->taxRateOverride,
+                    'payment_method' => $ctx->useTenders
+                        ? null
+                        : ($ctx->isPayLater ? 'pay_later' : ($ctx->paymentGateway ?: 'cash')),
+                    'tenders' => $ctx->useTenders ? $ctx->tenderInput : [],
                     'voucher' => $ctx->voucher,
                 ],
                 null,
@@ -63,6 +70,7 @@ class CheckoutService
             $loyaltyDiscount = (int) data_get($checkoutPreview, 'summary.loyalty_discount_total', 0);
             $voucherDiscount = (int) data_get($checkoutPreview, 'summary.voucher_discount_total', 0);
             $subtotalAfterPromo = (int) data_get($pricingPreview, 'summary.subtotal_after_promo', 0);
+            $invoiceDiscountTotal = $appliedManualDiscount + $loyaltyDiscount + $voucherDiscount;
 
             if ($ctx->isCashPayment && $ctx->cashAmount < $grandTotal) {
                 throw ValidationException::withMessages([
@@ -81,12 +89,14 @@ class CheckoutService
                 : ($ctx->isPayLater ? 'pay_later' : ($ctx->paymentGateway ?: 'cash'));
             $paymentStatus = $ctx->useTenders
                 ? $this->tenderService->aggregateStatus($tenders)
-                : ($ctx->isCashPayment ? 'paid' : ($ctx->isPayLater ? 'unpaid' : 'pending'));
+                : ($ctx->isCashPayment || $ctx->paymentGateway === TransactionTender::METHOD_CARD
+                    ? 'paid'
+                    : ($ctx->isPayLater ? 'unpaid' : 'pending'));
             $tenderBankAccountId = $ctx->useTenders
                 ? (collect($tenders)->firstWhere('bank_account_id', '!==', null)['bank_account_id'] ?? null)
                 : ($ctx->paymentGateway === 'bank_transfer' ? $ctx->bankAccountId : null);
 
-            $transaction = Transaction::create([
+            $transactionAttributes = [
                 'cashier_id' => $ctx->userId,
                 'cashier_shift_id' => $activeShift->id,
                 'warehouse_id' => $activeShift->warehouse_id,
@@ -108,16 +118,30 @@ class CheckoutService
                 'order_type' => $ctx->orderType,
                 'note' => $ctx->note,
                 'tax_rate' => data_get($checkoutPreview, 'summary.tax_rate'),
+                'taxable_amount' => data_get($checkoutPreview, 'summary.taxable_amount'),
                 'tax_total' => data_get($checkoutPreview, 'summary.tax_total', 0),
                 'customer_npwp' => $ctx->customerNpwp,
                 'price_list_id' => $this->priceListService->getApplicablePriceList($ctx->customer, $ctx->outlet)?->id,
-            ]);
+            ];
+            if (! Schema::hasColumn('transactions', 'taxable_amount')) {
+                unset($transactionAttributes['taxable_amount']);
+            }
+            $transaction = Transaction::create($transactionAttributes);
 
             if ($ctx->useTenders) {
                 $transaction->tenders()->createMany($tenders);
             }
 
-            $this->processCartItems($transaction, $carts, $pricingPreview, $ctx->outlet, $subtotalAfterPromo, $appliedManualDiscount, $activeShift->warehouse_id);
+            $this->processCartItems(
+                $transaction,
+                $carts,
+                $pricingPreview,
+                data_get($checkoutPreview, 'taxable_items', []),
+                $ctx->outlet,
+                $subtotalAfterPromo,
+                $invoiceDiscountTotal,
+                $activeShift->warehouse_id,
+            );
 
             Cart::where('cashier_id', $ctx->userId)->active()->delete();
 
@@ -155,21 +179,49 @@ class CheckoutService
         Transaction $transaction,
         $carts,
         array $pricingPreview,
+        array $taxableItems,
         $outlet,
         int $subtotalAfterPromo,
-        int $appliedManualDiscount,
+        int $invoiceDiscountTotal,
         ?int $warehouseId,
     ): void {
         $pricingItems = collect($pricingPreview['items']);
+        $taxableItemsByCartId = collect($taxableItems)->keyBy('cart_id');
+        $detailColumns = array_fill_keys(Schema::getColumnListing('transaction_details'), true);
+        $cartItems = $carts->values();
+        $allocatedDiscount = 0;
+        $cumulativeLineTotal = 0;
 
-        foreach ($carts as $cart) {
+        foreach ($cartItems as $index => $cart) {
             $pricingItem = $pricingItems->firstWhere('cart_id', $cart->id);
             $lineTotal = (int) data_get($pricingItem, 'line_total', $cart->price);
             $linePromoDiscount = (int) data_get($pricingItem, 'line_discount_total', 0);
             $baseUnitPrice = (int) data_get($pricingItem, 'base_unit_price', $cart->product->sell_price);
             $unitPrice = (int) data_get($pricingItem, 'effective_unit_price', $cart->product->sell_price);
+            $unit = $cart->unit_id
+                ? $cart->product->units->firstWhere('id', $cart->unit_id)
+                : null;
+            $taxableItem = $taxableItemsByCartId->get($cart->id, []);
+            $product = $cart->product;
+            $recipe = $product->stock_mode === 'made_to_order'
+                ? $this->recipeInventory->recipeForSale($product, $cart->variation_id)
+                : null;
+            $totalBuyPrice = $recipe
+                ? $this->recipeInventory->costForQuantity($recipe, (int) $cart->qty)
+                : (int) ($unit?->pivot?->buy_price ?? $product->buy_price) * (int) $cart->qty;
 
-            $detail = $transaction->details()->create([
+            $cumulativeLineTotal += $lineTotal;
+            $allocatedDiscountThroughLine = $index === $cartItems->count() - 1
+                ? $invoiceDiscountTotal
+                : (int) round(
+                    $invoiceDiscountTotal
+                    * $cumulativeLineTotal
+                    / max(1, $subtotalAfterPromo)
+                );
+            $lineInvoiceDiscount = $allocatedDiscountThroughLine - $allocatedDiscount;
+            $allocatedDiscount = $allocatedDiscountThroughLine;
+
+            $detailAttributes = [
                 'transaction_id' => $transaction->id,
                 'product_id' => $cart->product_id,
                 'unit_id' => $cart->unit_id,
@@ -178,6 +230,12 @@ class CheckoutService
                 'base_unit_price' => $baseUnitPrice,
                 'unit_price' => $unitPrice,
                 'price' => $lineTotal,
+                'cost_total' => $totalBuyPrice,
+                'taxable_amount' => (int) data_get($taxableItem, 'taxable_amount', 0),
+                'gross_sales_amount' => (int) data_get($taxableItem, 'gross_sales_amount', 0),
+                'tax_total' => (int) data_get($taxableItem, 'tax_total', 0),
+                'tax_rate' => data_get($taxableItem, 'tax_rate'),
+                'tax_type' => data_get($taxableItem, 'tax_type'),
                 'discount_total' => $linePromoDiscount,
                 'pricing_rule_id' => data_get($pricingItem, 'pricing_rule.id'),
                 'pricing_rule_name' => data_get($pricingItem, 'pricing_rule.name'),
@@ -187,12 +245,14 @@ class CheckoutService
                 'variation_id' => $cart->variation_id,
                 'variation_name' => $cart->variation_name,
                 'extras' => $cart->extras ?? [],
-            ]);
+            ];
+            $detailAttributes = array_intersect_key($detailAttributes, $detailColumns);
+            $detail = $transaction->details()->create($detailAttributes);
 
-            $totalBuyPrice = $cart->product->buy_price * $cart->qty;
-            $lineShare = $subtotalAfterPromo > 0 ? $lineTotal / $subtotalAfterPromo : 0;
-            $allocatedManualDiscount = (int) round($appliedManualDiscount * $lineShare);
-            $netSellPrice = max(0, $lineTotal - $allocatedManualDiscount);
+            $embeddedTax = data_get($taxableItem, 'tax_type') === 'inclusive'
+                ? (int) data_get($taxableItem, 'tax_total', 0)
+                : 0;
+            $netSellPrice = max(0, $lineTotal - $embeddedTax - $lineInvoiceDiscount);
             $profits = $netSellPrice - $totalBuyPrice;
 
             $transaction->profits()->create([
@@ -200,9 +260,14 @@ class CheckoutService
                 'total' => $profits,
             ]);
 
-            $product = Product::find($cart->product_id);
-
-            if ($product->is_composite) {
+            if ($recipe) {
+                $this->recipeInventory->consume(
+                    detail: $detail,
+                    recipe: $recipe,
+                    soldQuantity: (int) $cart->qty,
+                    warehouseId: $warehouseId,
+                );
+            } elseif ($product->is_composite) {
                 $product->load('components');
 
                 foreach ($product->components as $component) {
@@ -228,7 +293,7 @@ class CheckoutService
 
                     $component->decrement('stock', $componentQty);
                 }
-            } else {
+            } elseif ($product->stock_mode !== 'made_to_order') {
                 $baseQty = (int) round($cart->qty * (float) ($cart->conversion_factor ?? 1));
 
                 $pw = $warehouseId

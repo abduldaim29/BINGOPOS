@@ -15,7 +15,6 @@ Return to the documentation index: `docs/README.md`
 | `XENDIT_PUBLIC_KEY` | Xendit public key |
 | `XENDIT_CALLBACK_TOKEN` | Xendit webhook verification callback token |
 | `AUTH_PUBLIC_REGISTRATION` | Enable public registration (`true`/`false`, default: `false`) |
-| `WA_SERVICE_URL` | Node.js WhatsApp service address (default: `http://localhost:3001`) |
 
 The runtime version displayed by the application comes from `APP_VERSION`. Its value must match the Git release tag, for example, `v2.10.4`.
 
@@ -47,14 +46,13 @@ Configuration at `dashboard/settings/bank-accounts`:
 - Display order can be configured
 - Can be deactivated without being deleted
 
-## Tax Settings
+## Tax & Legal Information
 
-Configuration at `dashboard/settings/store` — under the "Tax & Legal Information" section:
+At `dashboard/settings/store`, the Brand Profile stores these optional Pakistan tax identifiers:
 
-- **Store NPWP** — Taxpayer Identification Number (format: `XX.XXX.XXX.X-XXX.XXX`)
-- **NIB** — Business Identification Number
-- **Default VAT Rate** — VAT percentage for new products (default: 11.00%)
-- The VAT rate can be changed for individual products on the product edit page
+- **NTN** — National Tax Number; individuals may enter their CNIC where it serves as their FBR registration number.
+- **STRN** — Sales Tax Registration Number, when registered for sales tax.
+- Product tax type and rate are configured on individual product records.
 
 ## Printer Settings
 
@@ -70,7 +68,7 @@ Configuration at `dashboard/settings/store`:
 
 - Name, address, phone, email, website, and city
 - Store logo
-- NPWP and NIB (for tax purposes)
+- NTN/CNIC and STRN (for Pakistan tax purposes)
 
 ## Sales Target
 
@@ -78,17 +76,6 @@ Configuration at `dashboard/settings/target`:
 
 - Monthly sales target
 - Displayed on the dashboard as a progress bar
-
-## WhatsApp Gateway
-
-Configuration at `dashboard/settings/whatsapp`:
-
-- **Service URL** — Node.js service address (default: `http://localhost:3001`)
-- **Enable Gateway** — enable/disable WhatsApp integration
-- **Automatic Sending** — receivables reminders and invoices sent automatically via campaigns
-- **Connection** — scan the QR code to connect (the session is saved automatically)
-
-Setup details: `docs/features/whatsapp-gateway.md`
 
 Campaigns and scheduled reminders require the Laravel scheduler and queue worker to be running.
 
@@ -108,4 +95,3 @@ Configuration at `dashboard/settings/warehouses`:
 - `picqer/php-barcode-generator` — barcodes in PDF documents
 - `maatwebsite/excel` — CSV and Excel import/export
 - Midtrans & Xendit — payment gateways
-- `whatsapp-web.js` — WhatsApp gateway (Node.js, separate from Laravel)

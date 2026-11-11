@@ -8,9 +8,7 @@ use App\Models\Transaction;
 use App\Models\User;
 use App\Models\Warehouse;
 use App\Services\ThermalPrintService;
-use App\Services\WhatsAppService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Http;
 use Inertia\Testing\AssertableInertia as Assert;
 use Spatie\Permission\Models\Permission;
 use Tests\TestCase;
@@ -71,7 +69,7 @@ class OutletSettingsTest extends TestCase
         $this->assertStringNotContainsString('CAFE PUSAT', $text);
     }
 
-    public function test_target_and_whatsapp_use_active_outlet_with_global_fallback(): void
+    public function test_target_uses_active_outlet_with_global_fallback(): void
     {
         $outletA = Outlet::create(['code' => 'MAL', 'name' => 'Malabar', 'is_active' => true]);
         $outletB = Outlet::create(['code' => 'TKB', 'name' => 'Taman Kencana', 'is_active' => true]);
@@ -82,20 +80,10 @@ class OutletSettingsTest extends TestCase
 
         Setting::set('monthly_sales_target', '100000');
         Setting::setForOutlet('monthly_sales_target', '250000', $outletA);
-        Setting::set('wa_service_url', 'https://global-wa.test');
-        Setting::set('wa_enabled', '1');
-        Setting::setForOutlet('wa_service_url', 'https://malabar-wa.test', $outletA);
-        Setting::setForOutlet('wa_enabled', '1', $outletA);
-
         $this->actingAs($user)
             ->get(route('settings.target'))
             ->assertInertia(fn (Assert $page) => $page->where('settings.monthly_sales_target', '250000'));
 
-        Http::fake(['https://malabar-wa.test/*' => Http::response(['connected' => true])]);
-        $this->assertTrue(app(WhatsAppService::class)->status($outletA)['connected']);
-        Http::assertSent(fn ($request) => $request->url() === 'https://malabar-wa.test/status');
-
         $this->assertSame('100000', Setting::getForOutlet('monthly_sales_target', $outletB));
-        $this->assertSame('https://global-wa.test', Setting::getForOutlet('wa_service_url', $outletB));
     }
 }

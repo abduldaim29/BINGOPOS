@@ -26,8 +26,8 @@ class SplitPaymentTest extends TestCase
         $this->actingAs($cashier)
             ->post(route('transactions.store'), [
                 'tenders' => [
-                    ['method' => 'cash', 'amount' => 5000, 'cash_received' => 6000],
-                    ['method' => 'bank_transfer', 'amount' => 5000, 'bank_account_id' => $bankAccount->id],
+                    ['method' => 'cash', 'amount' => 5850, 'cash_received' => 6000],
+                    ['method' => 'bank_transfer', 'amount' => 5850, 'bank_account_id' => $bankAccount->id],
                 ],
             ])
             ->assertRedirect();
@@ -37,10 +37,33 @@ class SplitPaymentTest extends TestCase
         $this->assertSame('split', $transaction->payment_method);
         $this->assertSame('paid', $transaction->payment_status);
         $this->assertSame(6000, $transaction->cash);
-        $this->assertSame(1000, $transaction->change);
+        $this->assertSame(150, $transaction->change);
         $this->assertCount(2, $transaction->tenders);
-        $this->assertSame(5000, $transaction->tenders[0]->amount);
-        $this->assertSame(5000, $transaction->tenders[1]->amount);
+        $this->assertSame(5850, $transaction->tenders[0]->amount);
+        $this->assertSame(5850, $transaction->tenders[1]->amount);
+    }
+
+    public function test_web_checkout_accepts_manual_card_split_tender(): void
+    {
+        [$cashier] = $this->prepareCheckout();
+
+        $this->actingAs($cashier)
+            ->post(route('transactions.store'), [
+                'tenders' => [
+                    ['method' => 'cash', 'amount' => 4400, 'cash_received' => 4400],
+                    ['method' => 'card', 'amount' => 6600],
+                ],
+            ])
+            ->assertRedirect();
+
+        $transaction = Transaction::latest('id')->first();
+
+        $this->assertSame('split', $transaction->payment_method);
+        $this->assertSame('paid', $transaction->payment_status);
+        $this->assertCount(2, $transaction->tenders);
+        $this->assertSame('card', $transaction->tenders[1]->method);
+        $this->assertSame('paid', $transaction->tenders[1]->payment_status);
+        $this->assertSame(6600, $transaction->tenders[1]->amount);
     }
 
     public function test_web_checkout_rejects_tenders_above_two_rows(): void

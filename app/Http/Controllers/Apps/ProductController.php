@@ -15,6 +15,7 @@ use App\Models\Product;
 use App\Models\ProductType;
 
 use App\Models\ProductWarehouse;
+use App\Models\Recipe;
 
 use App\Models\SubCategory;
 
@@ -23,15 +24,15 @@ use App\Models\Unit;
 use App\Models\Warehouse;
 
 use App\Services\AuditLogService;
-
+use App\Services\ImageStorageService;
 use App\Services\OutletAccessService;
-
+use App\Services\RecipeCostingService;
 use App\Services\StockMutationService;
-
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 
 use Inertia\Inertia;
 
@@ -47,7 +48,9 @@ class ProductController extends Controller
 
         private readonly AuditLogService $auditLogService,
 
-        private readonly OutletAccessService $outletAccessService
+        private readonly OutletAccessService $outletAccessService,
+        private readonly ImageStorageService $imageStorage,
+        private readonly RecipeCostingService $recipeCosting
 
     ) {}
 
@@ -70,7 +73,14 @@ class ProductController extends Controller
 
         $products = $query->when($request->search, function ($products, $search) {
             $products = $products->where('title', 'like', '%'.$search.'%');
-        })->with('category')->latest()->paginate($this->perPage())->withQueryString();
+        })->with('category')
+            ->latest()
+            ->paginate($this->perPage())
+            ->withQueryString()
+            ->through(function (Product $product) {
+                $product->setAttribute('is_live_cooking', $product->stock_mode === 'made_to_order');
+                return $product;
+            });
 
 
 
@@ -119,9 +129,16 @@ class ProductController extends Controller
 
         $products = Product::where('is_composite', false)
 
+            ->with('units')
+
             ->orderBy('title')
 
-            ->get(['id', 'title', 'sell_price', 'is_composite']);
+            ->get(['id', 'title', 'sku', 'buy_price', 'sell_price', 'is_composite']);
+
+        $basePurchaseCosts = $this->recipeCosting->basePurchaseCostsFor($products);
+        $products->each(function (Product $ingredient) use ($basePurchaseCosts) {
+            $ingredient->setAttribute('recipe_base_purchase_cost', $basePurchaseCosts[$ingredient->id]);
+        });
 
 
 
@@ -131,7 +148,7 @@ class ProductController extends Controller
             'categories' => $categories,
             'productTypes' => $productTypes,
             'products' => $products,
-            'units' => Unit::orderBy('code')->get(['id', 'code', 'symbol']),
+            'units' => Unit::orderBy('code')->get(['id', 'code', 'name', 'symbol']),
         ]);
 
     }
@@ -160,7 +177,8 @@ class ProductController extends Controller
 
         $request->validate([
 
-            'image' => 'required|image|mimes:jpeg,jpg,png,webp|max:2048',
+            'image' => 'nullable|image|mimes:jpeg,jpg,png,webp|max:2048',
+            'image_url' => 'nullable|url|max:2048',
 
             'barcode' => 'required|unique:products,barcode',
 
@@ -168,7 +186,7 @@ class ProductController extends Controller
 
             'title' => 'required',
 
-            'description' => 'required',
+            'description' => 'nullable|string',
 
             'category_id' => 'required',
 
@@ -176,11 +194,13 @@ class ProductController extends Controller
 
             'sub_category_id' => 'nullable|exists:sub_categories,id',
 
-            'buy_price' => 'required',
+            'buy_price' => 'nullable|numeric|min:0',
 
             'sell_price' => 'required',
 
-            'stock' => 'required|integer|min:0',
+            'stock' => 'nullable|integer|min:0',
+
+            'stock_mode' => 'nullable|in:stock,made_to_order',
 
             'warehouse_id' => 'nullable|exists:warehouses,id',
 
@@ -192,9 +212,39 @@ class ProductController extends Controller
 
             'tax_rate' => 'nullable|numeric|min:0|max:100',
 
+            'image_url' => 'nullable|url|max:2048',
+
             'variations' => 'nullable|array',
 
+            'variations.*' => 'required|string|max:100',
+
             'variation_prices' => 'nullable|array',
+
+            'variation_prices.*' => 'nullable|numeric|min:0',
+
+            'variation_recipes' => 'nullable|array',
+
+            'variation_recipes.*.batch_yield' => 'nullable|numeric|gt:0',
+
+            'variation_recipes.*.packaging_cost' => 'nullable|numeric|min:0',
+
+            'variation_recipes.*.labour_cost' => 'nullable|numeric|min:0',
+
+            'variation_recipes.*.overhead_cost' => 'nullable|numeric|min:0',
+
+            'variation_recipes.*.ingredients' => 'nullable|array',
+
+            'variation_recipes.*.ingredients.*.product_id' => 'required|integer|exists:products,id',
+
+            'variation_recipes.*.ingredients.*.ingredient_name' => 'nullable|string|max:255',
+
+            'variation_recipes.*.ingredients.*.unit_id' => 'nullable|integer|exists:units,id',
+
+            'variation_recipes.*.ingredients.*.quantity' => 'required|numeric|gt:0',
+
+            'variation_recipes.*.ingredients.*.wastage_percent' => 'nullable|numeric|min:0|lt:100',
+
+            'variation_recipes.*.ingredients.*.purchase_price' => 'nullable|numeric|min:0',
 
             ...$this->compositeRules(),
 
@@ -204,17 +254,17 @@ class ProductController extends Controller
 
         // upload image
 
-        $image = $request->file('image');
+        $imagePath = $request->file('image')
+            ? $this->imageStorage->store($request->file('image'), 'products')
+            : ($request->input('image_url') ?: 'default.png');
 
-        $image->storeAs('products', $image->hashName(), config('filesystems.image_disk', 'public'));
 
 
+        $product = DB::transaction(function () use ($request, $imagePath) {
+            // create product
+            $product = Product::create([
 
-        // create product
-
-        $product = Product::create([
-
-            'image' => $image->hashName(),
+            'image' => $imagePath,
 
             'barcode' => $request->barcode,
 
@@ -222,7 +272,7 @@ class ProductController extends Controller
 
             'title' => $request->title,
 
-            'description' => $request->description,
+            'description' => $request->input('description') ?? '',
 
             'category_id' => $request->category_id,
 
@@ -230,45 +280,48 @@ class ProductController extends Controller
 
             'sub_category_id' => $request->sub_category_id,
 
-            'buy_price' => $request->buy_price,
+            'buy_price' => $request->input('buy_price') ?? 0,
 
             'sell_price' => $request->sell_price,
 
-            'stock' => $request->stock,
+            'stock_mode' => $request->boolean('is_composite')
+                ? 'stock'
+                : $request->input('stock_mode', 'stock'),
+            'stock' => $request->input('stock_mode') === 'made_to_order'
+                ? 0
+                : ($request->input('stock') ?? 0),
 
             'min_stock' => $request->min_stock ?? 0,
 
             'max_stock' => $request->max_stock ?? 0,
 
-            'tax_type' => $request->input('tax_type', 'exclusive'),
-
-            'tax_rate' => $request->input('tax_rate', 18.00),
+            'tax_type' => $request->input('tax_type') ?? 'exclusive',
+            'tax_rate' => $request->input('tax_rate') ?? 18.00,
 
             'is_composite' => $request->boolean('is_composite'),
 
             'variations' => $request->input('variations'),
-
             'variation_prices' => $request->input('variation_prices'),
 
-        ]);
+            ]);
 
 
 
-        if ($request->boolean('is_composite')) {
+            if ($request->boolean('is_composite')) {
 
-            $this->validateComponentProducts($request);
+                $this->validateComponentProducts($request);
 
-            $this->syncComponents($product, $request->input('components'));
+                $this->syncComponents($product, $request->input('components'));
 
-        } else {
+            } else {
 
-            $this->syncUnits($product, $request->input('units'));
+                $this->syncUnits($product, $request->input('units'));
 
 
 
             // ponytail: keep global products.stock and per-warehouse pivot in sync; PUSAT (first active main) is the default warehouse
 
-            $warehouse = Warehouse::find($request->warehouse_id)
+                $warehouse = Warehouse::find($request->warehouse_id)
 
                 ?? Warehouse::active()->where('type', 'main')->orderBy('sort_order')->orderBy('code')->first()
 
@@ -276,27 +329,28 @@ class ProductController extends Controller
 
 
 
-            abort_unless($this->outletAccessService->canUseWarehouse($request->user(), $warehouse), 403);
+                abort_unless($this->outletAccessService->canUseWarehouse($request->user(), $warehouse), 403);
 
 
 
-            if ($warehouse) {
+                if ($warehouse) {
 
-                ProductWarehouse::updateOrCreate(
+                    ProductWarehouse::updateOrCreate(
+                        ['product_id' => $product->id, 'warehouse_id' => $warehouse->id],
+                        ['stock' => (int) $product->stock]
+                    );
 
-                    ['product_id' => $product->id, 'warehouse_id' => $warehouse->id],
+                }
 
-                    ['stock' => (int) $request->stock]
 
-                );
 
+                $this->stockMutationService->recordInitialStock($product, $request->user()?->id, $warehouse?->id);
             }
 
+            $this->syncVariationRecipes($product, $request->input('variation_recipes', []), $request->user()?->id);
 
-
-            $this->stockMutationService->recordInitialStock($product, $request->user()?->id, $warehouse?->id);
-
-        }
+            return $product;
+        });
 
         $this->auditLogService->log(
 
@@ -337,6 +391,7 @@ class ProductController extends Controller
     public function edit(Product $product)
 
     {
+        $product->setAttribute('is_live_cooking', $product->stock_mode === 'made_to_order');
 
         // get categories
 
@@ -366,15 +421,49 @@ class ProductController extends Controller
 
             ->where('id', '!=', $product->id)
 
+            ->with('units')
+
             ->orderBy('title')
 
-            ->get(['id', 'title', 'sell_price', 'is_composite']);
+            ->get(['id', 'title', 'sku', 'buy_price', 'sell_price', 'is_composite']);
+
+        $basePurchaseCosts = $this->recipeCosting->basePurchaseCostsFor($products);
+        $products->each(function (Product $ingredient) use ($basePurchaseCosts) {
+            $ingredient->setAttribute('recipe_base_purchase_cost', $basePurchaseCosts[$ingredient->id]);
+        });
+
+        $variationRecipes = Recipe::query()
+            ->where('product_id', $product->id)
+            ->whereNotNull('variation_id')
+            ->with(['ingredients.product.units', 'ingredients.unit'])
+            ->orderByDesc('id')
+            ->get()
+            ->unique('variation_id')
+            ->mapWithKeys(fn (Recipe $recipe) => [
+                (string) $recipe->variation_id => [
+                    'batch_yield' => (string) $recipe->batch_yield,
+                    'packaging_cost' => (string) $recipe->packaging_cost,
+                    'labour_cost' => (string) $recipe->labour_cost,
+                    'overhead_cost' => (string) $recipe->overhead_cost,
+                    'ingredients' => $recipe->ingredients->map(fn ($ingredient) => [
+                        'product_id' => $ingredient->product_id,
+                        'ingredient_name' => $ingredient->ingredient_name ?: $ingredient->product?->title,
+                        'unit_id' => $ingredient->unit_id,
+                        'quantity' => (string) $ingredient->quantity,
+                        'wastage_percent' => (string) $ingredient->wastage_percent,
+                        'purchase_price' => $ingredient->purchase_price === null
+                            ? ''
+                            : (string) $ingredient->purchase_price,
+                    ])->values()->all(),
+                ],
+            ]);
 
 
 
         return Inertia::render('Dashboard/Products/Edit', [
-
             'product' => $product->load('components', 'units'),
+            'recipeCost' => $this->recipeCostForProduct($product),
+            'variationRecipes' => $variationRecipes,
 
             'categories' => $categories,
 
@@ -384,10 +473,47 @@ class ProductController extends Controller
 
             'products' => $products,
 
-            'units' => Unit::orderBy('code')->get(['id', 'code', 'symbol']),
+            'units' => Unit::orderBy('code')->get(['id', 'code', 'name', 'symbol']),
 
         ]);
+    }
 
+    public function recipeCost(Product $product): \Illuminate\Http\JsonResponse
+    {
+        return response()->json([
+            'recipe' => $this->recipeCostForProduct($product),
+        ]);
+    }
+
+    private function recipeCostForProduct(Product $product): ?array
+    {
+        $recipe = Recipe::query()
+            ->where('product_id', $product->id)
+            ->whereNull('variation_id')
+            ->where('status', 'active')
+            ->latest('id')
+            ->first();
+
+        if (! $recipe) {
+            return null;
+        }
+
+        $costing = $this->recipeCosting->calculate($recipe);
+
+        return [
+            'id' => $recipe->id,
+            'name' => $recipe->name,
+            'code' => $recipe->code,
+            'status' => $recipe->status,
+            'batch_yield' => $costing['batch_yield'],
+            'total_cost' => round($costing['total_cost'], 2),
+            'cost_per_yield' => round($costing['cost_per_yield'], 2),
+            'ingredient_count' => $costing['ingredient_count'],
+            'packaging_cost' => round($costing['packaging_cost'], 2),
+            'labour_cost' => round($costing['labour_cost'], 2),
+            'overhead_cost' => round($costing['overhead_cost'], 2),
+            'calculated_at' => now()->toISOString(),
+        ];
     }
 
 
@@ -426,7 +552,7 @@ class ProductController extends Controller
 
             'title' => 'required',
 
-            'description' => 'required',
+            'description' => 'nullable|string',
 
             'category_id' => 'required',
 
@@ -434,9 +560,11 @@ class ProductController extends Controller
 
             'sub_category_id' => 'nullable|exists:sub_categories,id',
 
-            'buy_price' => 'required',
+            'buy_price' => 'nullable|numeric|min:0',
 
             'sell_price' => 'required',
+
+            'stock_mode' => 'nullable|in:stock,made_to_order',
 
             'min_stock' => 'nullable|integer|min:0',
 
@@ -448,7 +576,35 @@ class ProductController extends Controller
 
             'variations' => 'nullable|array',
 
+            'variations.*' => 'required|string|max:100',
+
             'variation_prices' => 'nullable|array',
+
+            'variation_prices.*' => 'nullable|numeric|min:0',
+
+            'variation_recipes' => 'nullable|array',
+
+            'variation_recipes.*.batch_yield' => 'nullable|numeric|gt:0',
+
+            'variation_recipes.*.packaging_cost' => 'nullable|numeric|min:0',
+
+            'variation_recipes.*.labour_cost' => 'nullable|numeric|min:0',
+
+            'variation_recipes.*.overhead_cost' => 'nullable|numeric|min:0',
+
+            'variation_recipes.*.ingredients' => 'nullable|array',
+
+            'variation_recipes.*.ingredients.*.product_id' => 'required|integer|exists:products,id',
+
+            'variation_recipes.*.ingredients.*.ingredient_name' => 'nullable|string|max:255',
+
+            'variation_recipes.*.ingredients.*.unit_id' => 'nullable|integer|exists:units,id',
+
+            'variation_recipes.*.ingredients.*.quantity' => 'required|numeric|gt:0',
+
+            'variation_recipes.*.ingredients.*.wastage_percent' => 'nullable|numeric|min:0|lt:100',
+
+            'variation_recipes.*.ingredients.*.purchase_price' => 'nullable|numeric|min:0',
 
             ...$this->compositeRules(),
 
@@ -474,143 +630,73 @@ class ProductController extends Controller
 
 
 
-        // check image update
+        $oldImage = null;
+        $attributes = [
+            'barcode' => $request->barcode,
+            'sku' => $request->sku,
+            'title' => $request->title,
+            'description' => $request->input('description') ?? '',
+            'category_id' => $request->category_id,
+            'product_type_id' => $request->product_type_id,
+            'sub_category_id' => $request->sub_category_id,
+            'buy_price' => $request->input('buy_price') ?? 0,
+            'sell_price' => $request->sell_price,
+            'stock_mode' => $request->boolean('is_composite')
+                ? 'stock'
+                : $request->input('stock_mode', 'stock'),
+            'min_stock' => $request->min_stock ?? 0,
+            'max_stock' => $request->max_stock ?? 0,
+            'tax_type' => $request->input('tax_type') ?? 'exclusive',
+            'tax_rate' => $request->input('tax_rate') ?? 18.00,
+            'is_composite' => $request->boolean('is_composite'),
+            'variations' => $request->input('variations'),
+            'variation_prices' => $request->input('variation_prices'),
+        ];
 
         if ($request->file('image')) {
+            $oldImage = $product->getRawOriginal('image');
+            $attributes['image'] = $this->imageStorage->store($request->file('image'), 'products');
+        } else {
+            $attributes['image'] = $request->filled('image_url')
+                ? $request->input('image_url')
+                : $product->getRawOriginal('image');
+        }
 
-
-
-            // remove old image
-
-            Storage::disk(config('filesystems.image_disk', 'public'))->delete('products/'.basename($product->image));
-
-
-
-            // upload new image
-
-            $image = $request->file('image');
-
-            $image->storeAs('products', $image->hashName(), config('filesystems.image_disk', 'public'));
-
-
-
-            // update product with new image
-
-            $product->update([
-
-                'image' => $image->hashName(),
-
-                'barcode' => $request->barcode,
-
-                'sku' => $request->sku,
-
-                'title' => $request->title,
-
-                'description' => $request->description,
-
-                'category_id' => $request->category_id,
-
-                'product_type_id' => $request->product_type_id,
-
-                'sub_category_id' => $request->sub_category_id,
-
-                'buy_price' => $request->buy_price,
-
-                'sell_price' => $request->sell_price,
-
-                'min_stock' => $request->min_stock ?? 0,
-
-                'max_stock' => $request->max_stock ?? 0,
-
-                'tax_type' => $request->input('tax_type', 'exclusive'),
-
-                'tax_rate' => $request->input('tax_rate', 11.00),
-
-                'is_composite' => $request->boolean('is_composite'),
-
-                'variations' => $request->input('variations'),
-
-                'variation_prices' => $request->input('variation_prices'),
-
-            ]);
-
-
+        DB::transaction(function () use ($product, $request, $attributes) {
+            $product->update($attributes);
 
             if ($request->boolean('is_composite')) {
-
                 $this->syncComponents($product, $request->input('components'));
-
             } else {
-
                 $this->syncUnits($product, $request->input('units'));
-
             }
 
+            if ($request->exists('variation_recipes')) {
+                $this->syncVariationRecipes(
+                    $product,
+                    $request->input('variation_recipes', []),
+                    $request->user()?->id
+                );
+            } elseif ($request->exists('variations')) {
+                $selectedVariationIds = array_map('strval', $product->variations ?? []);
+                $deselectedRecipes = Recipe::query()
+                    ->where('product_id', $product->id)
+                    ->whereNotNull('variation_id')
+                    ->where('status', '!=', 'inactive');
 
+                if ($selectedVariationIds !== []) {
+                    $deselectedRecipes->whereNotIn('variation_id', $selectedVariationIds);
+                }
 
-            $this->logProductUpdate($product, $before);
-
-
-
-            return to_route('products.index');
-
-        }
-
-
-
-        // update product without image
-
-        $product->update([
-
-            'barcode' => $request->barcode,
-
-            'sku' => $request->sku,
-
-            'title' => $request->title,
-
-            'description' => $request->description,
-
-            'category_id' => $request->category_id,
-
-            'product_type_id' => $request->product_type_id,
-
-            'sub_category_id' => $request->sub_category_id,
-
-            'buy_price' => $request->buy_price,
-
-            'sell_price' => $request->sell_price,
-
-            'min_stock' => $request->min_stock ?? 0,
-
-            'max_stock' => $request->max_stock ?? 0,
-
-            'tax_type' => $request->input('tax_type', 'exclusive'),
-
-            'tax_rate' => $request->input('tax_rate', 11.00),
-
-            'is_composite' => $request->boolean('is_composite'),
-
-            'variations' => $request->input('variations'),
-
-            'variation_prices' => $request->input('variation_prices'),
-
-        ]);
-
-
-
-        if ($request->boolean('is_composite')) {
-
-            $this->syncComponents($product, $request->input('components'));
-
-        } else {
-
-            $this->syncUnits($product, $request->input('units'));
-
-        }
-
-
+                $deselectedRecipes->update(['status' => 'inactive']);
+            }
+        });
 
         $this->logProductUpdate($product, $before);
+
+        if ($oldImage) {
+            $this->imageStorage->delete($oldImage, 'products');
+        }
 
 
 
@@ -698,6 +784,12 @@ class ProductController extends Controller
             }
         }
 
+        if (DB::table('transaction_detail_recipe_consumptions')
+            ->where('ingredient_product_id', $product->id)
+            ->exists()) {
+            return back()->with('error', 'This product cannot be permanently deleted because it has recipe inventory consumption history. Keep it archived to preserve the records.');
+        }
+
         if ($product->carts()->exists()) {
             return back()->with('error', 'Remove this product from all active or held carts before permanently deleting it.');
         }
@@ -707,11 +799,11 @@ class ProductController extends Controller
         }
 
         $before = $this->productAuditPayload($product);
-        $image = $product->image;
+        $image = $product->getRawOriginal('image');
         $product->forceDelete();
 
         if ($image) {
-            Storage::disk(config('filesystems.image_disk', 'public'))->delete('products/'.basename($image));
+            $this->imageStorage->delete($image, 'products');
         }
 
         $this->auditLogService->log(
@@ -726,6 +818,133 @@ class ProductController extends Controller
     }
 
 
+
+    private function syncVariationRecipes(Product $product, array $variationRecipes, ?int $userId): void
+    {
+        $selectedVariations = array_map('strval', $product->variations ?? []);
+        $recipeVariationIds = array_map('strval', array_keys($variationRecipes));
+
+        foreach ($recipeVariationIds as $variationId) {
+            if (! in_array($variationId, $selectedVariations, true)) {
+                throw ValidationException::withMessages([
+                    'variation_recipes' => "Recipe variation [{$variationId}] is not selected for this product.",
+                ]);
+            }
+        }
+
+        $existingRecipes = Recipe::query()
+            ->where('product_id', $product->id)
+            ->whereNotNull('variation_id')
+            ->orderByDesc('id')
+            ->lockForUpdate()
+            ->get()
+            ->groupBy(fn (Recipe $recipe) => (string) $recipe->variation_id);
+
+        foreach ($existingRecipes as $variationId => $recipes) {
+            if (! in_array($variationId, $selectedVariations, true)) {
+                foreach ($recipes as $recipe) {
+                    if ($recipe->status !== 'inactive') {
+                        $recipe->update(['status' => 'inactive']);
+                    }
+                }
+            }
+        }
+
+        $ingredientProductIds = collect($variationRecipes)
+            ->flatMap(fn ($recipe) => $recipe['ingredients'] ?? [])
+            ->pluck('product_id')
+            ->filter()
+            ->unique()
+            ->values();
+        $ingredientProducts = Product::query()
+            ->with('units')
+            ->whereIn('id', $ingredientProductIds)
+            ->get()
+            ->keyBy('id');
+
+        foreach ($variationRecipes as $variationId => $recipeData) {
+            $variationId = (string) $variationId;
+            $ingredients = $recipeData['ingredients'] ?? [];
+            $recipes = $existingRecipes->get($variationId, collect());
+
+            if (! count($ingredients)) {
+                foreach ($recipes as $recipe) {
+                    if ($recipe->status !== 'inactive') {
+                        $recipe->update(['status' => 'inactive']);
+                    }
+                }
+                continue;
+            }
+
+            foreach ($ingredients as $index => $ingredient) {
+                $ingredientProduct = $ingredientProducts->get((int) $ingredient['product_id']);
+                $unitId = $ingredient['unit_id'] ?? null;
+
+                if (! $ingredientProduct || $ingredientProduct->is_composite) {
+                    throw ValidationException::withMessages([
+                        "variation_recipes.{$variationId}.ingredients.{$index}.product_id" =>
+                            'Choose an existing non-composite inventory product.',
+                    ]);
+                }
+
+                if ($unitId && ! $ingredientProduct->units->contains('id', (int) $unitId)) {
+                    throw ValidationException::withMessages([
+                        "variation_recipes.{$variationId}.ingredients.{$index}.unit_id" =>
+                            'Choose a unit configured for this ingredient product. Configure a valid unit conversion before using other units.',
+                    ]);
+                }
+            }
+
+            $recipe = $recipes->first() ?? new Recipe();
+            foreach ($recipes->skip(1) as $duplicate) {
+                if ($duplicate->status !== 'inactive') {
+                    $duplicate->update(['status' => 'inactive']);
+                }
+            }
+
+            $variationName = Str::title(str_replace('_', ' ', preg_replace('/^[a-z]+_/', '', $variationId)));
+            $recipe->fill([
+                'product_id' => $product->id,
+                'variation_id' => $variationId,
+                'variation_name' => $variationName,
+                'name' => $product->title.' - '.$variationName,
+                'recipe_type' => 'variation',
+                'batch_yield' => $recipeData['batch_yield'] ?? 1,
+                'packaging_cost' => $recipeData['packaging_cost'] ?? 0,
+                'labour_cost' => $recipeData['labour_cost'] ?? 0,
+                'overhead_cost' => $recipeData['overhead_cost'] ?? 0,
+                'status' => 'active',
+                'created_by' => $recipe->created_by ?: $userId,
+            ]);
+
+            if (! $recipe->exists) {
+                do {
+                    $recipe->code = 'REC-'.now()->format('Ymd').'-'.Str::upper(Str::random(5));
+                } while (Recipe::where('code', $recipe->code)->exists());
+            }
+
+            $recipe->save();
+            $recipe->ingredients()->delete();
+
+            foreach ($ingredients as $ingredient) {
+                $ingredientProduct = $ingredientProducts->get((int) $ingredient['product_id']);
+                $recipe->ingredients()->create([
+                    'product_id' => $ingredientProduct->id,
+                    'ingredient_name' => $ingredientProduct->title,
+                    'unit_id' => $ingredient['unit_id'] ?: null,
+                    'quantity' => $ingredient['quantity'],
+                    'wastage_percent' => $ingredient['wastage_percent'] ?? 0,
+                    'purchase_price' => ($ingredient['purchase_price'] ?? '') === ''
+                        ? null
+                        : $ingredient['purchase_price'],
+                    'purchase_price_source' => ($ingredient['purchase_price'] ?? '') === ''
+                        ? null
+                        : 'manual_override',
+                    'purchase_tax_included' => false,
+                ]);
+            }
+        }
+    }
 
     private function compositeRules(): array
 

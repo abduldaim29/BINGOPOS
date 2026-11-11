@@ -7,6 +7,7 @@ use App\Models\Outlet;
 use App\Models\Setting;
 use App\Models\User;
 use App\Models\Warehouse;
+use App\Services\ImageStorageService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -46,7 +47,7 @@ class SetupController extends Controller
             'store_address' => 'nullable|string|max:500',
             'store_phone' => 'nullable|string|max:50',
             'store_email' => 'nullable|email|max:255',
-            'store_logo' => 'nullable|image|max:2048',
+            'store_logo' => 'nullable|image|mimes:jpeg,jpg,png,webp|max:2048',
             'business_type' => 'required|string|in:'.implode(',', array_keys(self::BUSINESS_TYPES)),
             'categories' => 'required|array|min:1',
             'categories.*' => 'required|string|max:255',
@@ -184,7 +185,7 @@ class SetupController extends Controller
         });
 
         if ($request->file('store_logo')) {
-            $path = $request->file('store_logo')->store('store', 'public');
+            $path = app(ImageStorageService::class)->store($request->file('store_logo'), 'store');
             Setting::set('store_logo', $path, 'Store logo');
         }
 

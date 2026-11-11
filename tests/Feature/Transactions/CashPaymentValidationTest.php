@@ -104,7 +104,7 @@ class CashPaymentValidationTest extends TestCase
     {
         $response = $this->post(route('transactions.store'), [
             'payment_method' => 'cash',
-            'cash' => 10000,
+            'cash' => 11600,
         ]);
 
         $response->assertSessionHasNoErrors();
@@ -113,7 +113,7 @@ class CashPaymentValidationTest extends TestCase
         $this->assertNotNull($transaction);
         $this->assertEquals('cash', $transaction->payment_method);
         $this->assertEquals('paid', $transaction->payment_status);
-        $this->assertEquals(10000, (int) $transaction->cash);
+        $this->assertEquals(11600, (int) $transaction->cash);
         $this->assertEquals(0, (int) $transaction->change);
         $this->assertEquals(99, $this->stock());
     }
@@ -126,7 +126,7 @@ class CashPaymentValidationTest extends TestCase
         ])->assertSessionHasNoErrors();
 
         $transaction = Transaction::latest('id')->first();
-        $this->assertEquals(40000, (int) $transaction->change);
+        $this->assertEquals(38400, (int) $transaction->change);
         $this->assertEquals(99, $this->stock());
     }
 

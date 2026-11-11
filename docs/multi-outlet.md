@@ -13,9 +13,8 @@ This guide helps new developers run the application from scratch until they can 
 - Node.js 18+ + npm
 - MySQL / MariaDB
 - Standard Laravel PHP extensions
-- Chrome/Chromium (for WhatsApp Gateway — optional)
 
-For production deployments that use automation, configure the Laravel queue worker and scheduler. Run `php artisan schedule:run` every minute. The WhatsApp Gateway also requires a separate Node.js service and a process manager such as PM2.
+For production deployments that use automation, configure the Laravel queue worker and scheduler. Run `php artisan schedule:run` every minute.
 
 ## Setup Steps
 
@@ -94,7 +93,7 @@ If the store has more than one branch, use the following scenario:
    - `PUT` / Puter (selling branch)
 2. The Super Admin account is automatically associated with every outlet. New cashiers are created through `Users`, with an outlet assignment and one default outlet.
 3. Initial branch stock: transfer from `PUSAT → WH-MAL/WH-TKB/WH-PUT` through the **Stock Transfer** menu, or enter stock through **Stock Opname**.
-4. Per-branch settings (logo, receipt, payment gateway, bank account, printer, WhatsApp, and target) are available on the Settings pages using the outlet switcher in the navbar.
+4. Per-branch settings (logo, receipt, payment gateway, bank account, printer, and target) are available on the Settings pages using the outlet switcher in the navbar.
 5. Close the shift before switching outlets — the outlet selector is locked while a cashier shift is active.
 
 ## Quick Validation Tips
@@ -110,4 +109,3 @@ If the store has more than one branch, use the following scenario:
 - Payment webhook not working: check `APP_URL`.
 - New module returning error 500: check whether the feature migration has been run.
 - Reminders, reorder alerts, or campaigns not running: check the queue worker and `schedule:run`.
-- WhatsApp messages not being sent: check `WA_SERVICE_URL`, device status, `wa_enabled`, and the Node.js service.

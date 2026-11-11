@@ -4,7 +4,7 @@ Back to the documentation index: `docs/README.md`
 
 ## Purpose
 
-Supports VAT (Value Added Tax) on transactions, with exclusive/inclusive modes per product, store NPWP/NIB details, and a configurable default tax rate.
+Supports tax on transactions, with exclusive/inclusive modes per product and optional Pakistan FBR identifiers (NTN/CNIC and STRN) on the Brand Profile.
 
 ## Definitions
 
@@ -12,17 +12,18 @@ Supports VAT (Value Added Tax) on transactions, with exclusive/inclusive modes p
 |---------|------|
 | Tax Exclusive | The product price **does not yet include** VAT. VAT is added to the grand total. |
 | Tax Inclusive | The product price **already includes** VAT. VAT is separated for reporting. |
-| NPWP | Taxpayer Identification Number — the store's tax identification. |
+| NTN | National Tax Number used for income-tax registration with FBR; for individuals, CNIC may serve as the registration number. |
+| STRN | Sales Tax Registration Number for entities registered for sales tax. |
 | VAT (PPN) | Value Added Tax (default 18%). |
 
 ## Current Features
 
 - VAT per product (exclusive/inclusive), with different rates allowed for different products.
-- The default VAT rate can be configured under Settings → Store Profile (default: 18.00%).
+- Tax type and rate are configured per product.
 - Checkout tax calculation automatically adds VAT to the grand total.
 - VAT line displayed in the checkout preview, printed invoices, PDF invoices, 80mm and 58mm PDF receipts, and thermal receipts.
 - The grand total includes VAT.
-- Store NPWP and NIB details are available under Settings → Store Profile.
+- Brand NTN/CNIC and STRN details are available under Settings → Brand Profile.
 - Reports include VAT in the grand total.
 
 ## Database
@@ -40,15 +41,15 @@ Supports VAT (Value Added Tax) on transactions, with exclusive/inclusive modes p
 
 ### Settings
 
-- `store_npwp` — store NPWP.
-- `store_nib` — store NIB.
+- `brand_ntn` — brand NTN/CNIC.
+- `brand_strn` — brand STRN.
 - `tax_default_rate` — default tax rate for new products.
 
 ## Pages and Routes
 
 | Route | Function |
 |-------|--------|
-| `settings.store` | Configure NPWP, NIB, and the default VAT rate. |
+| `settings.store` | Configure Brand Profile NTN/CNIC and STRN. |
 
 ## Calculation Workflow
 
@@ -73,4 +74,4 @@ Total:         Rs 10,000 + Rs 1,800
 - Tax affects only `grand_total`; it does not affect discounts, vouchers, or loyalty points.
 - Shipping costs are also subject to VAT at the same rate.
 - If `tax_rate = 0`, VAT is not calculated.
-- NPWP/NIB settings are optional and can be left blank.
+- NTN/CNIC and STRN settings are optional and can be left blank when not applicable.

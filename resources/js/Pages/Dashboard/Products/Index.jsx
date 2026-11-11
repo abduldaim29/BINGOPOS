@@ -45,8 +45,9 @@ function ProductCard({
     t,
 }) {
     const rowNumber = index + 1 + (currentPage - 1) * perPage;
-    const lowStock = product.stock > 0 && product.stock <= 5;
-    const outOfStock = product.stock === 0;
+    const isLiveCooking = Boolean(product.is_live_cooking);
+    const lowStock = !isLiveCooking && product.stock > 0 && product.stock <= 5;
+    const outOfStock = !isLiveCooking && product.stock === 0;
     const isComposite = product.is_composite;
 
     return (
@@ -76,6 +77,7 @@ function ProductCard({
                         alt={product.title}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                         loading="lazy"
+                        decoding="async"
                     />
                 ) : (
                     <div className="w-full h-full flex items-center justify-center">
@@ -94,7 +96,11 @@ function ProductCard({
                             {t("products.status.composite")}
                         </span>
                     )}
-                    {outOfStock ? (
+                    {isLiveCooking ? (
+                        <span className="px-2 py-1 text-xs font-semibold bg-emerald-600 text-white rounded-full">
+                            {t("products.status.liveCooking")}
+                        </span>
+                    ) : outOfStock ? (
                         <span className="px-2 py-1 text-xs font-semibold bg-danger-500 text-white rounded-full">
                             {t("products.status.outOfStock")}
                         </span>
@@ -193,21 +199,6 @@ function ProductCard({
                     <p className="text-base sm:text-lg font-bold text-primary-600 dark:text-primary-400">
                         {formatCurrency(product.sell_price)}
                     </p>
-                    {/* Buy Price - Subtle */}
-                    <div className="flex items-center justify-between mt-1">
-                        <p className="text-xs text-slate-400 dark:text-slate-500">
-                            Cost: {formatCurrency(product.buy_price)}
-                        </p>
-                        {/* Profit Indicator */}
-                        {product.sell_price > product.buy_price && (
-                            <span className="text-xs font-medium text-success-600 dark:text-success-400">
-                                +
-                                {formatCurrency(
-                                    product.sell_price - product.buy_price
-                                )}
-                            </span>
-                        )}
-                    </div>
                 </div>
             </div>
         </div>
@@ -329,6 +320,13 @@ export default function Index({ products, archived = false, archivedCount = 0 })
                                     <IconDownload size={18} />
                                     Export
                                 </a>
+                                <a
+                                    href={route("import.template", "products")}
+                                    className="inline-flex items-center justify-center gap-2 px-3 py-2 rounded-xl border border-primary-200 dark:border-primary-800 text-sm font-medium text-primary-600 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-950/30 transition-colors w-full sm:w-auto"
+                                >
+                                    <IconDownload size={18} />
+                                    Download Template
+                                </a>
                                 <button
                                     type="button"
                                     onClick={() =>
@@ -355,8 +353,12 @@ export default function Index({ products, archived = false, archivedCount = 0 })
                                                 route("import.products"),
                                                 { file },
                                                 {
-                                                    onSuccess: () => {
-                                                        toast.success("Products imported successfully");
+                                                    onSuccess: (page) => {
+                                                        if (page.props.flash?.error) {
+                                                            toast.error(page.props.flash.error);
+                                                            return;
+                                                        }
+                                                        toast.success(page.props.flash?.success || "Products imported successfully");
                                                         e.target.value = '';
                                                         router.reload(); // Reload the page to show new products
                                                     },
@@ -517,6 +519,8 @@ export default function Index({ products, archived = false, archivedCount = 0 })
                                                                 src={getProductImageUrl(product.image)}
                                                                 alt={product.title}
                                                                 className="w-full h-full object-cover"
+                                                                loading="lazy"
+                                                                decoding="async"
                                                             />
                                                         ) : (
                                                             <div className="w-full h-full flex items-center justify-center">
@@ -558,14 +562,18 @@ export default function Index({ products, archived = false, archivedCount = 0 })
                                             <Table.Td>
                                                 <span
                                                     className={`px-2 py-0.5 text-xs font-medium rounded ${
-                                                        product.stock === 0
+                                                        product.is_live_cooking
+                                                            ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-400"
+                                                            : product.stock === 0
                                                             ? "bg-danger-100 text-danger-700 dark:bg-danger-900/50 dark:text-danger-400"
                                                             : product.stock <= 5
                                                             ? "bg-warning-100 text-warning-700 dark:bg-warning-900/50 dark:text-warning-400"
                                                             : "bg-success-100 text-success-700 dark:bg-success-900/50 dark:text-success-400"
                                                     }`}
                                                 >
-                                                    {product.stock}
+                                                    {product.is_live_cooking
+                                                        ? t("products.status.liveCooking")
+                                                        : product.stock}
                                                 </span>
                                             </Table.Td>
                                             <Table.Td>

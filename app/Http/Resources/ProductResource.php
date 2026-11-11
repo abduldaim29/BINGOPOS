@@ -16,7 +16,11 @@ class ProductResource extends JsonResource
             'barcode' => $this->barcode,
             'sku' => $this->sku,
             'image' => $this->image
-                ? (str_starts_with($this->image, 'http') ? $this->image : url('storage/'.ltrim($this->image, '/')))
+                ? (str_starts_with($this->image, 'http') || str_starts_with($this->image, '/storage/')
+                    ? $this->image
+                    : '/storage/'.(str_starts_with(ltrim($this->image, '/'), 'products/')
+                        ? ltrim($this->image, '/')
+                        : 'products/'.ltrim($this->image, '/')))
                 : null,
             'category' => $this->whenLoaded('category', fn () => [
                 'id' => $this->category->id,
@@ -30,6 +34,8 @@ class ProductResource extends JsonResource
             'tax_type' => $this->tax_type,
             'tax_rate' => (float) $this->tax_rate,
             'is_composite' => (bool) $this->is_composite,
+            'stock_mode' => $this->stock_mode ?: 'stock',
+            'is_live_cooking' => $this->stock_mode === 'made_to_order',
             'variations' => $this->variations ?? [],
             'variation_prices' => $this->variation_prices ?? [],
             'units' => $this->whenLoaded('units', fn () => $this->units->map(fn ($unit) => [

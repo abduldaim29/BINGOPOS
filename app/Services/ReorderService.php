@@ -10,7 +10,8 @@ class ReorderService
 {
     public function getLowStockProducts(?int $warehouseId = null): Collection
     {
-        $query = Product::where('min_stock', '>', 0);
+        $query = Product::where('stock_mode', '!=', 'made_to_order')
+            ->where('min_stock', '>', 0);
 
         if ($warehouseId) {
             $query->whereHas('warehouses', function ($q) use ($warehouseId) {

@@ -90,7 +90,6 @@ const modules = [
             "Customer vouchers",
             "Automated segmentation (manual and rule-based)",
             "Campaign automation for reminders and promotions",
-            "WhatsApp Gateway for automated receipts, reminders, and promotions",
         ],
     },
     {

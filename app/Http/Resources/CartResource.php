@@ -18,7 +18,11 @@ class CartResource extends JsonResource
                 'sku' => $this->product->sku,
                 'sell_price' => (float) $this->product->sell_price,
                 'image' => $this->product->image
-                    ? (str_starts_with($this->product->image, 'http') ? $this->product->image : url('storage/'.ltrim($this->product->image, '/')))
+                    ? (str_starts_with($this->product->image, 'http') || str_starts_with($this->product->image, '/storage/')
+                        ? $this->product->image
+                        : '/storage/'.(str_starts_with(ltrim($this->product->image, '/'), 'products/')
+                            ? ltrim($this->product->image, '/')
+                            : 'products/'.ltrim($this->product->image, '/')))
                     : null,
             ]),
             'unit' => $this->whenLoaded('unit', fn () => [

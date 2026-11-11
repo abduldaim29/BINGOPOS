@@ -41,5 +41,5 @@ Customers can view invoices, check payment statuses, and pay outstanding receiva
 1. The cashier completes checkout.
 2. On the print page, click the "Share" button.
 3. The portal link is automatically copied to the clipboard.
-4. The cashier sends the link to the customer via WhatsApp.
+4. The cashier sends the link to the customer through their preferred communication method.
 5. The customer opens the link, views the invoice, and pays if necessary.

@@ -94,7 +94,7 @@ class LoyaltyFlowTest extends TestCase
             data_get($response->json(), 'data.summary.loyalty_discount_total')
         );
         $this->assertSame(
-            49000,
+            58600,
             data_get($response->json(), 'data.summary.grand_total')
         );
     }
@@ -145,23 +145,23 @@ class LoyaltyFlowTest extends TestCase
                 'customer_voucher_id' => $voucher->id,
                 'shipping_cost' => 0,
                 'grand_total' => 999999,
-                'cash' => 50000,
+                'cash' => 60000,
             ]);
 
         $transaction = Transaction::latest('id')->first();
 
         $response->assertRedirect(route('transactions.print', $transaction->invoice));
-        $this->assertSame(49000, (int) $transaction->grand_total);
+        $this->assertSame(58600, (int) $transaction->grand_total);
         $this->assertSame(10, (int) $transaction->loyalty_points_redeemed);
         $this->assertSame(1000, (int) $transaction->loyalty_discount_total);
         $this->assertSame(10000, (int) $transaction->customer_voucher_discount);
         $this->assertSame('VCR-CHECKOUT', $transaction->customer_voucher_code);
-        $this->assertSame(4, (int) $transaction->loyalty_points_earned);
+        $this->assertSame(5, (int) $transaction->loyalty_points_earned);
 
         $customer->refresh();
         $voucher->refresh();
 
-        $this->assertSame(14, (int) $customer->loyalty_points);
+        $this->assertSame(15, (int) $customer->loyalty_points);
         $this->assertTrue($voucher->is_used);
         $this->assertSame($transaction->id, $voucher->used_transaction_id);
         $this->assertDatabaseCount('loyalty_point_histories', 3);
@@ -234,7 +234,7 @@ class LoyaltyFlowTest extends TestCase
 
         $customer->refresh();
 
-        $this->assertSame(74, (int) $customer->loyalty_points);
+        $this->assertSame(77, (int) $customer->loyalty_points);
         $this->assertSame(LoyaltyService::TIER_GOLD, $customer->loyalty_tier);
     }
 

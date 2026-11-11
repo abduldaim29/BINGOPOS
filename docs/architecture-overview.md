@@ -85,7 +85,6 @@ Back to the documentation index: `docs/README.md`
 | `ReceivableService` | Aging, statements, and collection statistics. |
 | `PayableAgingService` | Supplier payable aging. |
 | `PaymentGatewayManager` | Dispatches payments to Midtrans/Xendit/Safepay via HTTP API calls (no direct SDKs). |
-| `WhatsAppService` | HTTP wrapper for the Node.js `whatsapp-web.js` service. |
 
 ## Module Integration Patterns
 
@@ -109,25 +108,6 @@ GR → inherits warehouse from PO and increments stock in the pivot table
 Stock Transfer → source → send → receive → destination
 Stock Opname → selects warehouse and reads stock from the pivot table
 ```
-
-## WhatsApp Gateway Architecture
-
-```text id="f4k2m8"
-┌─────────────────────────┐     HTTP      ┌──────────────────────┐
-│  Laravel App            │  ──────────→  │  whatsapp-service    │
-│                         │  ←──────────  │  (Node.js :3001)     │
-│  WhatsAppService.php    │               │                      │
-│  CrmAutomationService   │               │  whatsapp-web.js     │
-│  SettingController      │               │  Puppeteer/Chrome    │
-└─────────────────────────┘               └──────────┬───────────┘
-                                                     │
-                                                WhatsApp Web
-```
-
-- `whatsapp-service/` is a Node.js Express server running `whatsapp-web.js`.
-- Laravel communicates with this service over HTTP.
-- WhatsApp sessions are stored in `whatsapp-service/session/` and persist across restarts.
-- Requires Node.js and Chrome on the server (used internally by Puppeteer).
 
 ## Feature Documentation Pattern
 

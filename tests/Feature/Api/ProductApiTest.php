@@ -23,7 +23,7 @@ class ProductApiTest extends TestCase
 
         $this->user = User::factory()->create();
         $this->category = Category::create([
-            'name' => 'Kategori Test',
+            'name' => 'Test Category',
             'image' => '',
             'description' => '',
         ]);
@@ -59,7 +59,7 @@ class ProductApiTest extends TestCase
         Sanctum::actingAs($this->user, ['*']);
 
         for ($i = 1; $i <= 25; $i++) {
-            $this->makeProduct('Produk '.$i, 'BC-'.$i);
+            $this->makeProduct('Product '.$i, 'BC-'.$i);
         }
 
         $response = $this->getJson('/api/v1/products?per_page=10');
@@ -76,14 +76,14 @@ class ProductApiTest extends TestCase
     {
         Sanctum::actingAs($this->user, ['*']);
 
-        $this->makeProduct('Minyak Goreng', 'BC-MG');
-        $this->makeProduct('Gula Pasir', 'BC-GP');
-        $this->makeProduct('Kopi', 'BC-KP');
+        $this->makeProduct('Cooking Oil', 'BC-MG');
+        $this->makeProduct('Granulated Sugar', 'BC-GP');
+        $this->makeProduct('Coffee', 'BC-KP');
 
         $this->getJson('/api/v1/products?search=goreng')
             ->assertOk()
             ->assertJsonPath('meta.total', 1)
-            ->assertJsonPath('data.0.title', 'Minyak Goreng');
+            ->assertJsonPath('data.0.title', 'Cooking Oil');
     }
 
     public function test_products_store_creates(): void
@@ -91,7 +91,7 @@ class ProductApiTest extends TestCase
         Sanctum::actingAs($this->user, ['*']);
 
         $response = $this->postJson('/api/v1/products', [
-            'title' => 'Produk Baru',
+            'title' => 'New Product',
             'barcode' => 'NEW-001',
             'buy_price' => 5000,
             'sell_price' => 7500,
@@ -100,7 +100,7 @@ class ProductApiTest extends TestCase
 
         $response->assertCreated()
             ->assertJsonPath('success', true)
-            ->assertJsonPath('data.title', 'Produk Baru');
+            ->assertJsonPath('data.title', 'New Product');
 
         $this->assertDatabaseHas('products', ['barcode' => 'NEW-001']);
     }
@@ -109,7 +109,7 @@ class ProductApiTest extends TestCase
     {
         Sanctum::actingAs($this->user, ['*']);
 
-        $this->makeProduct('Produk Ada', 'DUP-001');
+        $this->makeProduct('Existing Product', 'DUP-001');
 
         $this->postJson('/api/v1/products', [
             'title' => 'Dup',
@@ -124,7 +124,7 @@ class ProductApiTest extends TestCase
     {
         Sanctum::actingAs($this->user, ['*']);
 
-        $product = $this->makeProduct('Produk Update', 'UPD-001');
+        $product = $this->makeProduct('Updated Product', 'UPD-001');
 
         $this->putJson("/api/v1/products/{$product->id}", ['sell_price' => 20000])
             ->assertOk()
@@ -142,7 +142,7 @@ class ProductApiTest extends TestCase
     {
         Sanctum::actingAs($this->user, ['*']);
 
-        $product = $this->makeProduct('Produk Hapus', 'DEL-001');
+        $product = $this->makeProduct('Deleted Product', 'DEL-001');
 
         $this->deleteJson("/api/v1/products/{$product->id}")->assertStatus(204);
 

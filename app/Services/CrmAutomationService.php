@@ -5,18 +5,14 @@ namespace App\Services;
 use App\Models\Customer;
 use App\Models\CustomerCampaign;
 use App\Models\CustomerCampaignLog;
-use App\Models\Outlet;
 use App\Models\Receivable;
-use App\Models\Setting;
-use App\Models\Transaction;
 use Carbon\CarbonInterface;
 use Illuminate\Support\Collection;
 
 class CrmAutomationService
 {
     public function __construct(
-        private readonly CustomerSegmentationService $segmentationService,
-        private readonly ?WhatsAppService $whatsAppService = null
+        private readonly CustomerSegmentationService $segmentationService
     ) {}
 
     public function audienceOptions(): array
@@ -143,27 +139,15 @@ class CrmAutomationService
             'segments' => $customer->segments->pluck('name')->values()->all(),
         ])->values()->all();
 
-        $outlet = $campaign->outlet_id ? Outlet::find($campaign->outlet_id) : null;
-        $waAvailable = Setting::getBoolForOutlet('wa_enabled', $outlet, false)
-            && Setting::getForOutlet('wa_service_url', $outlet)
-            && ($this->whatsAppService?->status($outlet)['connected'] ?? false);
-
         foreach ($audience as $customer) {
             $payload = $this->buildCustomerPayload($campaign, $customer);
 
             $log = $campaign->logs()->create([
                 'customer_id' => $customer->id,
-                'channel' => CustomerCampaign::CHANNEL_WHATSAPP_LINK,
+                'channel' => CustomerCampaign::CHANNEL_INTERNAL,
                 'status' => CustomerCampaignLog::STATUS_READY_TO_SEND,
                 'payload' => $payload,
             ]);
-
-            if ($waAvailable && $customer->no_telp) {
-                $sent = $this->whatsAppService->send($customer->no_telp, $payload['message'], $outlet);
-                if ($sent) {
-                    $this->markLog($log, CustomerCampaignLog::STATUS_SENT);
-                }
-            }
         }
 
         $campaign->update([
@@ -196,93 +180,6 @@ class CrmAutomationService
         $this->refreshCampaignStatus($log->campaign);
 
         return $log->fresh();
-    }
-
-    public function createInvoiceShareCampaignForTransaction(Transaction $transaction, int $userId): CustomerCampaign
-    {
-        $campaign = CustomerCampaign::query()->firstOrCreate(
-            ['context_key' => 'invoice-share-transaction-'.$transaction->id],
-            [
-                'name' => 'Share Invoice '.$transaction->invoice,
-                'type' => CustomerCampaign::TYPE_INVOICE_SHARE,
-                'status' => CustomerCampaign::STATUS_READY,
-                'channel' => CustomerCampaign::CHANNEL_WHATSAPP_LINK,
-                'audience_filters' => ['transaction_id' => $transaction->id],
-                'audience_snapshot' => [[
-                    'customer_id' => $transaction->customer_id,
-                    'transaction_id' => $transaction->id,
-                    'invoice' => $transaction->invoice,
-                ]],
-                'message_template' => 'Invoice {{invoice}}: {{url}}',
-                'processed_at' => now(),
-                'created_by' => $userId,
-            ]
-        );
-
-        $campaign->logs()->updateOrCreate(
-            [
-                'transaction_id' => $transaction->id,
-                'customer_id' => $transaction->customer_id,
-            ],
-            [
-                'channel' => CustomerCampaign::CHANNEL_WHATSAPP_LINK,
-                'status' => CustomerCampaignLog::STATUS_READY_TO_SEND,
-                'payload' => [
-                    'message' => 'Invoice '.$transaction->invoice.': '.route('transactions.public', $transaction->invoice, true),
-                    'whatsapp_url' => 'https://wa.me/?text='.urlencode('Invoice '.$transaction->invoice.': '.route('transactions.public', $transaction->invoice, true)),
-                    'invoice' => $transaction->invoice,
-                ],
-            ]
-        );
-
-        return $campaign->fresh(['logs.customer', 'logs.transaction']);
-    }
-
-    public function createInvoiceShareCampaignForReceivable(Receivable $receivable, int $userId): CustomerCampaign
-    {
-        $campaign = CustomerCampaign::query()->firstOrCreate(
-            ['context_key' => 'invoice-share-receivable-'.$receivable->id],
-            [
-                'name' => 'Share Receivable Invoice '.$receivable->invoice,
-                'type' => CustomerCampaign::TYPE_INVOICE_SHARE,
-                'status' => CustomerCampaign::STATUS_READY,
-                'channel' => CustomerCampaign::CHANNEL_WHATSAPP_LINK,
-                'audience_filters' => ['receivable_id' => $receivable->id],
-                'audience_snapshot' => [[
-                    'customer_id' => $receivable->customer_id,
-                    'receivable_id' => $receivable->id,
-                    'invoice' => $receivable->invoice,
-                ]],
-                'message_template' => 'Invoice {{invoice}} total {{remaining}} due on {{due_date}}',
-                'processed_at' => now(),
-                'created_by' => $userId,
-            ]
-        );
-
-        $shareText = sprintf(
-            'Receivable reminder for invoice %s. Remaining balance: Rp %s. Due date: %s',
-            $receivable->invoice,
-            number_format($receivable->remaining, 0, ',', '.'),
-            optional($receivable->due_date)?->format('d/m/Y') ?? '-'
-        );
-
-        $campaign->logs()->updateOrCreate(
-            [
-                'receivable_id' => $receivable->id,
-                'customer_id' => $receivable->customer_id,
-            ],
-            [
-                'channel' => CustomerCampaign::CHANNEL_WHATSAPP_LINK,
-                'status' => CustomerCampaignLog::STATUS_READY_TO_SEND,
-                'payload' => [
-                    'message' => $shareText,
-                    'whatsapp_url' => 'https://wa.me/?text='.urlencode($shareText),
-                    'invoice' => $receivable->invoice,
-                ],
-            ]
-        );
-
-        return $campaign->fresh(['logs.customer', 'logs.receivable']);
     }
 
     public function generateScheduledReminders(?CarbonInterface $at = null): void
@@ -394,11 +291,10 @@ class CrmAutomationService
 
                 $campaign->logs()->create([
                     'customer_id' => $customer->id,
-                    'channel' => CustomerCampaign::CHANNEL_WHATSAPP_LINK,
+                    'channel' => CustomerCampaign::CHANNEL_INTERNAL,
                     'status' => CustomerCampaignLog::STATUS_READY_TO_SEND,
                     'payload' => [
                         'message' => $message,
-                        'whatsapp_url' => 'https://wa.me/?text='.urlencode($message),
                         'reason' => 'inactive_customer',
                     ],
                 ]);
@@ -428,11 +324,10 @@ class CrmAutomationService
             $campaign->logs()->create([
                 'customer_id' => $receivable->customer_id,
                 'receivable_id' => $receivable->id,
-                'channel' => CustomerCampaign::CHANNEL_WHATSAPP_LINK,
+                'channel' => CustomerCampaign::CHANNEL_INTERNAL,
                 'status' => CustomerCampaignLog::STATUS_READY_TO_SEND,
                 'payload' => [
                     'message' => $message,
-                    'whatsapp_url' => 'https://wa.me/?text='.urlencode($message),
                     'reason' => $reason,
                     'invoice' => $receivable->invoice,
                 ],
@@ -461,7 +356,6 @@ class CrmAutomationService
 
         return [
             'message' => $message,
-            'whatsapp_url' => 'https://wa.me/?text='.urlencode($message),
             'segments' => $customer->segments->pluck('slug')->values()->all(),
         ];
     }

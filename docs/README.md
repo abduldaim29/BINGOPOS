@@ -33,7 +33,7 @@ This documentation is intended for developers who want to set up the application
 - `docs/features/purchasing-chain.md` — purchase orders (POs), goods receiving, and supplier returns 🆕
 - `docs/features/payables-suppliers.md` — supplier payables
 - `docs/features/receivables.md` — customer receivables
-- `docs/features/tax-management.md` — VAT, NPWP, and NIB 🆕
+- `docs/features/tax-management.md` — VAT and Pakistan FBR identifiers (NTN/CNIC, STRN) 🆕
 
 ### Pricing & Loyalty
 

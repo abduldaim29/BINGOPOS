@@ -4,7 +4,6 @@ import DashboardLayout from "@/Layouts/DashboardLayout";
 import {
     IconArrowLeft,
     IconCreditCard,
-    IconBrandWhatsapp,
     IconCash,
     IconPrinter,
 } from "@tabler/icons-react";
@@ -29,16 +28,11 @@ export default function ReceivableShow({ receivable, bankAccounts = [] }) {
         collection_notes: receivable.collection_notes || "",
     });
     const canPayReceivable = can("receivables-pay");
-    const canCreateCrmCampaign = can("crm-campaigns-create");
 
     useEffect(() => {
         if (flash?.success) toast.success(flash.success);
         if (flash?.error) toast.error(flash.error);
     }, [flash]);
-
-    const shareText = `Invoice ${receivable.invoice} - Total ${formatCurrency(
-        receivable.total
-    )} - Remaining ${formatCurrency(receivable.remaining)}`;
 
     const formatDate = (value) => {
         if (!value) return "-";
@@ -130,29 +124,6 @@ export default function ReceivableShow({ receivable, bankAccounts = [] }) {
                         </div>
                     </div>
                     <div className="flex items-center gap-2">
-                        {canCreateCrmCampaign && (
-                            <Link
-                                href={route(
-                                    "receivables.share-campaign",
-                                    receivable.id
-                                )}
-                                method="post"
-                                as="button"
-                                className="inline-flex items-center gap-2 rounded-xl bg-primary-500 px-3 py-2 text-sm font-semibold text-white transition-colors hover:bg-primary-600"
-                            >
-                                <IconBrandWhatsapp size={18} />
-                                WhatsApp Campaign
-                            </Link>
-                        )}
-                        <a
-                            href={`https://wa.me/?text=${encodeURIComponent(shareText)}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-green-500 text-white text-sm font-semibold hover:bg-green-600 transition-colors"
-                        >
-                            <IconBrandWhatsapp size={18} />
-                            Share via WhatsApp
-                        </a>
                         <div>{statusBadge(receivable.status)}</div>
                     </div>
                 </div>

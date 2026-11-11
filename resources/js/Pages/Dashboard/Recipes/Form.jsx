@@ -1,8 +1,9 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Link, useForm } from "@inertiajs/react";
+import axios from "axios";
 import DashboardLayout from "@/Layouts/DashboardLayout";
 import { Head } from "@inertiajs/react";
-import { IconArrowLeft, IconPlus, IconTrash, IconCopy, IconGripVertical } from "@tabler/icons-react";
+import { IconArrowLeft, IconPlus, IconTrash, IconCopy, IconGripVertical, IconUpload, IconDownload, IconFileSpreadsheet } from "@tabler/icons-react";
 
 const money = (value) => `Rs ${Number(value || 0).toLocaleString("en-PK", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
@@ -14,9 +15,17 @@ const blankIngredient = () => ({
     purchase_price: "",
 });
 
+const variationLabel = (variationId) =>
+    String(variationId || "")
+        .replace(/^[a-z]+_/, "")
+        .replace(/_/g, " ");
+
 export default function Form({ recipe, units, productSearchUrl, mode = "create" }) {
     const [productQuery, setProductQuery] = useState("");
     const [productResults, setProductResults] = useState([]);
+    const [isImporting, setIsImporting] = useState(false);
+    const [importMessage, setImportMessage] = useState("");
+    const [importError, setImportError] = useState("");
     const initialIngredients = recipe?.ingredients?.map((row) => ({
         ...row,
         ingredient_name: row.ingredient_name || row.product?.title || "",
@@ -28,6 +37,8 @@ export default function Form({ recipe, units, productSearchUrl, mode = "create" 
     const form = useForm({
         product_id: recipe?.product_id || "",
         product: recipe?.product || null,
+        variation_id: recipe?.variation_id || "",
+        variation_name: recipe?.variation_name || "",
         name: recipe?.name || "",
         recipe_type: recipe?.recipe_type || "standard",
         batch_yield: recipe?.batch_yield || "1",
@@ -56,8 +67,67 @@ export default function Form({ recipe, units, productSearchUrl, mode = "create" 
     const chooseFinishedProduct = (product) => {
         form.setData("product_id", product.id);
         form.setData("product", product);
+        form.setData("variation_id", "");
+        form.setData("variation_name", "");
         setProductQuery("");
         setProductResults([]);
+    };
+
+    const clearFinishedProduct = () => {
+        form.setData("product_id", "");
+        form.setData("product", null);
+        form.setData("variation_id", "");
+        form.setData("variation_name", "");
+    };
+
+    const setRecipeType = (recipeType) => {
+        form.setData("recipe_type", recipeType);
+        if (recipeType !== "variation") {
+            form.setData("variation_id", "");
+            form.setData("variation_name", "");
+        }
+    };
+
+    const importRecipeFile = async (event) => {
+        const file = event.target.files?.[0];
+        if (!file) return;
+
+        const hasExistingData =
+            form.data.name ||
+            form.data.product_id ||
+            form.data.ingredients.some((item) => item.ingredient_name) ||
+            form.data.steps.some((step) => step.title || step.instructions);
+        if (hasExistingData && !window.confirm("Importing a file will replace the recipe fields currently entered. Continue?")) {
+            event.target.value = "";
+            return;
+        }
+
+        setIsImporting(true);
+        setImportMessage("");
+        setImportError("");
+        const payload = new FormData();
+        payload.append("file", file);
+
+        try {
+            const response = await axios.post(route("recipes.import-preview"), payload, {
+                headers: { Accept: "application/json" },
+            });
+            form.setData({ ...form.data, ...response.data.data });
+            setImportMessage(
+                `Loaded ${response.data.counts.ingredients} ingredient(s) and ${response.data.counts.steps} preparation step(s). Review the form and save when ready.`
+            );
+        } catch (error) {
+            const validationErrors = error.response?.data?.errors;
+            setImportError(
+                validationErrors?.file?.[0] ||
+                    Object.values(validationErrors || {})[0]?.[0] ||
+                    error.response?.data?.message ||
+                    "Could not read this file. Check its format and try the recipe template."
+            );
+        } finally {
+            setIsImporting(false);
+            event.target.value = "";
+        }
     };
 
     const updateIngredient = (index, key, value) => {
@@ -107,14 +177,101 @@ export default function Form({ recipe, units, productSearchUrl, mode = "create" 
                 <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Manage ingredients, purchase costs, preparation steps, and recipe profitability.</p>
             </div>
 
+            {mode === "create" && (
+                <section className="mb-6 rounded-2xl border border-primary-200 bg-primary-50/60 p-4 dark:border-primary-900/60 dark:bg-primary-950/20">
+                    <div className="flex flex-col justify-between gap-4 lg:flex-row lg:items-center">
+                        <div className="flex items-start gap-3">
+                            <span className="rounded-xl bg-white p-2.5 text-primary-600 shadow-sm dark:bg-slate-900">
+                                <IconFileSpreadsheet size={22} />
+                            </span>
+                            <div>
+                                <h2 className="font-semibold text-slate-900 dark:text-white">
+                                    Import recipe from CSV or Excel
+                                </h2>
+                                <p className="mt-1 max-w-2xl text-sm text-slate-600 dark:text-slate-400">
+                                    Upload a recipe file to fill in the form. Nothing is saved until you review and click Save Recipe.
+                                </p>
+                                <p className="mt-1 text-xs text-slate-500">
+                                    Add rows with record_type <strong>recipe</strong>, <strong>ingredient</strong>, or <strong>step</strong>. The recipe row needs the recipe name and an existing product name, SKU, or barcode.
+                                </p>
+                                <p className="mt-1 text-xs text-slate-500">
+                                    For a variation recipe, use the parent product and fill variation_id (for example pizza_jumbo), or use a finished_product value such as Product Name - Jumbo (16-18 inch). The imported variation is selected automatically.
+                                </p>
+                            </div>
+                        </div>
+                        <div className="flex flex-wrap items-center gap-2">
+                            <a
+                                href={route("recipes.template", { format: "xlsx" })}
+                                className="button-secondary"
+                            >
+                                <IconDownload size={16} /> Excel template
+                            </a>
+                            <a
+                                href={route("recipes.template", { format: "csv" })}
+                                className="button-secondary"
+                            >
+                                <IconDownload size={16} /> CSV template
+                            </a>
+                            <label className={`button-primary cursor-pointer ${isImporting ? "pointer-events-none opacity-60" : ""}`}>
+                                <IconUpload size={16} />
+                                {isImporting ? "Reading file..." : "Choose file"}
+                                <input
+                                    type="file"
+                                    accept=".csv,.xlsx,.xls"
+                                    className="sr-only"
+                                    disabled={isImporting}
+                                    onChange={importRecipeFile}
+                                />
+                            </label>
+                        </div>
+                    </div>
+                    {importMessage && (
+                        <p role="status" className="mt-3 rounded-xl bg-emerald-100 px-3 py-2 text-sm text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-300">
+                            {importMessage}
+                        </p>
+                    )}
+                    {importError && (
+                        <p role="alert" className="mt-3 rounded-xl bg-red-100 px-3 py-2 text-sm text-red-800 dark:bg-red-950/50 dark:text-red-300">
+                            {importError}
+                        </p>
+                    )}
+                </section>
+            )}
+
             <form onSubmit={submit} className="space-y-6">
                 <section className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
                     <h2 className="mb-4 text-lg font-semibold text-slate-900 dark:text-white">Recipe Details</h2>
                     <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
                         <label className="lg:col-span-2"><span className="label">Recipe Name</span><input className="field" value={form.data.name} onChange={(e) => form.setData("name", e.target.value)} placeholder="Beef Cheese Burger Recipe" />{form.errors.name && <span className="error">{form.errors.name}</span>}</label>
-                        <label><span className="label">Recipe Type</span><select className="field" value={form.data.recipe_type} onChange={(e) => form.setData("recipe_type", e.target.value)}><option value="standard">Standard Recipe</option><option value="batch">Batch Preparation</option><option value="variation">Variation-Specific Recipe</option></select></label>
+                        <label><span className="label">Recipe Type</span><select className="field" value={form.data.recipe_type} onChange={(e) => setRecipeType(e.target.value)}><option value="standard">Standard Recipe</option><option value="batch">Batch Preparation</option><option value="variation">Variation-Specific Recipe</option></select></label>
                         <label><span className="label">Status</span><select className="field" value={form.data.status} onChange={(e) => form.setData("status", e.target.value)}><option value="draft">Draft</option><option value="active">Active</option><option value="inactive">Inactive</option></select></label>
-                        <div className="relative lg:col-span-2"><span className="label">Finished Product</span>{form.data.product ? <div className="field flex items-center justify-between"><span>{form.data.product.title} <small className="text-slate-500">{form.data.product.sku || form.data.product.barcode || ""}</small></span><button type="button" className="text-xs text-primary-600" onClick={() => form.setData("product", null)}>Change</button></div> : <><input className="field" value={productQuery} onChange={(e) => setProductQuery(e.target.value)} placeholder="Search product by name, SKU, or barcode" />{productResults.length > 0 && <div className="absolute z-20 mt-1 max-h-56 w-full overflow-auto rounded-xl border border-slate-200 bg-white shadow-lg dark:border-slate-700 dark:bg-slate-800">{productResults.map((product) => <button type="button" key={product.id} className="block w-full px-3 py-2 text-left text-sm hover:bg-slate-50 dark:hover:bg-slate-700" onClick={() => chooseFinishedProduct(product)}>{product.title} <span className="text-xs text-slate-500">{product.sku || product.barcode || ""}</span></button>)}</div>}</>}{form.errors.product_id && <span className="error">{form.errors.product_id}</span>}</div>
+                        <div className="relative lg:col-span-2"><span className="label">Finished Product</span>{form.data.product ? <div className="field flex items-center justify-between"><span>{form.data.product.title} <small className="text-slate-500">{form.data.product.sku || form.data.product.barcode || ""}</small></span><button type="button" className="text-xs text-primary-600" onClick={clearFinishedProduct}>Change</button></div> : <><input className="field" value={productQuery} onChange={(e) => setProductQuery(e.target.value)} placeholder="Search product by name, SKU, or barcode" />{productResults.length > 0 && <div className="absolute z-20 mt-1 max-h-56 w-full overflow-auto rounded-xl border border-slate-200 bg-white shadow-lg dark:border-slate-700 dark:bg-slate-800">{productResults.map((product) => <button type="button" key={product.id} className="block w-full px-3 py-2 text-left text-sm hover:bg-slate-50 dark:hover:bg-slate-700" onClick={() => chooseFinishedProduct(product)}>{product.title} <span className="text-xs text-slate-500">{product.sku || product.barcode || ""}</span></button>)}</div>}</>}{form.errors.product_id && <span className="error">{form.errors.product_id}</span>}</div>
+                        {form.data.recipe_type === "variation" && (
+                            <label className="lg:col-span-2">
+                                <span className="label">Finished Product Variation</span>
+                                <select
+                                    className="field"
+                                    value={form.data.variation_id}
+                                    disabled={!form.data.product}
+                                    onChange={(event) => {
+                                        const variationId = event.target.value;
+                                        form.setData("variation_id", variationId);
+                                        form.setData("variation_name", variationLabel(variationId));
+                                    }}
+                                >
+                                    <option value="">Select a variation</option>
+                                    {(form.data.product?.variations || []).map((variationId) => (
+                                        <option key={variationId} value={variationId}>
+                                            {variationLabel(variationId)}
+                                        </option>
+                                    ))}
+                                </select>
+                                {form.errors.variation_id && <span className="error">{form.errors.variation_id}</span>}
+                                {form.data.product && !(form.data.product.variations || []).length && (
+                                    <span className="error">This finished product has no configured variations.</span>
+                                )}
+                            </label>
+                        )}
                         <label><span className="label">Batch Yield</span><input type="number" min="0.0001" step="0.0001" className="field" value={form.data.batch_yield} onChange={(e) => form.setData("batch_yield", e.target.value)} /></label>
                         <label><span className="label">Yield Unit</span><select className="field" value={form.data.yield_unit_id} onChange={(e) => form.setData("yield_unit_id", e.target.value)}><option value="">Serving / unit</option>{units.map((unit) => <option key={unit.id} value={unit.id}>{unit.name} {unit.symbol ? `(${unit.symbol})` : ""}</option>)}</select></label>
                         <label><span className="label">Packaging Cost (PKR)</span><input type="number" min="0" step="0.01" className="field" value={form.data.packaging_cost} onChange={(e) => form.setData("packaging_cost", e.target.value)} /></label>
@@ -154,8 +311,127 @@ export default function Form({ recipe, units, productSearchUrl, mode = "create" 
                 </section>
 
                 <section className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
-                    <div className="mb-4 flex items-center justify-between"><div><h2 className="text-lg font-semibold text-slate-900 dark:text-white">Preparation Steps</h2><p className="text-sm text-slate-500">Add clear instructions for consistent preparation.</p></div><button type="button" onClick={addStep} className="button-secondary"><IconPlus size={16} /> Add Step</button></div>
-                    <div className="space-y-3">{form.data.steps.map((step, index) => <div key={index} className="grid grid-cols-1 gap-3 rounded-xl border border-slate-200 p-4 md:grid-cols-12 dark:border-slate-700"><div className="flex items-center text-slate-400"><IconGripVertical size={18} /><span className="ml-1 text-xs">{index + 1}</span></div><input className="field md:col-span-3" placeholder="Step title" value={step.title} onChange={(e) => updateStep(index, "title", e.target.value)} /><textarea className="field md:col-span-4" placeholder="Preparation instructions" value={step.instructions} onChange={(e) => updateStep(index, "instructions", e.target.value)} /><input className="field md:col-span-1" type="number" min="0" placeholder="Min" value={step.duration_minutes || ""} onChange={(e) => updateStep(index, "duration_minutes", e.target.value)} /><input className="field md:col-span-1" type="number" placeholder="Temp" value={step.temperature || ""} onChange={(e) => updateStep(index, "temperature", e.target.value)} /><input className="field md:col-span-2" placeholder="Equipment" value={step.equipment || ""} onChange={(e) => updateStep(index, "equipment", e.target.value)} /><button type="button" className="text-red-600" onClick={() => form.setData("steps", form.data.steps.filter((_, item) => item !== index))}><IconTrash size={18} /></button></div>)}</div>
+                    <div className="mb-4 flex items-center justify-between gap-3">
+                        <div>
+                            <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
+                                Preparation Steps
+                            </h2>
+                            <p className="text-sm text-slate-500">
+                                Edit and resize each field; the layout adjusts to the available space.
+                            </p>
+                        </div>
+                        <button type="button" onClick={addStep} className="button-secondary shrink-0">
+                            <IconPlus size={16} /> Add Step
+                        </button>
+                    </div>
+                    <div className="space-y-3">
+                        {form.data.steps.map((step, index) => (
+                            <div
+                                key={index}
+                                className="rounded-xl border border-slate-200 p-4 dark:border-slate-700"
+                            >
+                                <div className="mb-3 flex items-center justify-between">
+                                    <div className="flex items-center gap-1 text-xs font-semibold text-slate-500">
+                                        <IconGripVertical size={18} />
+                                        Step {index + 1}
+                                    </div>
+                                    <button
+                                        type="button"
+                                        aria-label={`Remove step ${index + 1}`}
+                                        className="rounded-lg p-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30"
+                                        onClick={() =>
+                                            form.setData(
+                                                "steps",
+                                                form.data.steps.filter((_, item) => item !== index)
+                                            )
+                                        }
+                                    >
+                                        <IconTrash size={18} />
+                                    </button>
+                                </div>
+                                <div
+                                    className="grid min-w-0 gap-3"
+                                    style={{
+                                        gridTemplateColumns:
+                                            "repeat(auto-fit, minmax(min(100%, 13rem), 1fr))",
+                                    }}
+                                >
+                                    <label className="label min-w-0">
+                                        Step title
+                                        <textarea
+                                            rows={2}
+                                            className="field min-h-14 resize"
+                                            placeholder="Step title"
+                                            value={step.title}
+                                            onChange={(e) =>
+                                                updateStep(index, "title", e.target.value)
+                                            }
+                                        />
+                                    </label>
+                                    <label className="label min-w-0">
+                                        Preparation instructions
+                                        <textarea
+                                            rows={4}
+                                            className="field min-h-28 resize"
+                                            placeholder="Preparation instructions"
+                                            value={step.instructions}
+                                            onChange={(e) =>
+                                                updateStep(index, "instructions", e.target.value)
+                                            }
+                                        />
+                                    </label>
+                                    <label className="label min-w-0">
+                                        Duration (minutes)
+                                        <input
+                                            className="field"
+                                            type="number"
+                                            min="0"
+                                            placeholder="Minutes"
+                                            value={step.duration_minutes || ""}
+                                            onChange={(e) =>
+                                                updateStep(index, "duration_minutes", e.target.value)
+                                            }
+                                        />
+                                    </label>
+                                    <label className="label min-w-0">
+                                        Temperature
+                                        <input
+                                            className="field"
+                                            type="number"
+                                            placeholder="Temperature"
+                                            value={step.temperature || ""}
+                                            onChange={(e) =>
+                                                updateStep(index, "temperature", e.target.value)
+                                            }
+                                        />
+                                    </label>
+                                    <label className="label min-w-0">
+                                        Temperature unit
+                                        <input
+                                            className="field"
+                                            placeholder="°C"
+                                            value={step.temperature_unit || ""}
+                                            onChange={(e) =>
+                                                updateStep(index, "temperature_unit", e.target.value)
+                                            }
+                                        />
+                                    </label>
+                                    <label className="label min-w-0">
+                                        Equipment
+                                        <textarea
+                                            rows={2}
+                                            className="field min-h-14 resize"
+                                            placeholder="Equipment"
+                                            value={step.equipment || ""}
+                                            onChange={(e) =>
+                                                updateStep(index, "equipment", e.target.value)
+                                            }
+                                        />
+                                    </label>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
                 </section>
 
                 <section className="rounded-2xl border border-primary-100 bg-primary-50/60 p-5 dark:border-primary-900/50 dark:bg-primary-950/20">

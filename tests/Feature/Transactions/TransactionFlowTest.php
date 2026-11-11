@@ -63,7 +63,7 @@ class TransactionFlowTest extends TestCase
         ]);
 
         $discount = 5000;
-        $grandTotal = $cart->price - $discount;
+        $grandTotal = $cart->price - $discount + (int) round($cart->price * 0.16);
         $cashPaid = 150000;
 
         $response = $this

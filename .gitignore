@@ -19,10 +19,6 @@ yarn-error.log
 /.idea
 /.vscode
 
-# WhatsApp Service
-whatsapp-service/.wwebjs_cache/
-whatsapp-service/session/
-
 # Internal docs (private)
 planning/
 .opencode/
@@ -32,7 +28,6 @@ planning/
 
 # Bun lockfiles (repo uses npm / package-lock.json)
 bun.lock
-whatsapp-service/bun.lock
 /storage/pail
 
 # Local environment secrets

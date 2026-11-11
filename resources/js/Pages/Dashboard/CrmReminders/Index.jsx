@@ -3,7 +3,7 @@ import DashboardLayout from "@/Layouts/DashboardLayout";
 import { Head, Link, router } from "@inertiajs/react";
 import Pagination from "@/Components/Dashboard/Pagination";
 import Table from "@/Components/Dashboard/Table";
-import { IconBellRinging, IconBrandWhatsapp } from "@tabler/icons-react";
+import { IconBellRinging } from "@tabler/icons-react";
 
 export default function Index({ campaigns, filters }) {
     const handleFilterChange = (key, value) => {
@@ -17,7 +17,7 @@ export default function Index({ campaigns, filters }) {
                 <div className="mb-6">
                     <h1 className="text-2xl font-bold text-slate-900 dark:text-white">CRM Reminders</h1>
                     <p className="text-sm text-slate-500 dark:text-slate-400">
-                        Queue internal reminders for receivables, repeat orders, invoice sharing, and promotional broadcasts.
+                        Queue internal reminders for receivables, repeat orders, and promotional broadcasts.
                     </p>
                 </div>
 
@@ -72,20 +72,12 @@ export default function Index({ campaigns, filters }) {
                                         <Table.Td>{campaign.logs?.length || 0} targets</Table.Td>
                                         <Table.Td>
                                             <div className="flex flex-wrap gap-2">
-                                                {campaign.logs?.slice(0, 2).map((log) =>
-                                                    log.payload?.whatsapp_url ? (
-                                                        <a
-                                                            key={log.id}
-                                                            href={log.payload.whatsapp_url}
-                                                            target="_blank"
-                                                            rel="noopener noreferrer"
-                                                            className="inline-flex items-center gap-2 rounded-lg bg-green-50 px-3 py-2 text-xs font-semibold text-green-700 hover:bg-green-100 dark:bg-green-900/30 dark:text-green-300"
-                                                        >
-                                                            <IconBrandWhatsapp size={14} />
-                                                            {log.customer?.name || "WhatsApp"}
-                                                        </a>
-                                                    ) : null
-                                                )}
+                                                <Link
+                                                    href={route("crm-campaigns.show", campaign.id)}
+                                                    className="inline-flex items-center gap-2 rounded-lg bg-primary-50 px-3 py-2 text-xs font-semibold text-primary-700 hover:bg-primary-100 dark:bg-primary-900/30 dark:text-primary-300"
+                                                >
+                                                    View campaign
+                                                </Link>
                                             </div>
                                         </Table.Td>
                                     </tr>

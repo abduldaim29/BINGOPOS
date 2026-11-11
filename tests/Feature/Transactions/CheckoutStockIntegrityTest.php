@@ -7,7 +7,9 @@ use App\Models\CashierShift;
 use App\Models\Category;
 use App\Models\Product;
 use App\Models\ProductBatch;
+use App\Models\Recipe;
 use App\Models\Transaction;
+use App\Models\TransactionDetailRecipeConsumption;
 use App\Models\User;
 use App\Models\Warehouse;
 use App\Services\CashierShiftService;
@@ -262,6 +264,129 @@ class CheckoutStockIntegrityTest extends TestCase
         $this->assertSame(22, $product->fresh()->stock);
         $this->assertSame(2, (int) ProductBatch::where('batch_number', 'BATCH-Y')->first()->stock);
         $this->assertSame(0, Cart::count());
+    }
+
+    public function test_checkout_consumes_only_the_selected_variations_recipe_ingredients(): void
+    {
+        $ingredient = $this->createProduct(100);
+        $pizza = Product::create([
+            'title' => 'Recipe Pizza',
+            'sku' => 'SKU-RP-'.Str::upper(Str::random(6)),
+            'barcode' => 'BC-RP-'.Str::upper(Str::random(6)),
+            'image' => 'product.png',
+            'description' => 'Recipe-backed product',
+            'category_id' => $this->category->id,
+            'buy_price' => 0,
+            'sell_price' => 800,
+            'stock' => 0,
+            'stock_mode' => 'made_to_order',
+            'variations' => ['pizza_small', 'pizza_large'],
+            'variation_prices' => ['pizza_small' => 800, 'pizza_large' => 1200],
+            'tax_rate' => 0,
+        ]);
+        $pizza->warehouses()->attach($this->pusat->id, ['stock' => 0]);
+
+        foreach (['pizza_small' => 4, 'pizza_large' => 10] as $variationId => $ingredientQty) {
+            $recipe = Recipe::create([
+                'product_id' => $pizza->id,
+                'variation_id' => $variationId,
+                'variation_name' => $variationId === 'pizza_small' ? 'Small' : 'Large',
+                'code' => 'REC-'.Str::upper(Str::random(10)),
+                'name' => 'Recipe '.ucfirst(str_replace('pizza_', '', $variationId)),
+                'recipe_type' => 'variation',
+                'batch_yield' => 1,
+                'status' => 'active',
+            ]);
+            $recipe->ingredients()->create([
+                'product_id' => $ingredient->id,
+                'ingredient_name' => $ingredient->title,
+                'quantity' => $ingredientQty,
+                'wastage_percent' => 0,
+            ]);
+        }
+
+        Cart::create([
+            'cashier_id' => $this->cashier->id,
+            'warehouse_id' => $this->pusat->id,
+            'product_id' => $pizza->id,
+            'variation_id' => 'pizza_small',
+            'variation_name' => 'Small',
+            'qty' => 2,
+            'price' => 1600,
+            'conversion_factor' => 1,
+        ]);
+
+        $this->actingAs($this->cashier)
+            ->post(route('transactions.store'), ['payment_method' => 'cash', 'cash' => 50000])
+            ->assertRedirect();
+
+        $this->assertSame(0, $pizza->fresh()->stock);
+        $this->assertSame(92, $ingredient->fresh()->stock);
+        $this->assertSame(
+            92,
+            (int) $ingredient->fresh()->warehouses()->where('warehouse_id', $this->pusat->id)->first()->pivot->stock
+        );
+        $this->assertDatabaseHas('transaction_detail_recipe_consumptions', [
+            'ingredient_product_id' => $ingredient->id,
+            'base_quantity_consumed' => 8,
+        ]);
+        $this->assertSame(1, TransactionDetailRecipeConsumption::count());
+    }
+
+    public function test_recipe_ingredient_shortage_rolls_back_checkout(): void
+    {
+        $ingredient = $this->createProduct(5);
+        $pizza = Product::create([
+            'title' => 'Short Recipe Pizza',
+            'sku' => 'SKU-SRP-'.Str::upper(Str::random(6)),
+            'barcode' => 'BC-SRP-'.Str::upper(Str::random(6)),
+            'image' => 'product.png',
+            'category_id' => $this->category->id,
+            'buy_price' => 0,
+            'sell_price' => 800,
+            'stock' => 0,
+            'stock_mode' => 'made_to_order',
+            'variations' => ['pizza_small'],
+            'variation_prices' => ['pizza_small' => 800],
+            'tax_rate' => 0,
+        ]);
+        $pizza->warehouses()->attach($this->pusat->id, ['stock' => 0]);
+        $recipe = Recipe::create([
+            'product_id' => $pizza->id,
+            'variation_id' => 'pizza_small',
+            'variation_name' => 'Small',
+            'code' => 'REC-'.Str::upper(Str::random(10)),
+            'name' => 'Short Recipe',
+            'recipe_type' => 'variation',
+            'batch_yield' => 1,
+            'status' => 'active',
+        ]);
+        $recipe->ingredients()->create([
+            'product_id' => $ingredient->id,
+            'ingredient_name' => $ingredient->title,
+            'quantity' => 10,
+            'wastage_percent' => 0,
+        ]);
+        Cart::create([
+            'cashier_id' => $this->cashier->id,
+            'warehouse_id' => $this->pusat->id,
+            'product_id' => $pizza->id,
+            'variation_id' => 'pizza_small',
+            'variation_name' => 'Small',
+            'qty' => 1,
+            'price' => 800,
+            'conversion_factor' => 1,
+        ]);
+
+        $this->actingAs($this->cashier)
+            ->post(route('transactions.store'), ['payment_method' => 'cash', 'cash' => 50000])
+            ->assertSessionHasErrors('stock');
+
+        $this->assertSame(0, Transaction::count());
+        $this->assertSame(5, $ingredient->fresh()->stock);
+        $this->assertSame(5, (int) $ingredient->fresh()->warehouses()->where('warehouse_id', $this->pusat->id)->first()->pivot->stock);
+        $this->assertSame(1, Cart::count());
+        $this->assertSame(0, TransactionDetailRecipeConsumption::count());
     }
 
     public function test_other_cashier_cart_is_ignored_when_checking_stock(): void

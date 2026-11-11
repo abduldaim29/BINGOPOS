@@ -63,7 +63,6 @@ Sistem kasir berbasis Laravel + Inertia + React untuk transaksi penjualan, inven
 - Voucher customer
 - Customer segments (manual & auto)
 - Campaign automation (reminder, promo broadcast)
-- **WhatsApp Gateway** — kirim pesan otomatis via whatsapp-web.js (QR scan, session persistent)
 
 ### Reports & Documents
 - Sales report + filter + summary
@@ -80,7 +79,6 @@ Sistem kasir berbasis Laravel + Inertia + React untuk transaksi penjualan, inven
 - **App Versioning** — versi aplikasi terpusat (`APP_VERSION`), tampil di sidebar + POS navbar
 
 ### Integrasi
-- **WhatsApp Gateway** — terhubung via Node.js service (`whatsapp-service/`)
 - **Payment Gateways** — Midtrans, Xendit
 
 ---
@@ -96,15 +94,21 @@ php artisan key:generate
 php artisan migrate --seed
 php artisan storage:link
 
+# Image uploads are resized/compressed with GD and stored as WebP when smaller.
+# Preview existing-image savings, then apply; originals are retained by default.
+php artisan images:optimize
+# php artisan images:optimize --apply
+# Add --delete-originals only after verifying the backup and optimized images.
+
+# POS product images are served as cached 320px WebP thumbnails on local storage
+# using /storage/products/{image}?size=pos; the original image stays unchanged.
+
 # Dev — server, queue, logs, dan Vite
 composer run dev
 
 # Setelah server berjalan, buka http://localhost:8000.
 # Pada instalasi pertama, aplikasi otomatis mengarahkan ke /setup.
 
-# WhatsApp Gateway (opsional) — untuk kirim WA otomatis
-cd whatsapp-service
-npm install && npm start
 ```
 
 Tidak ada akun default. Setelah `migrate --seed`, buka root aplikasi (`http://localhost:8000`); pada instalasi pertama aplikasi otomatis mengarahkan ke `/setup` untuk membuat akun admin dan profil toko.
@@ -115,8 +119,8 @@ Seeder demo bersifat opt-in: `UserSeeder` lalu `SampleDataSeeder`.
 | Dokumen | Isi |
 |---------|-----|
 | `docs/getting-started.md` | Setup lengkap |
-| `docs/configuration.md` | Konfigurasi environment, payment, pajak, printer, WhatsApp |
-| `docs/architecture-overview.md` | Arsitektur, middleware, service layer, Node service |
+| `docs/configuration.md` | Konfigurasi environment, payment, pajak, printer |
+| `docs/architecture-overview.md` | Arsitektur, middleware, dan service layer |
 | `docs/feature-index.md` | Indeks semua modul (44 fitur) |
 
 ## REST API (OpenAPI)
@@ -161,7 +165,7 @@ Base URL: `https://dikasir.web.id/api/v1` (dev: `http://localhost:8000/api/v1`)
 - Purchasing: PO, goods receiving, supplier return, payables
 - Finance: receivables, PPN
 - Pricing: pricing rules, price list, loyalty, vouchers
-- CRM: member, segments, campaigns, **WhatsApp Gateway**
+- CRM: member, segments, campaigns
 - Reports: sales, profit, insights, dokumen PDF
 - Tools: import/export, mobile POS, thermal printer, offline mode
 
@@ -173,8 +177,6 @@ Base URL: `https://dikasir.web.id/api/v1` (dev: `http://localhost:8000/api/v1`)
 4. **Route error 500** — jalankan `php artisan migrate` untuk modul baru
 5. **Test gagal karena PPN** — pastikan `tax_rate=0` di test Product::create
 6. **Vite tidak jalan** — pastikan `composer run dev` berjalan; command tersebut juga menjalankan Vite
-7. **WhatsApp QR tidak muncul** — pastikan `whatsapp-service/` sudah jalan (`npm start`)
-8. **WhatsApp terputus** — klik "Hubungkan Ulang" di Settings > WhatsApp, scan ulang QR
 
 ## Kontribusi
 

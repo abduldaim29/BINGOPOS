@@ -37,7 +37,7 @@ class ApiAuthorizationTest extends TestCase
         $this->getJson('/api/v1/products')->assertOk();
 
         $this->postJson('/api/v1/products', [
-            'title' => 'Produk Baru',
+            'title' => 'New Product',
             'barcode' => 'AUTH-NEW-001',
             'buy_price' => 5000,
             'sell_price' => 7500,
@@ -49,13 +49,13 @@ class ApiAuthorizationTest extends TestCase
         $this->actingWithAbilities($this->makeUser(), ['user:read']);
 
         $category = Category::create([
-            'name' => 'Kategori Test',
+            'name' => 'Test Category',
             'image' => '',
             'description' => '',
         ]);
 
         $product = Product::create([
-            'title' => 'Produk Test',
+            'title' => 'Test Product',
             'barcode' => 'AUTH-DEL-001',
             'sku' => 'SKU-AUTH-DEL-001',
             'image' => '',
@@ -74,7 +74,7 @@ class ApiAuthorizationTest extends TestCase
     {
         $user = $this->makeUser();
         $category = Category::create([
-            'name' => 'Kategori Test',
+            'name' => 'Test Category',
             'image' => '',
             'description' => '',
         ]);
@@ -82,7 +82,7 @@ class ApiAuthorizationTest extends TestCase
         $this->actingWithAbilities($user, ['user:read', 'products-access', 'products-create']);
 
         $this->postJson('/api/v1/products', [
-            'title' => 'Produk Baru',
+            'title' => 'New Product',
             'barcode' => 'AUTH-NEW-002',
             'category_id' => $category->id,
             'buy_price' => 5000,

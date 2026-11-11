@@ -224,6 +224,7 @@ class AdvancedSalesInsightsController extends Controller
             ->leftJoinSub($this->warehouseStockSubquery($filters['warehouse_ids']), 'ws', fn ($join) => $join->on('ws.product_id', '=', 'products.id'))
             ->leftJoinSub($salesSubquery, 'sales', fn ($join) => $join->on('sales.product_id', '=', 'products.id'))
             ->leftJoin('categories', 'categories.id', '=', 'products.category_id')
+            ->where('products.stock_mode', '!=', 'made_to_order')
             ->when($filters['category_id'] ?? null, fn ($q, $categoryId) => $q->where('products.category_id', $categoryId))
             ->where(function ($q) use ($filters) {
                 $q->where('ws.current_stock', '>', 0);

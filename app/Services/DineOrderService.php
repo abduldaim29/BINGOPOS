@@ -70,7 +70,7 @@ class DineOrderService
                         $pw?->decrement('stock', $componentQty);
                         $component->decrement('stock', $componentQty);
                     }
-                } else {
+                } elseif ($product->stock_mode !== 'made_to_order') {
                     $pw = ProductWarehouse::where('product_id', $product->id)
                         ->where('warehouse_id', $warehouseId)
                         ->lockForUpdate()

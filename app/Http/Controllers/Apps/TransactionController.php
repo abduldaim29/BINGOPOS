@@ -26,11 +26,13 @@ use App\Services\Payments\PaymentGatewayManager;
 use App\Services\PriceListService;
 use App\Services\PricingService;
 use App\Services\TransactionTenderService;
+use App\Services\TaxService;
 use App\Services\UnitConversionService;
 use App\Support\Checkout\CheckoutContext;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Inertia\Inertia;
@@ -81,6 +83,7 @@ class TransactionController extends Controller
                         'grand_total' => 0,
                     ],
                 ],
+                'taxRates' => app(TaxService::class)->paymentRates(),
                 'paymentGateways' => [],
                 'defaultPaymentGateway' => 'cash',
                 'bankAccounts' => [],
@@ -101,7 +104,8 @@ class TransactionController extends Controller
             ->get();
 
         $initialPricingPreview = $this->loyaltyService->previewCheckout(
-            $this->pricingService->previewCart($carts, null, null, $outlet)
+            $this->pricingService->previewCart($carts, null, null, $outlet),
+            options: ['payment_method' => 'cash']
         );
 
         // Keep catalog and customer data lazy so cart-only partial reloads do not rebuild them.
@@ -123,51 +127,86 @@ class TransactionController extends Controller
             })
             ->values();
 
-        $customers = fn () => Customer::latest()->get();
+        $customers = fn () => Customer::query()
+            ->select([
+                'id',
+                'name',
+                'no_telp',
+                'member_code',
+                'is_walkin',
+                'is_loyalty_member',
+                'loyalty_tier',
+                'loyalty_points',
+            ])
+            ->latest()
+            ->get();
 
-        $products = function () use ($warehouseId) {
-            $products = Product::with(['category:id,name', 'units'])
-                ->select('id', 'barcode', 'title', 'description', 'image', 'buy_price', 'sell_price', 'stock', 'category_id', 'variations', 'variation_prices')
-                ->when($warehouseId, function ($q) use ($warehouseId) {
-                    $q->whereHas('warehouses', fn ($w) => $w->where('product_warehouse.warehouse_id', $warehouseId)
-                        ->where('product_warehouse.stock', '>', 0));
-                }, function ($q) {
-                    $q->where('stock', '>', 0);
-                })
-                ->orderBy('title')
-                ->get();
-            $pricingBadges = $this->pricingService->previewProducts($products, null);
+        $products = function () use ($warehouseId, $outlet) {
+            $cacheKey = 'transactions.catalog.'.($warehouseId ?: 'global').'.'.($outlet?->id ?: 'all');
 
-            return $products->map(function (Product $product) use ($pricingBadges) {
-                $pricing = $pricingBadges->get($product->id);
+            return Cache::remember($cacheKey, now()->addSeconds(15), function () use ($warehouseId, $outlet) {
+                $products = Product::with([
+                    'category:id,name',
+                    'units:id,code',
+                    'components:id,sell_price',
+                ])
+                    ->select('id', 'barcode', 'title', 'image', 'sell_price', 'stock', 'stock_mode', 'category_id', 'variations', 'variation_prices', 'is_composite')
+                    ->where(function ($query) use ($warehouseId) {
+                        if ($warehouseId) {
+                            $query->whereHas('warehouses', fn ($warehouse) => $warehouse
+                                ->where('product_warehouse.warehouse_id', $warehouseId)
+                                ->where('product_warehouse.stock', '>', 0));
+                        } else {
+                            $query->where('stock', '>', 0);
+                        }
 
-                $variationPrices = [];
-                if (is_array($product->variation_prices)) {
-                    foreach ($product->variation_prices as $key => $value) {
-                        $variationPrices[$key] = (int) $value;
+                        $query->orWhere('stock_mode', 'made_to_order');
+                    })
+                    ->orderBy('title')
+                    ->get();
+                $pricingBadges = $this->pricingService->previewProducts($products, null, null, $outlet);
+
+                return $products->map(function (Product $product) use ($pricingBadges) {
+                    $pricing = $pricingBadges->get($product->id);
+
+                    $variationPrices = [];
+                    if (is_array($product->variation_prices)) {
+                        foreach ($product->variation_prices as $key => $value) {
+                            $variationPrices[$key] = (int) $value;
+                        }
                     }
-                }
 
-                return [
-                    ...$product->toArray(),
-                    'variation_prices' => $variationPrices,
-                    'units' => $product->units->map(fn ($u) => [
-                        'unit_id' => $u->id,
-                        'code' => $u->code,
-                        'is_base' => (bool) $u->pivot->is_base,
-                        'conversion_factor' => (float) $u->pivot->conversion_factor,
-                        'sell_price' => (int) $u->pivot->sell_price,
-                        'barcode' => $u->pivot->barcode,
-                    ]),
-                    'pricing_badge' => $pricing && ! empty($pricing['pricing_rule']) ? [
-                        'label' => $pricing['pricing_rule']['label'],
-                        'promo_price' => $pricing['pricing_rule']['price_context']
-                            ? $pricing['effective_unit_price']
-                            : null,
-                        'base_price' => $pricing['base_unit_price'],
-                        'kind' => $pricing['pricing_rule']['kind'],
-                    ] : null,
-                ];
+                    return [
+                        'id' => $product->id,
+                        'barcode' => $product->barcode,
+                        'title' => $product->title,
+                        'image' => $product->image,
+                        'sell_price' => (int) $product->sell_price,
+                        'stock' => (int) $product->stock,
+                        'is_live_cooking' => $product->stock_mode === 'made_to_order',
+                        'category_id' => $product->category_id,
+                        'category' => $product->category?->only(['id', 'name']),
+                        'is_composite' => (bool) $product->is_composite,
+                        'variations' => $product->variations ?? [],
+                        'variation_prices' => $variationPrices,
+                        'units' => $product->units->map(fn ($u) => [
+                            'unit_id' => $u->id,
+                            'code' => $u->code,
+                            'is_base' => (bool) $u->pivot->is_base,
+                            'conversion_factor' => (float) $u->pivot->conversion_factor,
+                            'sell_price' => (int) $u->pivot->sell_price,
+                            'barcode' => $u->pivot->barcode,
+                        ]),
+                        'pricing_badge' => $pricing && ! empty($pricing['pricing_rule']) ? [
+                            'label' => $pricing['pricing_rule']['label'],
+                            'promo_price' => $pricing['pricing_rule']['price_context']
+                                ? $pricing['effective_unit_price']
+                                : null,
+                            'base_price' => $pricing['base_unit_price'],
+                            'kind' => $pricing['pricing_rule']['kind'],
+                        ] : null,
+                    ];
+                })->values()->all();
             });
         };
 
@@ -201,6 +240,7 @@ class TransactionController extends Controller
             'products' => $products,
             'categories' => $categories,
             'initialPricingPreview' => $initialPricingPreview,
+            'taxRates' => app(TaxService::class)->paymentRates(),
             'paymentGateways' => $paymentSetting?->enabledGateways($outlet) ?? [],
             'defaultPaymentGateway' => $defaultGateway,
             'bankAccounts' => $bankAccounts,
@@ -221,7 +261,11 @@ class TransactionController extends Controller
         $warehouseId = $activeShift?->warehouse_id;
 
         $product = Product::where('barcode', $request->barcode)
-            ->whereHas('warehouses', fn ($q) => $q->where('product_warehouse.warehouse_id', $warehouseId))
+            ->where(function ($query) use ($warehouseId) {
+                $query->whereHas('warehouses', fn ($warehouse) => $warehouse
+                    ->where('product_warehouse.warehouse_id', $warehouseId))
+                    ->orWhere('stock_mode', 'made_to_order');
+            })
             ->first();
 
         if ($product) {
@@ -249,6 +293,11 @@ class TransactionController extends Controller
             'discount' => ['nullable', 'integer', 'min:0'],
             'shipping_cost' => ['nullable', 'integer', 'min:0'],
             'redeem_points' => ['nullable', 'integer', 'min:0'],
+            'tax_rate_override' => ['nullable', 'numeric', 'min:0', 'max:100'],
+            'payment_method' => ['nullable', 'in:cash,card,bank_transfer,midtrans,xendit,safepay,qris,pay_later'],
+            'tenders' => ['nullable', 'array', 'max:2'],
+            'tenders.*.method' => ['required_with:tenders', 'in:cash,card,bank_transfer,midtrans,xendit,safepay,qris'],
+            'tenders.*.amount' => ['required_with:tenders', 'integer', 'min:1'],
             'customer_voucher_id' => ['nullable', 'integer', 'exists:customer_vouchers,id'],
         ]);
 
@@ -275,6 +324,9 @@ class TransactionController extends Controller
                 'manual_discount' => (int) ($validated['discount'] ?? 0),
                 'shipping_cost' => (int) ($validated['shipping_cost'] ?? 0),
                 'redeem_points' => (int) ($validated['redeem_points'] ?? 0),
+                'tax_rate_override' => $validated['tax_rate_override'] ?? null,
+                'payment_method' => $validated['payment_method'] ?? 'cash',
+                'tenders' => $validated['tenders'] ?? [],
                 'voucher' => $voucher,
             ], null, $activeShift?->warehouse?->outlet),
         ]);
@@ -299,7 +351,7 @@ class TransactionController extends Controller
         $activeShift = $this->cashierShiftService->getActiveShiftForUser(auth()->user()->id);
         $warehouseId = $activeShift?->warehouse_id;
 
-        $product = Product::select('id', 'sell_price', 'buy_price', 'is_composite', 'variations', 'variation_prices')
+        $product = Product::select('id', 'sell_price', 'buy_price', 'is_composite', 'stock_mode', 'variations', 'variation_prices')
             ->whereId($validated['product_id'])
             ->first();
         $product->load('units');
@@ -362,7 +414,9 @@ class TransactionController extends Controller
                     ? (int) ($product->warehouses()->where('warehouse_id', $warehouseId)->first()?->pivot->stock ?? 0)
                     : (int) $product->stock;
 
-                if ($availableStock < $baseQty) {
+                $isLiveCooking = $product->stock_mode === 'made_to_order';
+
+                if (! $isLiveCooking && $availableStock < $baseQty) {
                     return redirect()->back()->with('error', 'Insufficient stock.');
                 }
 
@@ -501,7 +555,9 @@ class TransactionController extends Controller
             ? (int) ($product->warehouses()->where('warehouse_id', $warehouseId)->first()?->pivot->stock ?? 0)
             : (int) $product->stock;
 
-        if ($availableStock < $baseQty) {
+        $isLiveCooking = $product->stock_mode === 'made_to_order';
+
+        if (! $isLiveCooking && $availableStock < $baseQty) {
             return response()->json([
                 'success' => false,
                 'message' => 'Insufficient stock. Available: '.$availableStock,
@@ -707,6 +763,9 @@ class TransactionController extends Controller
      */
     public function store(Request $request, PaymentGatewayManager $paymentGatewayManager)
     {
+        $validated = $request->validate([
+            'tax_rate_override' => ['nullable', 'numeric', 'min:0', 'max:100'],
+        ]);
         $isPayLater = $request->boolean('pay_later');
         $paymentGateway = $isPayLater ? null : $request->input('payment_gateway');
         if ($paymentGateway) {
@@ -734,7 +793,7 @@ class TransactionController extends Controller
         }
 
         $paymentSetting = null;
-        if ($paymentGateway) {
+        if ($paymentGateway && $paymentGateway !== TransactionTender::METHOD_CARD) {
             $paymentSetting = PaymentSetting::forOutlet($outlet);
 
             $gatewayReady = $paymentSetting && ($paymentGateway === 'qris'
@@ -774,6 +833,9 @@ class TransactionController extends Controller
             tenderInput: $tenderInput,
             outlet: $outlet,
             bankAccountId: $request->input('bank_account_id'),
+            taxRateOverride: isset($validated['tax_rate_override'])
+                ? (float) $validated['tax_rate_override']
+                : null,
         );
 
         $result = $this->checkoutService->execute($context);
@@ -825,7 +887,7 @@ class TransactionController extends Controller
                     ->route('transactions.print', $result->transaction->invoice)
                     ->with('error', $exception->getMessage());
             }
-        } elseif ($paymentGateway) {
+        } elseif ($paymentGateway && $paymentGateway !== TransactionTender::METHOD_CARD) {
             try {
                 $paymentResponse = $paymentGateway === 'qris'
                     ? $paymentGatewayManager->createQrisPayment($result->transaction, $paymentSetting)

@@ -120,13 +120,13 @@ class PriceListCheckoutTest extends TestCase
         ]);
 
         $response->assertCreated()
-            ->assertJsonPath('data.grand_total', 16000);
+            ->assertJsonPath('data.grand_total', 18560);
 
         $this->assertDatabaseHas('transactions', [
             'id' => $response->json('data.id'),
             'customer_id' => $customer->id,
             'price_list_id' => $priceList->id,
-            'grand_total' => 16000,
+            'grand_total' => 18560,
         ]);
     }
 
@@ -146,12 +146,12 @@ class PriceListCheckoutTest extends TestCase
         ]);
 
         $response->assertCreated()
-            ->assertJsonPath('data.grand_total', 20000);
+            ->assertJsonPath('data.grand_total', 23200);
 
         $this->assertDatabaseHas('transactions', [
             'id' => $response->json('data.id'),
             'price_list_id' => null,
-            'grand_total' => 20000,
+            'grand_total' => 23200,
         ]);
     }
 
@@ -188,12 +188,12 @@ class PriceListCheckoutTest extends TestCase
 
         // In price list but no item for this product → sell_price 15000
         $response->assertCreated()
-            ->assertJsonPath('data.grand_total', 15000);
+            ->assertJsonPath('data.grand_total', 17400);
 
         $this->assertDatabaseHas('transactions', [
             'id' => $response->json('data.id'),
             'price_list_id' => $priceList->id,
-            'grand_total' => 15000,
+            'grand_total' => 17400,
         ]);
     }
 
@@ -232,7 +232,7 @@ class PriceListCheckoutTest extends TestCase
         ]);
 
         $response->assertCreated()
-            ->assertJsonPath('data.grand_total', 9000);
+            ->assertJsonPath('data.grand_total', 10440);
 
         $this->assertDatabaseHas('transactions', [
             'id' => $response->json('data.id'),
@@ -259,7 +259,7 @@ class PriceListCheckoutTest extends TestCase
         ]);
 
         $response->assertCreated()
-            ->assertJsonPath('data.grand_total', 10000);
+            ->assertJsonPath('data.grand_total', 11600);
 
         $this->assertDatabaseHas('transactions', [
             'id' => $response->json('data.id'),
@@ -297,7 +297,7 @@ class PriceListCheckoutTest extends TestCase
         ]);
 
         $response->assertCreated()
-            ->assertJsonPath('data.grand_total', 7000);
+            ->assertJsonPath('data.grand_total', 8120);
 
         $this->assertDatabaseHas('transactions', [
             'id' => $response->json('data.id'),

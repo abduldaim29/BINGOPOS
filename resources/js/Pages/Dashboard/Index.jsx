@@ -22,6 +22,10 @@ import {
     IconTarget,
     IconMapPin,
     IconWallet,
+    IconRefresh,
+    IconTrendingDown,
+    IconAlertCircle,
+    IconCash,
 } from "@tabler/icons-react";
 import { formatCurrency } from "@/Utils/currency";
 
@@ -195,6 +199,15 @@ export default function Dashboard({
     todayTransactions,
     todaySales = 0,
     todayProfit = 0,
+    totalLoss = 0,
+    todayLoss = 0,
+    completedReturns = 0,
+    todayReturns = 0,
+    refundedReturns = 0,
+    creditedReturns = 0,
+    outstandingReceivables = 0,
+    overdueReceivables = 0,
+    inventoryValue = 0,
     monthlyTarget = 0,
     currentMonthSales = 0,
     topProducts = [],
@@ -389,6 +402,70 @@ export default function Dashboard({
                         value={totalCustomers}
                         icon={IconUsers}
                     />
+                </div>
+
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                    <StatCard
+                        title="Today's Loss"
+                        value={formatCurrency(todayLoss)}
+                        subtitle={todayLoss > 0 ? "Negative profit detected" : "No recorded loss today"}
+                        icon={IconTrendingDown}
+                        gradient="from-red-500 to-rose-700"
+                    />
+                    <StatCard
+                        title="Sales Returns"
+                        value={formatCurrency(completedReturns)}
+                        subtitle={`${todayReturns ? formatCurrency(todayReturns) : "No"} returned today`}
+                        icon={IconRefresh}
+                        gradient="from-orange-500 to-amber-700"
+                    />
+                    <StatCard
+                        title="Inventory Value"
+                        value={formatCurrency(inventoryValue)}
+                        subtitle="Stock × saved buy price"
+                        icon={IconBox}
+                        gradient="from-cyan-500 to-blue-700"
+                    />
+                    <StatCard
+                        title="Outstanding Receivables"
+                        value={formatCurrency(outstandingReceivables)}
+                        subtitle={`${overdueReceivables} overdue account${overdueReceivables === 1 ? "" : "s"}`}
+                        icon={IconCash}
+                        gradient="from-violet-500 to-purple-700"
+                    />
+                </div>
+
+                <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+                    <div className={`rounded-2xl border p-5 ${totalLoss > 0 ? "border-red-200 bg-red-50 dark:border-red-900/50 dark:bg-red-950/20" : "border-emerald-200 bg-emerald-50 dark:border-emerald-900/50 dark:bg-emerald-950/20"}`}>
+                        <div className="flex items-start gap-3">
+                            <IconAlertCircle className={totalLoss > 0 ? "text-red-600" : "text-emerald-600"} />
+                            <div>
+                                <h3 className="font-semibold text-slate-900 dark:text-white">
+                                    Loss Monitor
+                                </h3>
+                                <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
+                                    {totalLoss > 0
+                                        ? `${formatCurrency(totalLoss)} net loss is recorded in profit entries. Review returns, wastage, and cost prices.`
+                                        : "No negative profit is recorded in the current data."}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    <div className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
+                        <h3 className="font-semibold text-slate-900 dark:text-white">Return Settlement</h3>
+                        <div className="mt-3 space-y-2 text-sm text-slate-600 dark:text-slate-300">
+                            <div className="flex justify-between"><span>Cash refunded</span><strong>{formatCurrency(refundedReturns)}</strong></div>
+                            <div className="flex justify-between"><span>Store credit</span><strong>{formatCurrency(creditedReturns)}</strong></div>
+                        </div>
+                    </div>
+                    <div className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
+                        <h3 className="font-semibold text-slate-900 dark:text-white">Receivables Alert</h3>
+                        <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
+                            {overdueReceivables > 0
+                                ? `${overdueReceivables} overdue receivable${overdueReceivables === 1 ? "" : "s"} need collection follow-up.`
+                                : "No overdue receivables found."}
+                        </p>
+                    </div>
                 </div>
 
                 {/* Revenue Chart - Full Width */}

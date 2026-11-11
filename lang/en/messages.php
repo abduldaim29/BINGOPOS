@@ -347,21 +347,6 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Flash Messages - WhatsApp
-    |--------------------------------------------------------------------------
-    */
-    'whatsapp' => [
-        'test_sent' => 'Test message sent successfully.',
-        'test_failed' => 'Failed to send test message.',
-        'connected' => 'WhatsApp connected successfully.',
-        'disconnected' => 'WhatsApp disconnected successfully.',
-        'qr_generated' => 'QR code generated successfully.',
-        'start_failed' => 'Failed to start WhatsApp service.',
-        'not_connected' => 'WhatsApp not connected.',
-    ],
-
-    /*
-    |--------------------------------------------------------------------------
     | Flash Messages - Users & Roles
     |--------------------------------------------------------------------------
     */

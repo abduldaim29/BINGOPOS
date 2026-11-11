@@ -18,6 +18,7 @@ import {
     IconRulerMeasure,
 } from "@tabler/icons-react";
 import { formatCurrency } from "@/Utils/currency";
+import VariationRecipeEditor from "@/Components/Dashboard/Products/VariationRecipeEditor";
 
 export default function Create({
     categories,
@@ -29,6 +30,7 @@ export default function Create({
 
     const { data, setData, post, processing, transform } = useForm({
         image: "",
+        image_url: "",
         barcode: "",
         sku: "",
         title: "",
@@ -39,6 +41,7 @@ export default function Create({
         buy_price: "",
         sell_price: "",
         stock: "",
+        stock_mode: "stock",
         min_stock: "",
         max_stock: "",
         tax_type: "exclusive",
@@ -266,6 +269,7 @@ export default function Create({
 
     const toggleComposite = (checked) => {
         setData("is_composite", checked);
+        if (checked) setData("stock_mode", "stock");
 
         if (checked) {
             setData("units", []);
@@ -389,6 +393,12 @@ export default function Create({
         }
     };
 
+    const handleImageUrlChange = (e) => {
+        const value = e.target.value;
+        setData("image_url", value);
+        if (!data.image) setImagePreview(value || null);
+    };
+
     // Save product and prepare automatic SKU/barcode values.
     const submitCompositeAware = (e) => {
         e.preventDefault();
@@ -399,20 +409,29 @@ export default function Create({
         }
 
         // Include selected variations and their prices in the form data
-        if (hasVariations && selectedVariations.length > 0) {
-            setData("variations", selectedVariations);
-            setData("variation_prices", data.variation_prices || {});
-        }
+        setData("variations", hasVariations ? selectedVariations : []);
+        setData("variation_prices", data.variation_prices || {});
 
         // Normal single product creation
         transform((formData) => ({
             ...formData,
+            variations: hasVariations ? selectedVariations : [],
+            variation_prices: Object.fromEntries(
+                selectedVariations.map((variationId) => [
+                    variationId,
+                    Number(formData.variation_prices?.[variationId] || 0),
+                ])
+            ),
 
             sell_price: formData.is_composite
                 ? 0
                 : formData.sell_price,
 
-            stock: formData.is_composite
+            stock_mode: formData.is_composite
+                ? "stock"
+                : formData.stock_mode,
+
+            stock: formData.is_composite || formData.stock_mode === "made_to_order"
                 ? 0
                 : formData.stock,
 
@@ -433,13 +452,6 @@ export default function Create({
                     String(unit.barcode || "").trim() ||
                     generateBarcode(),
             })),
-
-            variation_prices: Object.fromEntries(
-                Object.entries(formData.variation_prices || {}).map(([variationId, price]) => [
-                    variationId,
-                    price === "" ? 0 : Number(price),
-                ])
-            ),
         }));
 
         post(route("products.store"), {
@@ -508,6 +520,16 @@ export default function Create({
                                 errors={errors.image}
                                 accept="image/*"
                             />
+                            <div className="mt-3">
+                                <Input
+                                    type="url"
+                                    label="Or Image URL"
+                                    value={data.image_url}
+                                    onChange={handleImageUrlChange}
+                                    errors={errors.image_url}
+                                    placeholder="https://example.com/product.jpg"
+                                />
+                            </div>
                         </div>
                     </div>
 
@@ -536,15 +558,18 @@ export default function Create({
 
                                 <div className="md:col-span-2">
                                     <InputSelect
-                                        label="Item"
+                                        label="Product Type"
                                         data={productTypes}
                                         selected={selectedProductType}
                                         setSelected={setSelectedProductTypeHandler}
-                                        placeholder="Select an item (optional)"
+                                        placeholder="Select a product type (optional)"
                                         errors={errors.product_type_id}
                                         searchable={true}
                                         displayKey="name"
                                     />
+                                    <p className="mt-1 text-xs text-slate-500">
+                                        Use this to group the product. Recipe ingredients and costing are managed in Recipe Management.
+                                    </p>
                                 </div>
 
                                 <div className="md:col-span-2">
@@ -704,6 +729,18 @@ export default function Create({
                                                     </div>
                                                 </div>
                                             )}
+                                            {selectedVariations.length > 0 && (
+                                                <VariationRecipeEditor
+                                                    variations={selectedVariations
+                                                        .map((variationId) =>
+                                                            Object.values(availableVariations)
+                                                                .flat()
+                                                                .find((variation) => variation.id === variationId)
+                                                        )
+                                                        .filter(Boolean                                                        )}
+                                                        products={products}
+                                                />
+                                            )}
                                         </div>
                                     )}
                                 </div>
@@ -754,7 +791,7 @@ export default function Create({
 
                                 <div className="md:col-span-2">
                                     <Textarea
-                                        label="Description"
+                                        label="Description (Optional)"
                                         placeholder="Product description (optional)"
                                         errors={errors.description}
                                         onChange={(e) =>
@@ -792,16 +829,35 @@ export default function Create({
                                 </span>
                             </label>
 
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            {!data.is_composite && (
+                                <label className="mb-4 block max-w-sm">
+                                    <span className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">
+                                        Stocking Type
+                                    </span>
+                                    <select
+                                        value={data.stock_mode}
+                                        onChange={(e) => setData("stock_mode", e.target.value)}
+                                        className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-slate-800 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 dark:border-slate-700 dark:bg-slate-950 dark:text-white"
+                                    >
+                                        <option value="stock">Stock</option>
+                                        <option value="made_to_order">Made to Order</option>
+                                    </select>
+                                    {errors.stock_mode && (
+                                        <span className="mt-1 block text-xs text-danger-500">{errors.stock_mode}</span>
+                                    )}
+                                </label>
+                            )}
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                                 <Input
                                     type="number"
-                                    label="Purchase Price"
+                                    label="Purchase Price (Optional)"
                                     value={data.buy_price}
                                     onChange={(e) =>
                                         setData("buy_price", e.target.value)
                                     }
                                     errors={errors.buy_price}
-                                    placeholder="0"
+                                    placeholder="Leave blank if unknown"
                                 />
 
                                 <Input
@@ -824,25 +880,25 @@ export default function Create({
                                     }
                                 />
 
-                                <Input
-                                    type="number"
-                                    label="Stock"
-                                    value={
-                                        data.is_composite ? "" : data.stock
-                                    }
-                                    disabled={data.is_composite}
-                                    onChange={(e) =>
-                                        setData("stock", e.target.value)
-                                    }
-                                    errors={errors.stock}
-                                    placeholder={
-                                        data.is_composite
-                                            ? "Based on component stock"
-                                            : "0"
-                                    }
-                                />
+                                {data.stock_mode === "stock" && (
+                                    <Input
+                                        type="number"
+                                        label="Stock (Optional)"
+                                        value={data.is_composite ? "" : data.stock}
+                                        disabled={data.is_composite}
+                                        onChange={(e) => setData("stock", e.target.value)}
+                                        errors={errors.stock}
+                                        placeholder={data.is_composite ? "Based on component stock" : "0"}
+                                    />
+                                )}
                             </div>
+                            <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
+                                {data.stock_mode === "made_to_order"
+                                    ? "Finished-product stock is not tracked; recipe ingredients remain tracked."
+                                    : "Leave blank to start with 0 stock."}
+                            </p>
 
+                            {data.stock_mode === "stock" && (
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
                                 <Input
                                     type="number"
@@ -873,6 +929,7 @@ export default function Create({
                                     order (daily reorder:generate command).
                                 </p>
                             </div>
+                            )}
 
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
                                 <div>
@@ -964,7 +1021,7 @@ export default function Create({
                                                 {(
                                                     ((data.sell_price -
                                                         data.buy_price) /
-                                                        data.buy_price) *
+                                                        data.sell_price) *
                                                     100
                                                 ).toFixed(1)}
                                                 %

@@ -278,9 +278,11 @@
         },
         "items": {
             "dashboard": "Dashboard",
+            "digitalMenu": "Menu Digital",
             "categories": "Kategori",
             "subCategories": "Sub Kategori",
             "items": "Item",
+            "productTypes": "Jenis Produk",
             "products": "Produk",
             "customers": "Pelanggan",
             "suppliers": "Pemasok",
@@ -339,14 +341,13 @@
             "usersList": "Data Pengguna",
             "usersCreate": "Tambah Pengguna",
             "paymentGateway": "Gateway Pembayaran",
-            "storeProfile": "Profil Toko",
+            "storeProfile": "Profil Merek",
             "bankAccounts": "Rekening Bank",
             "loyalty": "Loyalitas",
             "salesTarget": "Target Penjualan",
             "priceLists": "Daftar Harga",
             "warehouses": "Gudang / Cabang",
-            "units": "Satuan",
-            "whatsApp": "WhatsApp"
+            "units": "Satuan"
         },
         "menu": {
             "overview": "Ringkasan",
@@ -401,7 +402,6 @@
             "salesTarget": "Target Penjualan",
             "warehouses": "Gudang",
             "outlets": "Outlet",
-            "whatsapp": "WhatsApp",
             "printers": "Printer",
             "taxSettings": "Pajak"
         }
@@ -487,6 +487,7 @@
         "status": {
             "outOfStock": "Habis",
             "lowStock": "Stok Rendah",
+            "liveCooking": "Dimasak saat dipesan",
             "composite": "Komposit",
             "inStock": "Tersedia"
         },
@@ -504,6 +505,35 @@
             "title": "Belum Ada Produk",
             "description": "Tambahkan produk pertama Anda untuk memulai"
         }
+    },
+    "variationRecipes": {
+        "title": "Konfigurasi Resep & Biaya",
+        "description": "Atur daftar bahan dan jumlah yang berbeda untuk setiap variasi. Biaya bahan menggunakan satuan produk yang dipilih dan harga beli yang dikonfigurasi.",
+        "unitConversionNote": "Untuk pemakaian stok di POS, atur satuan dasar bahan ke satuan terkecil yang dapat disimpan (misalnya g atau ml).",
+        "sellingPrice": "Harga jual",
+        "copyFrom": "Salin resep dari...",
+        "copy": "Salin",
+        "ingredient": "Bahan inventaris",
+        "selectProduct": "Pilih produk",
+        "quantity": "Jumlah",
+        "unit": "Satuan",
+        "selectUnit": "Pilih satuan",
+        "noUnits": "Satuan belum dikonfigurasi",
+        "baseUnit": "Satuan dasar",
+        "baseUnitFactor": "1 satuan = {{factor}} satuan dasar",
+        "cost": "Biaya",
+        "wastage": "Pemborosan (%)",
+        "addIngredient": "Tambah bahan",
+        "batchYield": "Hasil batch",
+        "packagingCost": "Biaya kemasan",
+        "labourCost": "Biaya tenaga kerja",
+        "overheadCost": "Biaya overhead",
+        "recipeCost": "Biaya resep",
+        "selectRecipe": "Pilih resep",
+        "editRecipe": "Edit resep",
+        "grossProfit": "Laba kotor",
+        "margin": "Margin",
+        "noMargin": "—"
     },
     "categories": {
         "title": "Kategori",
@@ -805,7 +835,6 @@
         "download": "Unduh",
         "confirmPayment": "Konfirmasi Pembayaran",
         "salesReturn": "Retur Penjualan",
-        "sendWhatsApp": "Kirim via WhatsApp",
         "noTransactions": "Tidak ada transaksi yang sesuai filter",
         "noTransactionsDefault": "Transaksi akan muncul di sini",
         "downloadInvoice": "Unduh Faktur",
@@ -1166,20 +1195,6 @@
                 "branch": "Branch",
                 "stock": "Stock Warehouse"
             }
-        },
-        "whatsapp": {
-            "title": "WhatsApp",
-            "serviceUrl": "Service URL",
-            "enabled": "Enable",
-            "autoSend": "Auto Send",
-            "connect": "Connect",
-            "disconnect": "Disconnect",
-            "scanQR": "Scan QR Code",
-            "status": {
-                "connected": "Connected",
-                "disconnected": "Disconnected",
-                "connecting": "Connecting..."
-            }
         }
     },
     "reports": {
@@ -1254,11 +1269,6 @@
         "receipt": "Receipt",
         "shippingLabel": "Shipping Label",
         "printDocument": "Print Document"
-    },
-    "whatsapp": {
-        "sendTest": "Send Test",
-        "messageSent": "Message sent",
-        "messageFailed": "Failed to send message"
     },
     "language": {
         "title": "Bahasa",

@@ -49,8 +49,8 @@ class WalkInCustomerTest extends TestCase
             ->post(route('transactions.store'), [
                 'customer_id' => null,
                 'discount' => 0,
-                'grand_total' => $product->sell_price,
-                'cash' => $product->sell_price,
+                'grand_total' => (int) round($product->sell_price * 1.16),
+                'cash' => (int) round($product->sell_price * 1.16),
                 'change' => 0,
             ]);
 

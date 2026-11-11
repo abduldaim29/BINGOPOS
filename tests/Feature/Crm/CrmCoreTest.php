@@ -7,9 +7,9 @@ use App\Models\CustomerCampaign;
 use App\Models\CustomerCampaignLog;
 use App\Models\CustomerSegment;
 use App\Models\Receivable;
-use App\Models\Transaction;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Route;
 use Spatie\Permission\Models\Permission;
 use Tests\TestCase;
 
@@ -188,45 +188,10 @@ class CrmCoreTest extends TestCase
         ]);
     }
 
-    public function test_transaction_share_campaign_is_idempotent(): void
+    public function test_removed_campaign_sharing_routes_are_unavailable(): void
     {
-        $user = $this->createUserWithPermissions([
-            'crm-campaigns-create',
-        ]);
-        $customer = $this->createCustomer([
-            'name' => 'Customer Share Invoice',
-            'no_telp' => '628111000006',
-        ]);
-        $transaction = Transaction::create([
-            'cashier_id' => $user->id,
-            'customer_id' => $customer->id,
-            'invoice' => 'TRX-CRM-001',
-            'cash' => 150000,
-            'change' => 0,
-            'discount' => 0,
-            'grand_total' => 150000,
-        ]);
-
-        $this->actingAs($user)
-            ->post(route('transactions.share-campaign', $transaction))
-            ->assertRedirect();
-
-        $this->actingAs($user)
-            ->post(route('transactions.share-campaign', $transaction))
-            ->assertRedirect();
-
-        $this->assertSame(
-            1,
-            CustomerCampaign::query()
-                ->where('context_key', 'invoice-share-transaction-'.$transaction->id)
-                ->count()
-        );
-        $this->assertSame(
-            1,
-            CustomerCampaignLog::query()
-                ->where('transaction_id', $transaction->id)
-                ->count()
-        );
+        $this->assertFalse(Route::has('transactions.share-campaign'));
+        $this->assertFalse(Route::has('receivables.share-campaign'));
     }
 
     private function createUserWithPermissions(array $permissions): User
